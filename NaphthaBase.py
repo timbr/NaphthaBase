@@ -2,6 +2,7 @@ from Settings import *
 import pyodbc
 import os
 import sqlite3
+import datetime
 
 NaphthaBase = ''
 stock_connection = ''
@@ -44,16 +45,25 @@ class materialcodes(object):
         c = NaphthaBase.cursor()
         self.matdata = [row for row in c.execute("select * from Material")]
         self.createDB()
-        
+    
+    def getdesc(self, matcode):
+        return self.getlatest.get(matcode.upper().upper(), [''])[0]
+        # Return an empty string if no key found
+    
     def createDB(self):
+        # Constants to make list items clearer
+        CODE = 0
+        DESC = 1
+        LASTUPDATE = 2
+        RECORDNUM = 3
         self.getlatest = {}
         for entry in self.matdata:
-            if entry[0] in self.getlatest.keys():
-                if entry[2] > self.getlatest[entry[0]][2]:
-                    self.getlatest[entry[0]] = entry[1]
+            if entry[CODE] in self.getlatest.keys():
+                if entry[LASTUPDATE] > self.getlatest[entry[CODE]][LASTUPDATE]:
+                    self.getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM], entry[LASTUPDATE]]
+                    # RECORDNUM is added in position 1 so that LASTUPDATE remains in position 2
             else:
-                self.getlatest[entry[0]] = entry[1]
-                
+                self.getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM], entry[LASTUPDATE]]
         
     def updateNaphthaBase(self):
         RandRcursor = stock_connection.cursor()
@@ -75,18 +85,39 @@ class materialcodes(object):
             c.execute('insert into Material_temp values (?,?,?,?)', entry)
         NaphthaBase.commit()
         
-        diff = c.execute("SELECT Material_temp.* from Material_temp Left Join Material on (Material_temp.LastUpdated = Material.LastUpdated) where Material.LastUpdated IS Null")
+        diffquery = """
+        SELECT Material_temp.*
+        from Material_temp
+        Left Join Material on (Material_temp.LastUpdated = Material.LastUpdated)
+        where Material.LastUpdated IS Null
+        """  
+        diff = c.execute(diffquery)
         
         newrows =  [row for row in diff]
         
         for entry in newrows:
-            print entry
             c.execute('insert into Material values (?,?,?,?)', entry)
         NaphthaBase.commit()
         self.matdata = [row for row in c.execute("select * from Material")]
         self.createDB()
         NaphthaBase.close()
 
-            
-            
-        
+if __name__ == '__main__':
+    # Tests
+    if os.path.exists(NaphthaBase_Dbase):
+        os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
+    MakeDatabaseConnection(TestDB_Old)
+    MatCodeOld = materialcodes()
+    MatCodeOld.updateNaphthaBase()
+    original = MatCodeOld.getdesc('pa23')
+    no_entry = MatCodeOld.getdesc('ppld26c')
+    
+    MakeDatabaseConnection(TestDB_New)
+    MatCodeNew = materialcodes()
+    MatCodeNew.updateNaphthaBase()
+    revised = MatCodeNew.getdesc('PA23')
+    an_entry = MatCodeNew.getdesc('PPLD26C')
+    
+    print
+    print original, revised
+    print no_entry, an_entry
