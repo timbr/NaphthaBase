@@ -1,0 +1,9 @@
+Saturday 4th September 2010
+
+Started work on the database interface for the Naphtha Python Utilities. With this project documentation is key as I am only doing this part-time and there are bound to be large breaks between work stints. Every single trivial thing needs to be documented to make it as easy as possible to pick up where I left off.
+
+Today's work has been starting to import the latest formula table from the main Naphtha database, find any differences between this and the 'NaphthaBase' and then add these different entries to the NaphthaBase. Obviously any new entries will be added, but entries that have changed will be appended without deleted the orginal entry. This should hopefully provide some ability to review the history of entries. Also this change can be flagged at import to let everyone know that something has changed.
+
+Some ideas: I think it would be good to log to a text file any changes in the imported data. Another file can be used to log errors.
+
+It is very important that this program is robust, so exceptions should be caught and dealt with when problems occur accessing data.

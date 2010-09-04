@@ -1,0 +1,11 @@
+Saturday 4th September 2010
+
+Using Git
+
+The idea of this file is to fully document how to use git and GitHub so that when I have a break of a few weeks I can get back to where I was.
+
+To use Git with Windows and upload to GitHub over SSH you need to have a program called Pageant running. I think this is part of PuTTY.
+
+When Pageant is run, right click on the Taskbar icon and select Add Key. Navigate to Users\Tim\.ssh and open puttypriv.ppk. Type in the usual password. This should now authenticate ssh for Git.
+
+To be continued...
