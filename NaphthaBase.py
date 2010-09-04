@@ -4,23 +4,24 @@ import os
 import sqlite3
 import datetime
 
-NaphthaBase = ''
+NaphthaBaseChecked = 0
 stock_connection = ''
 
 
 def MakeDatabaseConnection(RandR_db = RandR_Naphtha_Dbase):
-    global NaphthaBase, stock_connection
-    NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
+    global stock_connection
     CheckTables() # check that all the necessary tables are present
     
     if os.path.exists(RandR_db):
         stock_connection = \
         pyodbc.connect(DRIVER='{Microsoft Access Driver (*.mdb)}', DBQ=RandR_db)
-        print "Made connection with R&R database at %s" %RandR_db
+        print "Made connection with R&R database at %s" % RandR_db
     else:
         print "Unable to make connection with R&R database at %s" % RandR_db
 
 def CheckTables():
+    global NaphthaBaseChecked # TODO Find alternative to global variables
+    NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
     c = NaphthaBase.cursor()
     query = c.execute("select * from sqlite_master where type = 'table'")
     tables = [row[1] for row in query]
@@ -33,15 +34,20 @@ def CheckTables():
         c.execute("drop table Material_temp")
         NaphthaBase.commit()
         print 'Removed Material_temp table'
+    NaphthaBase.close()
+    NaphthaBaseChecked = 1
         
 class materialcodes(object):
     def __init__(self):
-        if NaphthaBase == '':
+        if NaphthaBaseChecked == 0:
             # No connection has been made to the NaphthaBase
             MakeDatabaseConnection()
         if stock_connection == '':
             # No connection has been made to the R&R stock database
-            self.localonly = True
+            self.localonly = 1
+        else:
+            self.localonly = 0
+        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
         c = NaphthaBase.cursor()
         self.matdata = [row for row in c.execute("select * from Material")]
         self.createDB()
@@ -66,6 +72,9 @@ class materialcodes(object):
                 self.getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM], entry[LASTUPDATE]]
         
     def updateNaphthaBase(self):
+        if self.localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
         RandRcursor = stock_connection.cursor()
         command = """
         SELECT
@@ -79,6 +88,7 @@ class materialcodes(object):
         """
         RandRdata = RandRcursor.execute(command)
         
+        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
         c = NaphthaBase.cursor()
         c.execute("create table Material_temp (Code text, Description text, LastUpdated date, RecordNo int)")
         for entry in RandRdata:
