@@ -138,7 +138,9 @@ class purchases(object):
         NaphthaBase.text_factory = str # solves problem with Pound signs....!
         c = NaphthaBase.cursor()
         command = """
-        SELECT * from Purchases,
+        SELECT PO_Num, Code, Batch, Quantity, Price, OrderValue, Supplier, OrderReference, OrderDate,
+        DueDate, PlacedBy, DeliveredQuantity, PrintedComment, DeliveryComment, Status, LastUpdated
+        FROM Purchases,
         (SELECT MAX(LastUpdated) AS latest from Purchases WHERE PO_Num = %(po_num)s)
         WHERE PO_Num = %(po_num)s and LastUpdated = latest
         ORDER BY Code
