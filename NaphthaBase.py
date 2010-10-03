@@ -29,7 +29,7 @@ def CheckTables():
     if len(tables) == 0:
         # empty database file
         c.execute("create table Material (Code text, Description text, LastUpdated date, RecordNo int)")
-        c.execute("create table Purchases (PO_Num text, Code text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
+        c.execute("create table Purchases (PO_Num text, Code text, Batch text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
         NaphthaBase.commit()
     if 'Material_temp' in tables:
         c.execute("drop table Material_temp")
@@ -149,7 +149,7 @@ class purchases(object):
     def createDB(self):
         PO_conn = sqlite3.connect(':memory:')
         PO_c = PO_conn.cursor()
-        PO_c.execute("create table Purchases (PO_Num text, Code text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
+        PO_c.execute("create table Purchases (PO_Num text, Code text, Batch text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
         PO_c.commit()
         
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
@@ -180,6 +180,7 @@ class purchases(object):
         SELECT
         \"Purchase Order\".\"Order Number\" AS PO_Num,
         \"Purchase Item\".\"Component Code\" AS Code,
+        \"Formula Stock\".Batch,
         \"Purchase Item\".Quantity,
         \"Purchase Item\".Price,
         \"Purchase Order\".\"Order Value\" AS OrderValue,
@@ -193,8 +194,10 @@ class purchases(object):
         \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
         \"Purchase Order\".Status,
         \"Purchase Item\".\"Last Updated\" AS LastUpdated
-        FROM \"Purchase Item\", \"Purchase Order\"
-        WHERE (\"Purchase Item\".\"Order Number\" = \"Purchase Order\".\"Order Number\")
+        FROM \"Purchase Item\", \"Purchase Order\", \"Formula Stock\"
+        WHERE (\"Purchase Item\".\"Order Number\" = \"Purchase Order\".\"Order Number\"
+        AND \"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON
+        AND \"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key)
         ORDER BY \"Purchase Order\".\"Order Number\"
         """
         RandRdata = RandRcursor.execute(command)
@@ -202,14 +205,14 @@ class purchases(object):
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
         NaphthaBase.text_factory = str # solves problem with Pound signs....!
         c = NaphthaBase.cursor()
-        c.execute("create table Purchases_temp (PO_Num text, Code text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
+        c.execute("create table Purchases_temp (PO_Num text, Code text, Batch text, Quantity text, Price text, OrderValue text, Supplier text, OrderReference text, OrderDate date, DueDate date, PlacedBy text, DeliveredQuantity text, PrintedComment text, DeliveryComment text, Status int, LastUpdated date)")
         for entry in RandRdata:
             entry_temp = [thing for thing in entry]
-            entry_temp[2] = str(entry_temp[2]) # prices and quantities are stored as a decimal type in the RandR database
-            entry_temp[3] = str(entry_temp[3]) # Convert them to text fields for storing in the NaphthaBase
-            entry_temp[4] = str(entry_temp[4])
-            entry_temp[10] = str(entry_temp[10])
-            c.execute('insert into Purchases_temp values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', entry_temp)
+            entry_temp[3] = str(entry_temp[3]) # prices and quantities are stored as a decimal type in the RandR database
+            entry_temp[4] = str(entry_temp[4]) # Convert them to text fields for storing in the NaphthaBase
+            entry_temp[5] = str(entry_temp[5])
+            entry_temp[11] = str(entry_temp[11])
+            c.execute('insert into Purchases_temp values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', entry_temp)
         NaphthaBase.commit()
         
         diffquery = """
@@ -224,7 +227,7 @@ class purchases(object):
         
         for entry in newrows:
             
-            c.execute('insert into Purchases values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', entry)
+            c.execute('insert into Purchases values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', entry)
         NaphthaBase.commit()
         self.POdata = [row for row in c.execute("select * from Purchases")]
         #self.createDB()
