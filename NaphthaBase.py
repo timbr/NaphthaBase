@@ -124,6 +124,13 @@ class MaterialCodes(object):
         
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
         c = NaphthaBase.cursor()
+        
+        query = c.execute("select * from sqlite_master where type = 'table'")
+        tables = [row[1] for row in query]
+        if 'Material_temp' in tables:
+            c.execute("drop table Material_temp")
+            NaphthaBase.commit()
+        
         c.execute("create table Material_temp (Code text, Description text, \
                   LastUpdated date, RecordNo int)")
         for entry in RandRdata:
@@ -237,12 +244,12 @@ class Purchases(object):
         \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
         \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
         \"Purchase Order\".Status,
-        \"Purchase Item\".\"Last Updated\" AS LastUpdated
-        FROM \"Purchase Item\", \"Purchase Order\", \"Formula Stock\"
-        WHERE (\"Purchase Item\".\"Order Number\" = 
-        \"Purchase Order\".\"Order Number\"
-        AND \"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON
-        AND \"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key)
+        \"Purchase Item\".\"Last Updated\" AS LastUpdated       
+        FROM (\"Purchase Order\" INNER JOIN \"Purchase Item\" ON
+        \"Purchase Order\".\"Order Number\" = 
+        \"Purchase Item\".\"Order Number\") LEFT JOIN \"Formula Stock\" ON
+        (\"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key) AND 
+        (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON)       
         ORDER BY \"Purchase Order\".\"Order Number\"
         """
         RandRdata = RandRcursor.execute(command)
@@ -250,6 +257,13 @@ class Purchases(object):
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
         NaphthaBase.text_factory = str # solves problem with Pound signs....!
         c = NaphthaBase.cursor()
+        
+        query = c.execute("select * from sqlite_master where type = 'table'")
+        tables = [row[1] for row in query]
+        if 'Purchases_temp' in tables:
+            c.execute("drop table Purchases_temp")
+            NaphthaBase.commit()
+        
         c.execute("create table Purchases_temp (PO_Num text, Code text, \
                   Batch text, Quantity text, Price text, OrderValue text, \
                   Supplier text, OrderReference text, OrderDate date, \
@@ -280,6 +294,7 @@ class Purchases(object):
             c.execute('insert into Purchases values (?,?,?,?,?,?,?,?,?,?,?, \
                       ?,?,?,?,?)', entry)
         NaphthaBase.commit()
+        
         self.POdata = [row for row in c.execute("select * from Purchases")]
         #self._create_db()
         NaphthaBase.close()        
