@@ -12,8 +12,10 @@ import pyodbc
 import os
 import sqlite3
 import datetime
+import decimal
 
 from Settings import *
+import sql
 
 
 NaphthaBaseChecked = 0
@@ -39,132 +41,144 @@ def check_tables():
     """Checks that the NaphthaBase has all the tables it needs and no more."""
     
     global NaphthaBaseChecked # TODO Find alternative to global variables
-    NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-    c = NaphthaBase.cursor()
-    query = c.execute("select * from sqlite_master where type = 'table'")
+    query = naphthabase_query("select * from sqlite_master where type = 'table'")
     tables = [row[1] for row in query]
     print tables
     if len(tables) == 0:
-        # empty database file
-        c.execute("create table Material (Code text, Description text, \
-                  LastUpdated date, RecordNo int)")
-        c.execute("create table Purchases (PO_Num text, Code text, \
-                  Batch text, Quantity text, Price text, OrderValue text, \
-                  Supplier text, OrderReference text, OrderDate date, \
-                  DueDate date, PlacedBy text, DeliveredQuantity text, \
-                  PrintedComment text, DeliveryComment text, Status int, \
-                  LastUpdated date)")
-        c.execute("create table Stock (Batch text, Code text, Revision text, \
-                  BatchStatus text, QuantityNow text, \
-                  OriginalDeliveredQuantity text, StockInfo text, \
-                  Supplier text, PONumber text, PurchaseCost text, \
-                  Customer text, WONumber text, Price text, \
-                  UsageReference text, StockAction text, ItemOrder text, \
-                  QuantityMovement text, UserID text, LastUpdated date, \
-                  InvoiceDate date, BatchUp_Date date)")
-        NaphthaBase.commit()
+        naphthabase_query(sql.create_material_table, \
+                          sql.create_purchases_table, sql.create_stock_table)
     if 'Material_temp' in tables:
-        c.execute("drop table Material_temp")
-        NaphthaBase.commit()
+        naphthabase_query("drop table Material_temp")
         print 'Removed Material_temp table'
     if 'Purchases_temp' in tables:
-        c.execute("drop table Purchases_temp")
-        NaphthaBase.commit()
+        naphthabase_query("drop table Purchases_temp")
         print 'Removed Purchases_temp table'
     if 'Stock_temp' in tables:
-        c.execute("drop table Stock_temp")
-        NaphthaBase.commit()
+        naphthabase_query("drop table Stock_temp")
         print 'Removed Stock_temp table'
-    NaphthaBase.close()
     NaphthaBaseChecked = 1
-        
+    
+    
+def naphthabase_query(query, params = None):
+    """Returns results of a given NaphthaBase Query.
+    
+    Opens NaphthaBase, runs sql query and closes NaphthaBase.
+    """
+    
+    NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
+    NaphthaBase.text_factory = str # solves problem with Pound signs....!
+    c = NaphthaBase.cursor()
+    if params == None:
+        results = [row for row in c.execute(query)]
+    else:
+        results = [row for row in c.execute(query, params)]
+    NaphthaBase.commit()
+    NaphthaBase.close()
+    return results
+    
+ 
+def naphthabase_transfer(data, query):
+    """Loads data into NaphthaBase and closes database at the end.
+    
+    Faster than writing each line individually using naphthabase_query()
+    as it keeps the NaphthaBase connection open until all lines have been
+    written.
+    """
+    
+    NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
+    NaphthaBase.text_factory = str # solves problem with Pound signs....!
+    c = NaphthaBase.cursor()
+    for entry in data:
+            results = [row for row in c.execute(query, entry)]
+    NaphthaBase.commit()
+    NaphthaBase.close()
+
+    
+def stringprocess(datastore):
+    """Converts Decimal fields to strings in an sqlite datastore.
+    
+    Returns a tuple with all decimal values converted to strings
+    """
+    
+    output_list = []
+    for line in datastore:
+        output_line = []
+        for field in line:
+            if type(field) is decimal.Decimal:
+                field = str(field)
+            output_line.append(field)
+        output_list.append(output_line)
+    return tuple(output_list)
+    
         
 class MaterialCodes(object):
-    """Updates and provides access to Material Codes and their descriptions"""
+    """Updates and provides access to Material Codes and their descriptions.
+    
+    If the R&R database can be connected to, the material codes are read,
+    written to the NaphthaBase and stored in memory as a Python Dictionary.
+    If the R&R database can't be found then only NaphthaBase data is used.
+    """
     
     def __init__(self):
         if NaphthaBaseChecked == 0:
             # No connection has been made to the NaphthaBase
-            MakeDatabaseConnection()
+            make_database_connection()
         if stock_connection == '':
             # No connection has been made to the R&R stock database
             self._localonly = 1
         else:
             self._localonly = 0
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        c = NaphthaBase.cursor()
-        self._matdata = [row for row in c.execute("select * from Material")]
+            # If connection has been made to the R&R stock database then
+            # update the NaphthaBase with the latest codes.
+            self._last_refreshed = \
+                datetime.datetime.now() - datetime.timedelta(minutes=31)
+                # pretend naphthabase hasn't been refreshed for 31 mins)
+            self._update_naphtha_base()
+        self._matdata = [row for row in naphthabase_query("select * from Material")]
         self._create_db()
     
     def getdesc(self, matcode):
-        return self.getlatest.get(matcode.upper().upper(), [''])[0]
+        self._update_naphtha_base()
+        return self._getlatest.get(matcode.upper().upper(), [''])[0]
         # Return an empty string if no key found
     
     def _create_db(self):
+        """Creates a python dictionary of material codes and descriptions.
+        """
         # Constants to make list items clearer
         CODE = 0
         DESC = 1
         LASTUPDATE = 2
         RECORDNUM = 3
-        self.getlatest = {}
+        self._getlatest = {}
         for entry in self._matdata:
-            if entry[CODE] in self.getlatest.keys():
+            if entry[CODE] in self._getlatest.keys():
                 if entry[LASTUPDATE] > self.getlatest[entry[CODE]][LASTUPDATE]:
-                    self.getlatest[entry[CODE]] = [entry[DESC], \
+                    self._getlatest[entry[CODE]] = [entry[DESC], \
                        entry[RECORDNUM], entry[LASTUPDATE]]
                     # RECORDNUM is added in position 1 so that LASTUPDATE remains in position 2
             else:
-                self.getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM],\
+                self._getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM],\
                    entry[LASTUPDATE]]
-        
-    def update_naphtha_base(self):
+
+    def _update_naphtha_base(self):
         if self._localonly == 1:
             print 'Unable to update - remote database not found'
             return
-        RandRcursor = stock_connection.cursor()
-        command = """
-        SELECT
-        Formula.Key AS Code,
-        Formula.Description,
-        Formula.\"Last Updated\" AS LastUpdated,
-        Formula.\"Record Number\" AS RecordNo
-        FROM Formula
-        WHERE (Formula.\"Customer Key\"='ANY')
-        ORDER BY Formula.Key
-        """
-        RandRdata = RandRcursor.execute(command)
-        
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        c = NaphthaBase.cursor()
-        
-        query = c.execute("select * from sqlite_master where type = 'table'")
-        tables = [row[1] for row in query]
-        if 'Material_temp' in tables:
-            c.execute("drop table Material_temp")
-            NaphthaBase.commit()
-        
-        c.execute("create table Material_temp (Code text, Description text, \
-                  LastUpdated date, RecordNo int)")
-        for entry in RandRdata:
-            c.execute('insert into Material_temp values (?,?,?,?)', entry)
-        NaphthaBase.commit()
-        
-        diffquery = """
-        SELECT Material_temp.*
-        from Material_temp
-        Left Join Material on
-        (Material_temp.LastUpdated = Material.LastUpdated)
-        where Material.LastUpdated IS Null
-        """
-        
-        diff = c.execute(diffquery)
-        newrows =  [row for row in diff]
-        for entry in newrows:
-            c.execute('insert into Material values (?,?,?,?)', entry)
-        NaphthaBase.commit()
-        self._matdata = [row for row in c.execute("select * from Material")]
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NatphthaBase with latest Material Codes.'
+        RandRcursor = stock_connection.cursor()   
+        RandRdata = RandRcursor.execute(sql.material_codes)
+            
+        naphthabase_query(sql.clear_material_table)
+
+        naphthabase_transfer(RandRdata, 'insert into Material values (?,?,?,?)')
+        self._matdata = [row for row in naphthabase_query("select * from Material")]
         self._create_db()
-        NaphthaBase.close()
+        self._last_refreshed = datetime.datetime.now()
 
         
 class Purchases(object):
@@ -178,138 +192,42 @@ class Purchases(object):
             # No connection has been made to the R&R stock database
             self._localonly = 1
         else:
+            # If connection has been made to the R&R stock database then
+            # update the NaphthaBase with the latest purchase orders.
             self._localonly = 0
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
-        c = NaphthaBase.cursor()
-        self._POdata = [row for row in c.execute("select * from Purchases")]
-        #self._create_db()
+            self._last_refreshed = \
+                datetime.datetime.now() - datetime.timedelta(minutes=31)
+                # pretend naphthabase hasn't been refreshed for 31 mins)
+            self._update_naphtha_base()
+
+        self._po_data = [row for row in naphthabase_query("select * from Purchases")]
     
     def get_po(self, PO_Num):
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
-        c = NaphthaBase.cursor()
-        command = """
-        SELECT PO_Num, Code, Batch, Quantity, Price, OrderValue, Supplier,
-        OrderReference, OrderDate, DueDate, PlacedBy, DeliveredQuantity,
-        PrintedComment, DeliveryComment, Status, LastUpdated
-        FROM Purchases,
-        (SELECT MAX(LastUpdated) AS latest from Purchases WHERE
-        PO_Num = %(po_num)s)
-        WHERE PO_Num = %(po_num)s and LastUpdated = latest
-        ORDER BY Code
-        """ % {'po_num': str(PO_Num)}
-        results = c.execute(command)
+        self._update_naphtha_base()
+        results = naphthabase_query(sql.purchase_orders % {'po_num': str(PO_Num)})
         return [line for line in results]
-    
-    def _create_db(self):
-        PO_conn = sqlite3.connect(':memory:')
-        PO_c = PO_conn.cursor()
-        PO_c.execute("create table Purchases (PO_Num text, Code text, \
-                     Batch text, Quantity text, Price text, OrderValue text, \
-                     Supplier text, OrderReference text, OrderDate date, \
-                     DueDate date, PlacedBy text, DeliveredQuantity text, \
-                     PrintedComment text, DeliveryComment text, Status int, \
-                     LastUpdated date)")
-        PO_c.commit()
         
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
-        PO_c_disk = NaphthaBase.cursor()
-
-        
-        # Constants to make list items clearer
-        CODE = 0
-        DESC = 1
-        LASTUPDATE = 2
-        RECORDNUM = 3
-        self.getlatest = {}
-        for entry in self.POdata:
-            if entry[CODE] in self.getlatest.keys():
-                if entry[LASTUPDATE] > self.getlatest[entry[CODE]][LASTUPDATE]:
-                    self.getlatest[entry[CODE]] = [entry[DESC], \
-                       entry[RECORDNUM], entry[LASTUPDATE]]
-                    # RECORDNUM is added in position 1 so that LASTUPDATE remains in position 2
-            else:
-                self.getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM],\
-                   entry[LASTUPDATE]]
-        
-    def update_naphtha_base(self):
+    def _update_naphtha_base(self):
         if self._localonly == 1:
             print 'Unable to update - remote database not found'
             return
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NatphthaBase with latest Purchase Orders.'
         RandRcursor = stock_connection.cursor()
-        command = """
-        SELECT
-        \"Purchase Order\".\"Order Number\" AS PO_Num,
-        \"Purchase Item\".\"Component Code\" AS Code,
-        \"Formula Stock\".Batch,
-        \"Purchase Item\".Quantity,
-        \"Purchase Item\".Price,
-        \"Purchase Order\".\"Order Value\" AS OrderValue,
-        \"Purchase Order\".Supplier,
-        \"Purchase Order\".\"Order Reference\" AS OrderReference,
-        \"Purchase Order\".\"Order Date\" AS OrderDate,
-        \"Purchase Item\".\"Due Date\" AS DueDate,
-        \"Purchase Order\".\"Placed By\" AS PlacedBy,
-        \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
-        \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
-        \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
-        \"Purchase Order\".Status,
-        \"Purchase Item\".\"Last Updated\" AS LastUpdated       
-        FROM (\"Purchase Order\" INNER JOIN \"Purchase Item\" ON
-        \"Purchase Order\".\"Order Number\" = 
-        \"Purchase Item\".\"Order Number\") LEFT JOIN \"Formula Stock\" ON
-        (\"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key) AND 
-        (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON)       
-        ORDER BY \"Purchase Order\".\"Order Number\"
-        """
-        RandRdata = RandRcursor.execute(command)
+        RandRdata = RandRcursor.execute(sql.po_data)
+
+        naphthabase_query(sql.clear_po_table)
         
-        NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
-        c = NaphthaBase.cursor()
-        
-        query = c.execute("select * from sqlite_master where type = 'table'")
-        tables = [row[1] for row in query]
-        if 'Purchases_temp' in tables:
-            c.execute("drop table Purchases_temp")
-            NaphthaBase.commit()
-        
-        c.execute("create table Purchases_temp (PO_Num text, Code text, \
-                  Batch text, Quantity text, Price text, OrderValue text, \
-                  Supplier text, OrderReference text, OrderDate date, \
-                  DueDate date, PlacedBy text, DeliveredQuantity text, \
-                  PrintedComment text, DeliveryComment text, Status int, \
-                  LastUpdated date)")
-        for entry in RandRdata:
-            entry_temp = [thing for thing in entry] #prices and quantities are
-            entry_temp[3] = str(entry_temp[3]) #stored as a decimal type in the
-            entry_temp[4] = str(entry_temp[4]) #RandR database. Convert them to text
-            entry_temp[5] = str(entry_temp[5]) #fields for storing in the NaphthaBase
-            entry_temp[11] = str(entry_temp[11])
-            c.execute('insert into Purchases_temp values (?,?,?,?,?,?,?,?,?, \
-                      ?,?,?,?,?,?,?)', entry_temp)
-        NaphthaBase.commit()
-        
-        diffquery = """
-        SELECT Purchases_temp.*
-        from Purchases_temp
-        Left Join Purchases on (Purchases_temp.LastUpdated =
-        Purchases.LastUpdated)
-        where Purchases.LastUpdated IS Null
-        """
-        
-        diff = c.execute(diffquery)
-        newrows =  [row for row in diff]
-        for entry in newrows: 
-            c.execute('insert into Purchases values (?,?,?,?,?,?,?,?,?,?,?, \
-                      ?,?,?,?,?)', entry)
-        NaphthaBase.commit()
-        
-        self.POdata = [row for row in c.execute("select * from Purchases")]
-        #self._create_db()
-        NaphthaBase.close()
+        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
+
+        naphthabase_transfer(RandR_Stringed, 'insert into Purchases values \
+                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+
+        self._po_data = [row for row in naphthabase_query("select * from Purchases")]
+        self._last_refreshed = datetime.datetime.now()
         
         
 class Stock(object):
@@ -468,7 +386,7 @@ if __name__ == '__main__':
         os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
     make_database_connection(TestDB_Old)
     MatCodeOld = MaterialCodes()
-    MatCodeOld.update_naphtha_base()
+    #MatCodeOld.update_naphtha_base()
     original = MatCodeOld.getdesc('pa23')
     no_entry = MatCodeOld.getdesc('ppld26c')
     
@@ -476,19 +394,14 @@ if __name__ == '__main__':
     po.update_naphtha_base()
     podata_original = po.get_po(7562)
     
-    make_database_connection(TestDB_New)
-    MatCodeNew = MaterialCodes()
-    MatCodeNew.update_naphtha_base()
-    revised = MatCodeNew.getdesc('PA23')
-    an_entry = MatCodeNew.getdesc('PPLD26C')
     
     po = Purchases()
     po.update_naphtha_base()
     podata_revised = po.get_po(7562)
     
     print
-    print original, revised
-    print no_entry, an_entry
+    print original
+    print no_entry
     print
     print podata_original
     print
