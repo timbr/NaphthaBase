@@ -1,4 +1,4 @@
-""" sql.py  -- Contains Sql queries for R&R Access DB and Naphthabase.
+""" sql.py  -- Contains Sql queries for R&R Access DB and NaphthaBase.
 """
 
 # Table Creation
@@ -131,7 +131,74 @@ purchase_orders = """
     """
 
 
-    # Clear Purchase Orders Table (NaphthaBase)
+# Clear Purchase Orders Table (NaphthaBase)
 clear_po_table = """
     DELETE FROM Purchases
     """             
+
+# Stock Selection (R&R Database)
+get_stock = """
+    SELECT
+    \"Formula Stock\".Batch,
+    \"Formula Stock Usage\".Formula AS Code,
+    \"Formula Stock Usage\".Revision,
+    \"Formula Stock\".Type AS BatchStatus,
+    \"Formula Stock\".Quantity AS QuantityNow,
+    \"Formula Stock\".\"Original Quantity\" AS OriginalDeliveredQuantity,
+    \"Formula Stock\".Location AS StockInfo,
+    \"Formula Stock\".Supplier,
+    \"Formula Stock\".PON AS PONumber,
+    \"Formula Stock\".Cost AS PurchaseCost,
+    \"Formula Stock Usage\".Customer,
+    \"Formula Stock Usage\".\"Works order Number\" AS WONumber,
+    \"Formula Stock Usage\".Price,
+    \"Formula Stock Usage\".\"Usage Reference\" AS UsageReference,
+    \"Formula Stock Usage\".\"Record Type\" AS StockAction,
+    \"Formula Stock Usage\".\"Item Order\" AS ItemOrder,
+    \"Formula Stock Usage\".Quantity AS QuantityMovement,
+    \"Formula Stock Usage\".\"User ID\" AS UserID,
+    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
+    \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
+    \"Formula Stock\".\"Production Date\" AS BatchUp_Date
+    FROM \"Formula Stock\", \"Formula Stock Usage\"
+    WHERE \"Formula Stock\".Batch = \"Formula Stock Usage\".Batch
+    ORDER BY \"Formula Stock\".Batch,
+    \"Formula Stock Usage\".\"Last Updated\"
+    """
+
+# Stock Selection (NaphthaBase)
+get_batch = """
+    SELECT
+    Batch,
+    Code,
+    Revision,
+    BatchStatus,
+    QuantityNow,
+    OriginalDeliveredQuantity,
+    StockInfo,
+    Supplier,
+    PONumber,
+    PurchaseCost,
+    Customer,
+    WONumber,
+    Price,
+    UsageReference,
+    StockAction,
+    ItemOrder,
+    QuantityMovement,
+    UserID,
+    LastUpdated,
+    InvoiceDate,
+    BatchUp_Date
+    FROM Stock
+    WHERE Batch = %(batch_num)s
+    """
+
+#    (SELECT MAX(LastUpdated) AS latest from Stock WHERE
+#    Batch = %(batch_num)s)    
+#  and LastUpdated = latest
+    
+# Clear StockTable (NaphthaBase)
+clear_stock_table = """
+    DELETE FROM Stock
+    """       
