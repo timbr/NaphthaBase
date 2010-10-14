@@ -41,22 +41,19 @@ def check_tables():
     """Checks that the NaphthaBase has all the tables it needs and no more."""
     
     global NaphthaBaseChecked # TODO Find alternative to global variables
+    # Dictionary of table names and the sql query strings needed to create them
+    tablelist = {'Material': sql.create_material_table,
+                 'Purchases': sql.create_purchases_table,
+                 'Stock': sql.create_stock_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
-    tables = [row[1] for row in query]
-    print tables
-    if len(tables) == 0:
-        naphthabase_query(sql.create_material_table, \
-                          sql.create_purchases_table, sql.create_stock_table)
-    if 'Material_temp' in tables:
-        naphthabase_query("drop table Material_temp")
-        print 'Removed Material_temp table'
-    if 'Purchases_temp' in tables:
-        naphthabase_query("drop table Purchases_temp")
-        print 'Removed Purchases_temp table'
-    if 'Stock_temp' in tables:
-        naphthabase_query("drop table Stock_temp")
-        print 'Removed Stock_temp table'
+    # What tables are in the NaphthaBase?
+    dbtables = [row[1] for row in query]
+    print dbtables
+    # Excecute sql to create any missing tables
+    for table in tablelist.keys():
+        if table not in dbtables:
+            naphthabase_query(tablelist[table])
     NaphthaBaseChecked = 1
     
     
