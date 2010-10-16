@@ -44,7 +44,8 @@ def check_tables():
     # Dictionary of table names and the sql query strings needed to create them
     tablelist = {'Material': sql.create_material_table,
                  'Purchases': sql.create_purchases_table,
-                 'Stock': sql.create_stock_table}
+                 'Stock': sql.create_stock_table,
+                 'Sales': sql.create_sales_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -95,7 +96,7 @@ def naphthabase_transfer(data, query):
 def stringprocess(datastore):
     """Converts Decimal fields to strings in an sqlite datastore.
     
-    Returns a tuple with all decimal values converted to strings
+    Returns a tuple with all decimal values converted to strings.
     """
     
     output_list = []
@@ -246,7 +247,7 @@ class Stock(object):
             self._localonly = 1
         else:
             # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest purchase orders.
+            # update the NaphthaBase with the latest stock.
             self._localonly = 0
             self._last_refreshed = \
                 datetime.datetime.now() - datetime.timedelta(minutes=31)
@@ -279,6 +280,55 @@ class Stock(object):
                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         self._stockdata = \
           [row for row in naphthabase_query("select * from Stock")]
+        self._last_refreshed = datetime.datetime.now()
+
+
+class Sales(object):
+    """Updates and provides access to Sales and Despatch information."""
+    
+    def __init__(self):
+        if NaphthaBaseChecked == 0:
+            # No connection has been made to the NaphthaBase
+            MakeDatabaseConnection()
+        if stock_connection == '':
+            # No connection has been made to the R&R stock database
+            self._localonly = 1
+        else:
+            # If connection has been made to the R&R stock database then
+            # update the NaphthaBase with the latest sales and despatches.
+            self._localonly = 0
+            self._last_refreshed = \
+                datetime.datetime.now() - datetime.timedelta(minutes=31)
+                # pretend naphthabase hasn't been refreshed for 31 mins)
+            self._update_naphtha_base()
+        self._salesdata = \
+          [row for row in naphthabase_query("select * from Sales")]
+    
+    def get_wo(self, WO_Num):
+        self._update_naphtha_base()
+        results = \
+          naphthabase_query(sql.sales_orders % {'wo_num': str(WO_Num)})
+        return [line for line in results]
+
+    def _update_naphtha_base(self):
+        if self._localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
+         # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NaphthaBase with latest Sales and Despatches.'
+        RandRcursor = stock_connection.cursor()
+        RandRdata = RandRcursor.execute(sql.get_sales)
+        
+        naphthabase_query(sql.clear_sales_table)
+        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
+        naphthabase_transfer(RandR_Stringed, 'insert into Sales values \
+                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \
+                             ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        self._salesdata = \
+          [row for row in naphthabase_query("select * from Sales")]
         self._last_refreshed = datetime.datetime.now()
         
 

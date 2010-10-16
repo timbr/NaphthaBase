@@ -58,6 +58,47 @@ create_stock_table = """
     )
     """
 
+create_sales_table = """
+    CREATE TABLE Sales (
+    WO_Num text,
+    Link text,
+    StockCode text,
+    CustomerKey text,
+    CustomerOrderNumber text,
+    DespatchNotes text,
+    OrderQuantity text,
+    Price text,
+    OrderValue text,
+    Status int,
+    OrderDate date,
+    RequiredDate date,
+    DespatchDate date,
+    InvoiceDate date,
+    Operator text,
+    DespatchCompanyName text,
+    DespatchAddress1 text,
+    DespatchAddress2 text,
+    DespatchAddress3 text,
+    DespatchPostCode text,
+    DeliveryNoteComment1 text,
+    DeliveryNoteComment2 text,
+    DeliveryNoteComment3 text,
+    DeliveryNoteComment4 text,
+    DeliveryNoteComment5 text,
+    InvoiceComment1 text,
+    InvoiceComment2 text,
+    InvoiceComment3 text,
+    InvoiceComment4 text,
+    InvoiceComment5 text,
+    InvoiceComment6 text,
+    InvoiceTerms text,
+    ItemCount int,
+    Haulier text,
+    BatchDespatched text,
+    DespatchedQuantity text,
+    LastUpdated date
+    )
+    """
 
 # Material Selection (R&R Database)
 material_codes = """
@@ -76,7 +117,7 @@ clear_material_table = """
     DELETE FROM Material
     """
 
-#Purchase Order Selection (R&R Database)
+# Purchase Order Selection (R&R Database)
 po_data = """
     SELECT
     \"Purchase Order\".\"Order Number\" AS PO_Num,
@@ -103,7 +144,7 @@ po_data = """
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
-#Purchase Order Selection (NaphthaBase)
+# Purchase Order Selection (NaphthaBase)
 purchase_orders = """
     SELECT
     PO_Num,
@@ -193,12 +234,110 @@ get_batch = """
     FROM Stock
     WHERE Batch = %(batch_num)s
     """
-
-#    (SELECT MAX(LastUpdated) AS latest from Stock WHERE
-#    Batch = %(batch_num)s)    
-#  and LastUpdated = latest
     
-# Clear StockTable (NaphthaBase)
+# Clear Stock Table (NaphthaBase)
 clear_stock_table = """
     DELETE FROM Stock
-    """       
+    """
+
+
+# Sales Order Selection (R&R Database)
+get_sales = """
+    SELECT
+    \"Sales Order\".Key AS WO_Num,
+    \"Sales Order\".Link,
+    \"Sales Order Item\".\"Stock Code\" AS StockCode,
+    \"Sales Order\".CustomerKey,
+    \"Sales Order\".\"Customer Order Number\" AS CustomerOrderNumber,
+    \"Sales Order\".Comment AS DespatchNotes,
+    \"Sales Order Item\".Quantity AS OrderQuantity,
+    \"Sales Order Item\".Price,
+    \"Sales Order\".\"Order Value\" AS OrderValue,
+    \"Sales Order\".Status,
+    \"Sales Order\".\"Order Date\" AS OrderDate,
+    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order\".\"Despatch Date\" AS DespatchDate,
+    \"Sales Order\".\"Invoice Date\" AS InvoiceDate,
+    \"Sales Order\".Operator,
+    \"Sales Order\".Name AS DespatchCompanyName,
+    \"Sales Order\".Address1 AS DespatchAddress1,
+    \"Sales Order\".Address2 AS DespatchAddress2,
+    \"Sales Order\".Address3 AS DespatchAddress3,
+    \"Sales Order\".\"Post Code\" AS DespatchPostCode,
+    \"Sales Order\".\"Printed Comment1\" AS DeliveryNoteComment1,
+    \"Sales Order\".\"Printed Comment2\" AS DeliveryNoteComment2,
+    \"Sales Order\".\"Printed Comment3\" AS DeliveryNoteComment3,
+    \"Sales Order\".\"Printed Comment4\" AS DeliveryNoteComment4,
+    \"Sales Order\".\"Printed Comment5\" AS DeliveryNoteComment5,
+    \"Sales Order\".\"Invoice Comment1\" AS InvoiceComment1,
+    \"Sales Order\".\"Invoice Comment2\" AS InvoiceComment2,
+    \"Sales Order\".\"Invoice Comment3\" AS InvoiceComment3,
+    \"Sales Order\".\"Invoice Comment4\" AS InvoiceComment4,
+    \"Sales Order\".\"Invoice Comment5\" AS InvoiceComment5,
+    \"Sales Order\".\"Invoice Comment6\" AS InvoiceComment6,
+    \"Sales Order\".\"Invoice terms\" AS InvoiceTerms,
+    \"Sales Order\".\"Item Count\" AS ItemCount,
+    \"Sales Order Additional\".Description AS Haulier,
+    \"Sales Order Despatch\".Batch AS BatchDespatched,
+    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
+    \"Sales Order\".\"Last Updated\" AS LastUpdated
+    FROM ((\"Sales Order\" LEFT JOIN \"Sales Order Additional\" ON
+    \"Sales Order\".Key = \"Sales Order Additional\".Parent) LEFT JOIN
+    \"Sales Order Despatch\" ON
+    \"Sales Order\".Key = \"Sales Order Despatch\".Key) LEFT JOIN
+    \"Sales Order Item\" ON \"Sales Order\".Key = \"Sales Order Item\".Parent
+    """
+
+# Sales Order Selection (NaphthaBase)
+sales_orders = """
+    SELECT
+    WO_Num,
+    Link,
+    StockCode,
+    CustomerKey,
+    CustomerOrderNumber,
+    DespatchNotes,
+    OrderQuantity,
+    Price,
+    OrderValue,
+    Status,
+    OrderDate,
+    RequiredDate,
+    DespatchDate,
+    InvoiceDate,
+    Operator,
+    DespatchCompanyName,
+    DespatchAddress1,
+    DespatchAddress2,
+    DespatchAddress3,
+    DespatchPostCode,
+    DeliveryNoteComment1,
+    DeliveryNoteComment2,
+    DeliveryNoteComment3,
+    DeliveryNoteComment4,
+    DeliveryNoteComment5,
+    InvoiceComment1,
+    InvoiceComment2,
+    InvoiceComment3,
+    InvoiceComment4,
+    InvoiceComment5,
+    InvoiceComment6,
+    InvoiceTerms,
+    ItemCount,
+    Haulier,
+    BatchDespatched,
+    DespatchedQuantity,
+    LastUpdated
+    FROM Sales,
+    (SELECT
+        MAX(LastUpdated) AS latest from Sales WHERE
+        WO_Num = %(wo_num)s)
+    WHERE WO_Num = %(wo_num)s and LastUpdated = latest
+    ORDER BY WO_Num
+    """
+
+
+# Clear Sales Table (NaphthaBase)
+clear_sales_table = """
+    DELETE FROM Sales
+    """
