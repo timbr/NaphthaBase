@@ -108,7 +108,21 @@ def stringprocess(datastore):
             output_line.append(field)
         output_list.append(output_line)
     return tuple(output_list)
+
+def get_column_positions(table):
+    """Creates a dictionary relating column names and their positions.
     
+    So given the Materials table it would return:
+    
+        {'Code': 0, 'Description': 1, 'LastUpdated': 2, 'RecordNo': 3}
+    """
+    
+    column_names = naphthabase_query("pragma table_info(%s)" % table)
+    column_dict = {}
+    for column in column_names:
+        column_dict[column[1]] = column[0]
+    return column_dict
+
         
 class MaterialCodes(object):
     """Updates and provides access to Material Codes and their descriptions.
@@ -135,6 +149,9 @@ class MaterialCodes(object):
             self._update_naphtha_base()
         self._matdata = \
           [row for row in naphthabase_query("select * from Material")]
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._column_pos = get_column_positions('Material')
         self._create_db()
     
     def getdesc(self, matcode):
@@ -172,13 +189,14 @@ class MaterialCodes(object):
         print 'Updating NatphthaBase with latest Material Codes.'
         RandRcursor = stock_connection.cursor()   
         RandRdata = RandRcursor.execute(sql.material_codes)
-            
         naphthabase_query(sql.clear_material_table)
-
         naphthabase_transfer(RandRdata, 'insert into Material values \
           (?,?,?,?)')
         self._matdata = \
           [row for row in naphthabase_query("select * from Material")]
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._column_pos = get_column_positions('Material')
         self._create_db()
         self._last_refreshed = datetime.datetime.now()
 
@@ -201,9 +219,11 @@ class Purchases(object):
                 datetime.datetime.now() - datetime.timedelta(minutes=31)
                 # pretend naphthabase hasn't been refreshed for 31 mins)
             self._update_naphtha_base()
-
         self._po_data = \
           [row for row in naphthabase_query("select * from Purchases")]
+        # create a dictionary relating column postions against their names.
+        # ie 'PO_Num': 0, 'Code': 1, etc
+        self._column_pos = get_column_positions('Purchases')
     
     def get_po(self, PO_Num):
         self._update_naphtha_base()
@@ -222,16 +242,15 @@ class Purchases(object):
         print 'Updating NaphthaBase with latest Purchase Orders.'
         RandRcursor = stock_connection.cursor()
         RandRdata = RandRcursor.execute(sql.po_data)
-
         naphthabase_query(sql.clear_po_table)
-        
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-
         naphthabase_transfer(RandR_Stringed, 'insert into Purchases values \
                              (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-
         self._po_data = \
           [row for row in naphthabase_query("select * from Purchases")]
+        # create a dictionary relating column postions against their names.
+        # ie 'PO_Num': 0, 'Code': 1, etc
+        self._column_pos = get_column_positions('Purchases')
         self._last_refreshed = datetime.datetime.now()
         
         
@@ -255,6 +274,9 @@ class Stock(object):
             self._update_naphtha_base()
         self._stockdata = \
           [row for row in naphthabase_query("select * from Stock")]
+        # create a dictionary relating column postions against their names.
+        # ie 'Batch': 0, 'Code': 1, etc
+        self._column_pos = get_column_positions('Stock')
     
     def get_batch(self, Batch_Num):
         self._update_naphtha_base()
@@ -273,13 +295,15 @@ class Stock(object):
         print 'Updating NaphthaBase with latest Stock.'
         RandRcursor = stock_connection.cursor()
         RandRdata = RandRcursor.execute(sql.get_stock)
-        
         naphthabase_query(sql.clear_stock_table)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
         naphthabase_transfer(RandR_Stringed, 'insert into Stock values \
                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         self._stockdata = \
           [row for row in naphthabase_query("select * from Stock")]
+        # create a dictionary relating column postions against their names.
+        # ie 'Batch': 0, 'Code': 1, etc
+        self._column_pos = get_column_positions('Stock')
         self._last_refreshed = datetime.datetime.now()
 
 
@@ -303,6 +327,9 @@ class Sales(object):
             self._update_naphtha_base()
         self._salesdata = \
           [row for row in naphthabase_query("select * from Sales")]
+        # create a dictionary relating column postions against their names.
+        # ie 'WO_Num': 0, 'Link': 1, etc
+        self._column_pos = get_column_positions('Sales')
     
     def get_wo(self, WO_Num):
         self._update_naphtha_base()
@@ -321,7 +348,6 @@ class Sales(object):
         print 'Updating NaphthaBase with latest Sales and Despatches.'
         RandRcursor = stock_connection.cursor()
         RandRdata = RandRcursor.execute(sql.get_sales)
-        
         naphthabase_query(sql.clear_sales_table)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
         naphthabase_transfer(RandR_Stringed, 'insert into Sales values \
@@ -329,6 +355,9 @@ class Sales(object):
                              ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         self._salesdata = \
           [row for row in naphthabase_query("select * from Sales")]
+        # create a dictionary relating column postions against their names.
+        # ie 'WO_Num': 0, 'Link': 1, etc
+        self._column_pos = get_column_positions('Sales')
         self._last_refreshed = datetime.datetime.now()
         
 
