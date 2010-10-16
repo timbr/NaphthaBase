@@ -14,7 +14,7 @@ import sqlite3
 import datetime
 import decimal
 
-from Settings import *
+from settings import *
 import sql
 
 
