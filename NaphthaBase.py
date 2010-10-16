@@ -45,7 +45,8 @@ def check_tables():
     tablelist = {'Material': sql.create_material_table,
                  'Purchases': sql.create_purchases_table,
                  'Stock': sql.create_stock_table,
-                 'Sales': sql.create_sales_table}
+                 'Sales': sql.create_sales_table,
+                 'Hauliers': sql.create_hauliers_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -184,7 +185,7 @@ class MaterialCodes(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NatphthaBase with latest Material Codes.'
+        print 'Updating NaphthaBase with latest Material Codes.'
         RandRcursor = stock_connection.cursor()   
         RandRdata = RandRcursor.execute(sql.material_codes)
         naphthabase_query(sql.clear_material_table)
@@ -343,21 +344,90 @@ class Sales(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NaphthaBase with latest Sales and Despatches.'
+        print 'Updating NaphthaBase with latest Haulier Information.'
         RandRcursor = stock_connection.cursor()
         RandRdata = RandRcursor.execute(sql.get_sales)
         naphthabase_query(sql.clear_sales_table)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Sales values \
+        naphthabase_transfer(RandR_Stringed, 'insert into Hauliers values \
                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \
                              ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._salesdata = \
-          [row for row in naphthabase_query("select * from Sales")]
+        self._haulierdata = \
+          [row for row in naphthabase_query("select * from Hauliers")]
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
-        self._clmn = get_column_positions('Sales')
+        self._clmn = get_column_positions('Hauliers')
         self._last_refreshed = datetime.datetime.now()
+
         
+class Hauliers(object):
+    """Updates and provides access to Haulier names.
+    
+    If the R&R database can be connected to, the haulier names are read,
+    written to the NaphthaBase and stored in memory as a Python Dictionary.
+    If the R&R database can't be found then only NaphthaBase data is used.
+    """
+    
+    def __init__(self):
+        if NaphthaBaseChecked == 0:
+            # No connection has been made to the NaphthaBase
+            make_database_connection()
+        if stock_connection == '':
+            # No connection has been made to the R&R stock database
+            self._localonly = 1
+        else:
+            self._localonly = 0
+            # If connection has been made to the R&R stock database then
+            # update the NaphthaBase with the latest codes.
+            self._last_refreshed = \
+                datetime.datetime.now() - datetime.timedelta(minutes=31)
+                # pretend naphthabase hasn't been refreshed for 31 mins)
+            self._update_naphtha_base()
+        self._haulierdata = \
+          [row for row in naphthabase_query("select * from Hauliers")]
+        # create a dictionary relating column postions against their names.
+        # ie 'HaulierKey': 0, 'Name': 1, etc
+        self._clmn = get_column_positions('Hauliers')
+        self._create_db()
+    
+    def getdesc(self, haulier_key):
+        self._update_naphtha_base()
+        return self._hauliers_dict.get(haulier_key.upper().upper(), [''])[0]
+        # Return an empty string if no key found
+    
+    def _create_db(self):
+        """Creates a python dictionary of haulier codes and descriptions.
+        """
+
+        self._hauliers_dict = {}
+        for entry in self._haulierdata:
+            haulier_key = entry[self._clmn['HaulierKey']]
+            name = entry[self._clmn['Name']]
+            nominal = entry[self._clmn['NominalCode']]
+            self._hauliers_dict[haulier_key] = [name, nominal]
+
+    def _update_naphtha_base(self):
+        if self._localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NaphthaBase with latest Material Codes.'
+        RandRcursor = stock_connection.cursor()   
+        RandRdata = RandRcursor.execute(sql.get_hauliers)
+        naphthabase_query(sql.clear_hauliers_table)
+        naphthabase_transfer(RandRdata, 'insert into Hauliers values \
+          (?,?,?)')
+        self._haulierdata = \
+          [row for row in naphthabase_query("select * from Hauliers")]
+        # create a dictionary relating column postions against their names.
+        # ie 'HaulierKey': 0, 'Name': 1, etc
+        self._clmn = get_column_positions('Hauliers')
+        self._create_db()
+        self._last_refreshed = datetime.datetime.now()
+
 
 if __name__ == '__main__':
     # Tests

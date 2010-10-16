@@ -100,6 +100,14 @@ create_sales_table = """
     )
     """
 
+create_hauliers_table = """
+    CREATE TABLE Hauliers (
+    HaulierKey text,
+    Name text,
+    NominalCode text
+    )
+    """
+
 # Material Selection (R&R Database)
 material_codes = """
     SELECT
@@ -336,8 +344,23 @@ sales_orders = """
     ORDER BY WO_Num
     """
 
-
 # Clear Sales Table (NaphthaBase)
 clear_sales_table = """
     DELETE FROM Sales
+    """
+
+
+# Hauliers Selection (R&R Database)
+get_hauliers = """
+    SELECT
+    \"Additional Items\".Key AS HaulierKey,
+    \"Additional Items\".Name,
+    \"Additional Items\".\"Nominal Code\" AS NominalCode
+    FROM \"Additional Items\"
+    ORDER BY \"Additional Items\".\"Record Number\"
+    """
+                 
+# Clear Hauliers Table (NaphthaBase)
+clear_hauliers_table = """
+    DELETE FROM Hauliers
     """
