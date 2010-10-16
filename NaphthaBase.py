@@ -151,7 +151,7 @@ class MaterialCodes(object):
           [row for row in naphthabase_query("select * from Material")]
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
-        self._column_pos = get_column_positions('Material')
+        self._clmn = get_column_positions('Material')
         self._create_db()
     
     def getdesc(self, matcode):
@@ -162,21 +162,19 @@ class MaterialCodes(object):
     def _create_db(self):
         """Creates a python dictionary of material codes and descriptions.
         """
-        # Constants to make list items clearer
-        CODE = 0
-        DESC = 1
-        LASTUPDATE = 2
-        RECORDNUM = 3
+
         self._getlatest = {}
         for entry in self._matdata:
-            if entry[CODE] in self._getlatest.keys():
-                if entry[LASTUPDATE] > self.getlatest[entry[CODE]][LASTUPDATE]:
-                    self._getlatest[entry[CODE]] = [entry[DESC], \
-                       entry[RECORDNUM], entry[LASTUPDATE]]
-                    # RECORDNUM is added in position 1 so that LASTUPDATE remains in position 2
+            code = entry[self._clmn['Code']]
+            lastupdate = entry[self._clmn['LastUpdated']]
+            desc = entry[self._clmn['Description']]
+            recordnum = entry[self._clmn['RecordNo']]
+            if code in self._getlatest.keys():
+                if lastupdate > code[self._clmn['LastUpdated']]:
+                    self._getlatest[code] = [desc, recordnum, lastupdate]
+                    # recordnum is added in position 1 so that lastupdate remains in position 2
             else:
-                self._getlatest[entry[CODE]] = [entry[DESC], entry[RECORDNUM],\
-                   entry[LASTUPDATE]]
+                self._getlatest[code] = [desc, recordnum, lastupdate]
 
     def _update_naphtha_base(self):
         if self._localonly == 1:
@@ -196,7 +194,7 @@ class MaterialCodes(object):
           [row for row in naphthabase_query("select * from Material")]
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
-        self._column_pos = get_column_positions('Material')
+        self._clmn = get_column_positions('Material')
         self._create_db()
         self._last_refreshed = datetime.datetime.now()
 
@@ -223,7 +221,7 @@ class Purchases(object):
           [row for row in naphthabase_query("select * from Purchases")]
         # create a dictionary relating column postions against their names.
         # ie 'PO_Num': 0, 'Code': 1, etc
-        self._column_pos = get_column_positions('Purchases')
+        self._clmn = get_column_positions('Purchases')
     
     def get_po(self, PO_Num):
         self._update_naphtha_base()
@@ -250,7 +248,7 @@ class Purchases(object):
           [row for row in naphthabase_query("select * from Purchases")]
         # create a dictionary relating column postions against their names.
         # ie 'PO_Num': 0, 'Code': 1, etc
-        self._column_pos = get_column_positions('Purchases')
+        self._clmn = get_column_positions('Purchases')
         self._last_refreshed = datetime.datetime.now()
         
         
@@ -276,7 +274,7 @@ class Stock(object):
           [row for row in naphthabase_query("select * from Stock")]
         # create a dictionary relating column postions against their names.
         # ie 'Batch': 0, 'Code': 1, etc
-        self._column_pos = get_column_positions('Stock')
+        self._clmn = get_column_positions('Stock')
     
     def get_batch(self, Batch_Num):
         self._update_naphtha_base()
@@ -303,7 +301,7 @@ class Stock(object):
           [row for row in naphthabase_query("select * from Stock")]
         # create a dictionary relating column postions against their names.
         # ie 'Batch': 0, 'Code': 1, etc
-        self._column_pos = get_column_positions('Stock')
+        self._clmn = get_column_positions('Stock')
         self._last_refreshed = datetime.datetime.now()
 
 
@@ -329,7 +327,7 @@ class Sales(object):
           [row for row in naphthabase_query("select * from Sales")]
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
-        self._column_pos = get_column_positions('Sales')
+        self._clmn = get_column_positions('Sales')
     
     def get_wo(self, WO_Num):
         self._update_naphtha_base()
@@ -357,7 +355,7 @@ class Sales(object):
           [row for row in naphthabase_query("select * from Sales")]
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
-        self._column_pos = get_column_positions('Sales')
+        self._clmn = get_column_positions('Sales')
         self._last_refreshed = datetime.datetime.now()
         
 
