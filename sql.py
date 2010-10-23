@@ -300,10 +300,14 @@ get_sales = """
     \"Sales Order\".\"Last Updated\" AS LastUpdated
     FROM ((\"Sales Order\" LEFT JOIN \"Sales Order Additional\" ON
     \"Sales Order\".Key = \"Sales Order Additional\".Parent) LEFT JOIN
+    \"Sales Order Item\" ON
+    \"Sales Order\".Key = \"Sales Order Item\".Parent) LEFT JOIN
     \"Sales Order Despatch\" ON
-    \"Sales Order\".Key = \"Sales Order Despatch\".Key) LEFT JOIN
-    \"Sales Order Item\" ON \"Sales Order\".Key = \"Sales Order Item\".Parent
+    (\"Sales Order Item\".\"Stock Code\" = \"Sales Order Despatch\".\"Stock Code\") AND
+    (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
     """
+    
+    
 
 # Sales Order Selection (NaphthaBase)
 sales_orders = """
