@@ -118,11 +118,20 @@ def get_column_positions(table):
         {'Code': 0, 'Description': 1, 'LastUpdated': 2, 'RecordNo': 3}
     """
     
-    column_names = naphthabase_query("pragma table_info(%s)" % table)
+    column_names = get_columns(table)
     column_dict = {}
-    for column in column_names:
-        column_dict[column[1]] = column[0]
+    for index, value in enumerate(column_names):
+        column_dict[value] = index
     return column_dict
+
+    
+def get_columns(table):
+    """Creates an ordered list of column names for a given table.
+    """
+    
+    column_data = naphthabase_query("pragma table_info(%s)" % table)
+    column_names = [col[1] for col in column_data]
+    return column_names
 
         
 class MaterialCodes(object):
@@ -158,7 +167,7 @@ class MaterialCodes(object):
     def getdesc(self, matcode):
         self._update_naphtha_base()
         return self._getlatest.get(matcode.upper().upper(), [''])[0]
-        # Return an empty string if no key found
+        # Return an empty string if no key found    
     
     def _create_db(self):
         """Creates a python dictionary of material codes and descriptions.
@@ -283,6 +292,23 @@ class Stock(object):
           naphthabase_query(sql.get_batch % {'batch_num': str(Batch_Num)})
         return [line for line in results]
 
+    def getdict(self, Batch_Num):
+        """Returns a list of dictionaries with stock data.
+        
+        Each stock entry is a returned as a dictionary, with column names as
+        the dictionary keys.
+        """
+        
+        data = self.get_batch(Batch_Num)
+        columns = get_columns('Stock')
+        datalist = []
+        for record in data:
+            datadict = {}
+            for index, field in enumerate(record):
+                datadict[columns[index]] = field
+            datalist.append(datadict)
+        return datalist
+
     def _update_naphtha_base(self):
         if self._localonly == 1:
             print 'Unable to update - remote database not found'
@@ -344,19 +370,19 @@ class Sales(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NaphthaBase with latest Haulier Information.'
+        print 'Updating NaphthaBase with latest Sales and Despatch Information.'
         RandRcursor = stock_connection.cursor()
         RandRdata = RandRcursor.execute(sql.get_sales)
         naphthabase_query(sql.clear_sales_table)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Hauliers values \
+        naphthabase_transfer(RandR_Stringed, 'insert into Sales values \
                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \
                              ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._haulierdata = \
-          [row for row in naphthabase_query("select * from Hauliers")]
+        self._salesdata = \
+          [row for row in naphthabase_query("select * from Sales")]
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
-        self._clmn = get_column_positions('Hauliers')
+        self._clmn = get_column_positions('Sales')
         self._last_refreshed = datetime.datetime.now()
 
         
@@ -414,7 +440,7 @@ class Hauliers(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NaphthaBase with latest Material Codes.'
+        print 'Updating NaphthaBase with latest Hauliers.'
         RandRcursor = stock_connection.cursor()   
         RandRdata = RandRcursor.execute(sql.get_hauliers)
         naphthabase_query(sql.clear_hauliers_table)
