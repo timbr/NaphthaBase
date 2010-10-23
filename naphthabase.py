@@ -46,6 +46,7 @@ def check_tables():
                  'Purchases': sql.create_purchases_table,
                  'Stock': sql.create_stock_table,
                  'Sales': sql.create_sales_table,
+                 'DeletedSales': sql.create_deleted_sales_table,
                  'Hauliers': sql.create_hauliers_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
@@ -352,6 +353,8 @@ class Sales(object):
             self._update_naphtha_base()
         self._salesdata = \
           [row for row in naphthabase_query("select * from Sales")]
+        self._deletedsalesdata = \
+          [row for row in naphthabase_query("select * from DeletedSales")]
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
         self._clmn = get_column_positions('Sales')
@@ -360,6 +363,9 @@ class Sales(object):
         self._update_naphtha_base()
         results = \
           naphthabase_query(sql.sales_orders % {'wo_num': str(WO_Num)})
+        if results == []:
+            results = naphthabase_query \
+                          (sql.deleted_sales_orders % {'wo_num': str(WO_Num)})
         return [line for line in results]
 
     def _update_naphtha_base(self):
@@ -383,6 +389,14 @@ class Sales(object):
         # create a dictionary relating column postions against their names.
         # ie 'WO_Num': 0, 'Link': 1, etc
         self._clmn = get_column_positions('Sales')
+        
+        RandRdata = RandRcursor.execute(sql.get_deleted_sales)
+        naphthabase_query(sql.clear_deleted_sales_table)
+        naphthabase_transfer(RandRdata, 'insert into DeletedSales values \
+                            (?,?,?,?)')
+        self._deletedsalesdata = \
+          [row for row in naphthabase_query("select * from DeletedSales")]
+        
         self._last_refreshed = datetime.datetime.now()
 
         

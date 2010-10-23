@@ -100,6 +100,15 @@ create_sales_table = """
     )
     """
 
+create_deleted_sales_table = """
+    CREATE TABLE DeletedSales (
+    WO_Num text,
+    UserID text,
+    Reason text,
+    LastUpdated date
+    )
+    """
+
 create_hauliers_table = """
     CREATE TABLE Hauliers (
     HaulierKey text,
@@ -349,6 +358,33 @@ clear_sales_table = """
     DELETE FROM Sales
     """
 
+
+# Deleted Sales Orders(R&R Database)
+get_deleted_sales = """
+    SELECT
+    \"Missing Order Number\".Key AS WO_Num,
+    \"Missing Order Number\".\"User ID\" AS UserID,
+    \"Missing Order Number\".Reason AS Reason,
+    \"Missing Order Number\".DateTime AS LastUpdated
+    FROM \"Missing Order Number\"
+    WHERE \"Missing Order Number\".Key > '1'
+    """
+
+# Deleted Sales Selection (NaphthaBase)
+deleted_sales_orders = """
+    SELECT
+    WO_Num,
+    UserID,
+    Reason,
+    LastUpdated
+    FROM DeletedSales
+    WHERE WO_Num = %(wo_num)s
+    """
+    
+# Clear Deleted Sales Table (NaphthaBase)
+clear_deleted_sales_table = """
+    DELETE FROM DeletedSales
+    """
 
 # Hauliers Selection (R&R Database)
 get_hauliers = """
