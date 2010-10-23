@@ -296,7 +296,7 @@ class Stock(object):
     def getdict(self, Batch_Num):
         """Returns a list of dictionaries with stock data.
         
-        Each stock entry is a returned as a dictionary, with column names as
+        Each stock entry is returned as a dictionary, with column names as
         the dictionary keys.
         """
         
@@ -364,9 +364,32 @@ class Sales(object):
         results = \
           naphthabase_query(sql.sales_orders % {'wo_num': str(WO_Num)})
         if results == []:
+            # if the WO number can't be found check the list of deleted orders
             results = naphthabase_query \
                           (sql.deleted_sales_orders % {'wo_num': str(WO_Num)})
         return [line for line in results]
+    
+    def getdict(self, WO_Num):
+        """Returns a list of dictionaries with sales data.
+        
+        Each entry is returned as a dictionary, with column names as
+        the dictionary keys.
+        """
+        
+        data = self.get_wo(WO_Num)
+        if len(data[0]) == 4:
+            # Works Order number is on the Deleted list
+            return data
+        columns = get_columns('Sales')
+        datalist = []
+        for record in data:
+            datadict = {}
+            for index, field in enumerate(record):
+                if field != '':
+                    # don't include blank columns
+                    datadict[columns[index]] = field
+            datalist.append(datadict)
+        return datalist
 
     def _update_naphtha_base(self):
         if self._localonly == 1:
@@ -471,31 +494,18 @@ class Hauliers(object):
 
 if __name__ == '__main__':
     # Tests
-    if os.path.exists(NaphthaBase_Dbase):
-        os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
-    make_database_connection(TestDB_Old)
-    MatCodeOld = MaterialCodes()
-    #MatCodeOld.update_naphtha_base()
-    original = MatCodeOld.getdesc('pa23')
-    no_entry = MatCodeOld.getdesc('ppld26c')
-    
+    if os.getenv('COMPUTERNAME') == 'ACER5920':
+        # Use dummy R&R database and run some tests
+        print '\nACER5920\n========\n'
+        if os.path.exists(NaphthaBase_Dbase):
+            os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
+        make_database_connection(TestDB_Old)
+    else:
+        make_database_connection()
+        
+    matcode = MaterialCodes()
     po = Purchases()
-    po.update_naphtha_base()
-    podata_original = po.get_po(7562)
-    
-    
-    po = Purchases()
-    po.update_naphtha_base()
-    podata_revised = po.get_po(7562)
-    
-    print
-    print original
-    print no_entry
-    print
-    print podata_original
-    print
-    print podata_revised
-    
-    
-    
-    
+    stock = Stock()
+    so = Sales()
+    haulier = Hauliers()
+       

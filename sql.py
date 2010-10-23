@@ -306,8 +306,6 @@ get_sales = """
     (\"Sales Order Item\".\"Stock Code\" = \"Sales Order Despatch\".\"Stock Code\") AND
     (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
     """
-    
-    
 
 # Sales Order Selection (NaphthaBase)
 sales_orders = """
