@@ -220,8 +220,8 @@ purchase_orders = """
     FROM Purchases,
     (SELECT
         MAX(LastUpdated) AS latest from Purchases WHERE
-        PO_Num = %(po_num)s)
-    WHERE PO_Num = %(po_num)s and LastUpdated = latest
+        PO_Num = %(query)s)
+    WHERE PO_Num = %(query)s and LastUpdated = latest
     ORDER BY Code
     """
 
@@ -293,7 +293,7 @@ get_batch = """
     InvoiceDate,
     BatchUp_Date
     FROM Stock
-    WHERE Batch = %(batch_num)s
+    WHERE Batch = %(query)s
     """
 
 #----------------------------------------------------------------------------#
@@ -401,8 +401,8 @@ sales_orders = """
     FROM Sales,
     (SELECT
         MAX(LastUpdated) AS latest from Sales WHERE
-        WO_Num = %(wo_num)s)
-    WHERE WO_Num = %(wo_num)s and LastUpdated = latest
+        WO_Num = %(query)s)
+    WHERE WO_Num = %(query)s and LastUpdated = latest
     ORDER BY WO_Num
     """
 
@@ -438,7 +438,7 @@ deleted_sales_orders = """
     Reason,
     LastUpdated
     FROM DeletedSales
-    WHERE WO_Num = %(wo_num)s
+    WHERE WO_Num = %(query)s
     """
 
 #----------------------------------------------------------------------------#
@@ -524,8 +524,8 @@ customer = """
     Terms,
     LastUpdated
     FROM Customer
-    WHERE CustomerID like '%(customer_id)s' OR
-    Name like '%(customer_id)s'
+    WHERE CustomerID like '%(query)s' OR
+    Name like '%(query)s'
     """
 
 #----------------------------------------------------------------------------#

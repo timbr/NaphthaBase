@@ -146,9 +146,11 @@ def get_columns(table):
     return column_names
 
 
+#////////////////////////////////////////////////////////////////////////////#
 class NaphthaBaseObject(object):
     """Universal data object class that can be subclassed.
     """
+#////////////////////////////////////////////////////////////////////////////#
     
     def __init__(self):
         if NaphthaBaseChecked == 0:
@@ -165,20 +167,105 @@ class NaphthaBaseObject(object):
                 datetime.datetime.now() - datetime.timedelta(minutes=31)
                 # pretend naphthabase hasn't been refreshed for 31 mins)
             self._update_naphtha_base()
-        self._data = \
-          [row for row in naphthabase_query("select * from %s" % self._table)]
+        self._data = self._getdata # Get a list containing all the data
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
         self._clmn = get_column_positions(self._table)
-        self._create_db()
+        
+    def _getdata(self, table = ''):
+        """Get all the data and store it as a list in self._data
+        """
+        
+        if table == '':
+            # If the table isn't specified, use the default table
+            table = self._table
+        data = [row for row in naphthabase_query("select * from %s" % table)]
+        return data
     
-    def getdesc(self, code):
+    def _getfromdict(self, code):
         self._update_naphtha_base()
         return self._getlatest.get(code.upper().upper(), [''])[0]
         # Return an empty string if no key found    
+        
+    def _sqlquery(self, query, sql = ''):
+        """Returns a list of tuples containing results of sql query
+        """
+        
+        if sql == '':
+            # If the sql to use isn't specified then use the default sql
+            sql = self._nbquery
+        self._update_naphtha_base()
+        results = \
+          naphthabase_query(sql % {'query': str(query)})
+        return [line for line in results]
+    
+    def _sqlquery_as_dict(self, query, include_blank_columns = False):
+        """Returns a list of dictionaries containing results of sql query.
+        
+        The dictionary keys are the column names. Only columns that contain
+        data are returned
+        """
+        
+        data = self._sqlquery(query)
+        columns = get_columns(self._table)
+        datalist = []
+        for record in data:
+            datadict = {}
+            for index, field in enumerate(record):
+                if field != '' or include_blank_columns is True:
+                    # don't include blank columns unless told to
+                    datadict[columns[index]] = field
+            datalist.append(datadict)
+        return datalist
+
+    def _update_naphtha_base(self):
+        if self._localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NaphthaBase with latest %s Data.' % self._table
+        RandRcursor = stock_connection.cursor()   
+        RandRdata = RandRcursor.execute(self._randr_query)
+        naphthabase_query(self._cleardb)
+        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
+        num_fields = len(get_columns(self._table))
+        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
+        # creates string "insert into <table> values (?,?,?,?, etc)"
+        naphthabase_transfer(RandR_Stringed, 'insert into %s values %s' \
+                                              % (self._table, insert_fields))
+        self._data = self._getdata # Get a list containing all the data
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._clmn = get_column_positions(self._table)
+        self._last_refreshed = datetime.datetime.now()
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class MaterialCodes(NaphthaBaseObject):
+    """Updates and provides access to Material Codes and their descriptions.
+    
+    If the R&R database can be connected to, the material codes are read,
+    written to the NaphthaBase and stored in memory as a Python Dictionary.
+    If the R&R database can't be found then only NaphthaBase data is used.
+    """
+#////////////////////////////////////////////////////////////////////////////#
+    
+    def __init__(self):
+        self._table = 'Material'
+        self._randr_query = sql.material_codes
+        self._cleardb = sql.clear_material_table
+        NaphthaBaseObject.__init__(self)
+        self._create_db()
+    
+    def get_mat(self, mat_code):
+        # This method is probably not needed
+        return NaphthaBaseObject._getfromdict(self, mat_code)
     
     def _create_db(self):
-        """Creates a python dictionary of codes and descriptions.
+        """Creates a python dictionary of Material codes and descriptions.
         """
 
         self._getlatest = {}
@@ -193,282 +280,67 @@ class NaphthaBaseObject(object):
                     # recordnum is added in position 1 so that lastupdate remains in position 2
             else:
                 self._getlatest[code] = [desc, recordnum, lastupdate]
-
+    
     def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-        # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest %s Data.' % self._table
-        RandRcursor = stock_connection.cursor()   
-        RandRdata = RandRcursor.execute(self._randr_query)
-        naphthabase_query(self._cleardb)
-        num_fields = len(get_columns(self._table))
-        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
-        # creates string "insert into <table> values (?,?,?,?, etc)"
-        naphthabase_transfer(RandRdata, 'insert into %s values %s' \
-                                         % (self._table, insert_fields))
-        self._data = \
-          [row for row in naphthabase_query("select * from %s" % self._table)]
-        # create a dictionary relating column postions against their names.
-        # ie 'Code': 0, 'Description': 1, etc
-        self._clmn = get_column_positions(self._table)
+        NaphthaBaseObject._update_naphtha_base(self)
         self._create_db()
-        self._last_refreshed = datetime.datetime.now()
 
-class MatCodes(NaphthaBaseObject):
-    """Updates and provides access to Material Codes and their descriptions.
-    
-    If the R&R database can be connected to, the material codes are read,
-    written to the NaphthaBase and stored in memory as a Python Dictionary.
-    If the R&R database can't be found then only NaphthaBase data is used.
-    """
-    
+
+#////////////////////////////////////////////////////////////////////////////#
+class Purchases(NaphthaBaseObject):
+    """Updates and provides access to Purchase Order information."""
+#////////////////////////////////////////////////////////////////////////////#
+
     def __init__(self):
-        self._table = 'Material'
-        self._randr_query = sql.material_codes
-        self._cleardb = sql.clear_material_table
+        self._table = 'Purchases'
+        self._randr_query = sql.po_data
+        self._nbquery = sql.purchase_orders
+        self._cleardb = sql.clear_po_table
         NaphthaBaseObject.__init__(self)
     
-    def get_mat(self, mat_code):
-        return NaphthaBaseObject.getdesc(self, mat_code)
-
-    
-class MaterialCodes(object):
-    """Updates and provides access to Material Codes and their descriptions.
-    
-    If the R&R database can be connected to, the material codes are read,
-    written to the NaphthaBase and stored in memory as a Python Dictionary.
-    If the R&R database can't be found then only NaphthaBase data is used.
-    """
-    
-    def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            make_database_connection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            self._localonly = 0
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest codes.
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._matdata = \
-          [row for row in naphthabase_query("select * from Material")]
-        # create a dictionary relating column postions against their names.
-        # ie 'Code': 0, 'Description': 1, etc
-        self._clmn = get_column_positions('Material')
-        self._create_db()
-    
-    def getdesc(self, matcode):
-        self._update_naphtha_base()
-        return self._getlatest.get(matcode.upper().upper(), [''])[0]
-        # Return an empty string if no key found    
-    
-    def _create_db(self):
-        """Creates a python dictionary of material codes and descriptions.
-        """
-
-        self._getlatest = {}
-        for entry in self._matdata:
-            code = entry[self._clmn['Code']]
-            lastupdate = entry[self._clmn['LastUpdated']]
-            desc = entry[self._clmn['Description']]
-            recordnum = entry[self._clmn['RecordNo']]
-            if code in self._getlatest.keys():
-                if lastupdate > code[self._clmn['LastUpdated']]:
-                    self._getlatest[code] = [desc, recordnum, lastupdate]
-                    # recordnum is added in position 1 so that lastupdate remains in position 2
-            else:
-                self._getlatest[code] = [desc, recordnum, lastupdate]
-
-    def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-        # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Material Codes.'
-        RandRcursor = stock_connection.cursor()   
-        RandRdata = RandRcursor.execute(sql.material_codes)
-        naphthabase_query(sql.clear_material_table)
-        naphthabase_transfer(RandRdata, 'insert into Material values \
-          (?,?,?,?)')
-        self._matdata = \
-          [row for row in naphthabase_query("select * from Material")]
-        # create a dictionary relating column postions against their names.
-        # ie 'Code': 0, 'Description': 1, etc
-        self._clmn = get_column_positions('Material')
-        self._create_db()
-        self._last_refreshed = datetime.datetime.now()
-
-        
-class Purchases(object):
-    """Updates and provides access to Purchase Order information."""
-    
-    def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            MakeDatabaseConnection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest purchase orders.
-            self._localonly = 0
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._po_data = \
-          [row for row in naphthabase_query("select * from Purchases")]
-        # create a dictionary relating column postions against their names.
-        # ie 'PO_Num': 0, 'Code': 1, etc
-        self._clmn = get_column_positions('Purchases')
-    
     def get_po(self, PO_Num):
-        self._update_naphtha_base()
-        results = \
-          naphthabase_query(sql.purchase_orders % {'po_num': str(PO_Num)})
-        return [line for line in results]
-        
-    def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-        # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Purchase Orders.'
-        RandRcursor = stock_connection.cursor()
-        RandRdata = RandRcursor.execute(sql.po_data)
-        naphthabase_query(sql.clear_po_table)
-        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Purchases values \
-                             (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._po_data = \
-          [row for row in naphthabase_query("select * from Purchases")]
-        # create a dictionary relating column postions against their names.
-        # ie 'PO_Num': 0, 'Code': 1, etc
-        self._clmn = get_column_positions('Purchases')
-        self._last_refreshed = datetime.datetime.now()
-        
-        
-class Stock(object):
+        return NaphthaBaseObject._sqlquery(self, PO_Num)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Stock(NaphthaBaseObject):
     """Updates and provides access to Stock information."""
-    
+#////////////////////////////////////////////////////////////////////////////#
+
     def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            MakeDatabaseConnection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest stock.
-            self._localonly = 0
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._stockdata = \
-          [row for row in naphthabase_query("select * from Stock")]
-        # create a dictionary relating column postions against their names.
-        # ie 'Batch': 0, 'Code': 1, etc
-        self._clmn = get_column_positions('Stock')
-    
+        self._table = 'Stock'
+        self._randr_query = sql.get_stock
+        self._nbquery = sql.get_batch
+        self._cleardb = sql.clear_stock_table
+        NaphthaBaseObject.__init__(self)
+
     def get_batch(self, Batch_Num):
-        self._update_naphtha_base()
-        results = \
-          naphthabase_query(sql.get_batch % {'batch_num': str(Batch_Num)})
-        return [line for line in results]
+        return NaphthaBaseObject._sqlquery(self, Batch_Num)
 
-    def getdict(self, Batch_Num):
-        """Returns a list of dictionaries with stock data.
-        
-        Each stock entry is returned as a dictionary, with column names as
-        the dictionary keys.
-        """
-        
-        data = self.get_batch(Batch_Num)
-        columns = get_columns('Stock')
-        datalist = []
-        for record in data:
-            datadict = {}
-            for index, field in enumerate(record):
-                datadict[columns[index]] = field
-            datalist.append(datadict)
-        return datalist
-
-    def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-         # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Stock.'
-        RandRcursor = stock_connection.cursor()
-        RandRdata = RandRcursor.execute(sql.get_stock)
-        naphthabase_query(sql.clear_stock_table)
-        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Stock values \
-                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._stockdata = \
-          [row for row in naphthabase_query("select * from Stock")]
-        # create a dictionary relating column postions against their names.
-        # ie 'Batch': 0, 'Code': 1, etc
-        self._clmn = get_column_positions('Stock')
-        self._last_refreshed = datetime.datetime.now()
+    def get_dict(self, Batch_Num):
+        return NaphthaBaseObject._sqlquery_as_dict(self, Batch_Num)
 
 
-class Sales(object):
+#////////////////////////////////////////////////////////////////////////////#
+class Sales(NaphthaBaseObject):
     """Updates and provides access to Sales and Despatch information."""
-    
+#////////////////////////////////////////////////////////////////////////////#
+
     def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            MakeDatabaseConnection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest sales and despatches.
-            self._localonly = 0
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._salesdata = \
-          [row for row in naphthabase_query("select * from Sales")]
-        self._deletedsalesdata = \
-          [row for row in naphthabase_query("select * from DeletedSales")]
-        # create a dictionary relating column postions against their names.
-        # ie 'WO_Num': 0, 'Link': 1, etc
-        self._clmn = get_column_positions('Sales')
+        self._table = 'Sales'
+        self._randr_query = sql.get_sales
+        self._nbquery = sql.sales_orders
+        self._cleardb = sql.clear_sales_table
+        NaphthaBaseObject.__init__(self)
+        # Create a list of WO numbers that have been deleted
+        self._deleted = self._getdata('DeletedSales')
     
     def get_wo(self, WO_Num):
-        self._update_naphtha_base()
-        results = \
-          naphthabase_query(sql.sales_orders % {'wo_num': str(WO_Num)})
+        results = NaphthaBaseObject._sqlquery(self, WO_Num)
         if results == []:
             # if the WO number can't be found check the list of deleted orders
-            results = naphthabase_query \
-                          (sql.deleted_sales_orders % {'wo_num': str(WO_Num)})
+            results = NaphthaBaseObject._sqlquery(self, WO_Num, \
+                                                  sql.deleted_sales_orders)
         return [line for line in results]
     
     def getdict(self, WO_Num):
@@ -477,52 +349,18 @@ class Sales(object):
         Each entry is returned as a dictionary, with column names as
         the dictionary keys.
         """
-        
-        data = self.get_wo(WO_Num)
-        if len(data[0]) == 4:
-            # Works Order number is on the Deleted list
-            return data
-        columns = get_columns('Sales')
-        datalist = []
-        for record in data:
-            datadict = {}
-            for index, field in enumerate(record):
-                if field != '':
-                    # don't include blank columns
-                    datadict[columns[index]] = field
-            datalist.append(datadict)
-        return datalist
+
+        results = NaphthaBaseObject._sqlquery_as_dict(self, WO_Num)
+        if results == []:
+            results = NaphthaBaseObject._sqlquery(self, WO_Num, \
+                                                  sql.deleted_sales_orders)
+        return [line for line in results]
 
     def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-         # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Sales and Despatch Information.'
-        RandRcursor = stock_connection.cursor()
-        RandRdata = RandRcursor.execute(sql.get_sales)
-        naphthabase_query(sql.clear_sales_table)
-        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Sales values \
-                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, \
-                             ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._salesdata = \
-          [row for row in naphthabase_query("select * from Sales")]
-        # create a dictionary relating column postions against their names.
-        # ie 'WO_Num': 0, 'Link': 1, etc
-        self._clmn = get_column_positions('Sales')
+        NaphthaBaseObject._update_naphtha_base(self)
+        # Create a list of WO numbers that have been deleted
+        self._deleted = self._getdata('DeletedSales')
         
-        RandRdata = RandRcursor.execute(sql.get_deleted_sales)
-        naphthabase_query(sql.clear_deleted_sales_table)
-        naphthabase_transfer(RandRdata, 'insert into DeletedSales values \
-                            (?,?,?,?)')
-        self._deletedsalesdata = \
-          [row for row in naphthabase_query("select * from DeletedSales")]
-        
-        self._last_refreshed = datetime.datetime.now()
 
         
 class Hauliers(object):
