@@ -232,6 +232,9 @@ class MatCodes(NaphthaBaseObject):
         self._randr_query = sql.material_codes
         self._cleardb = sql.clear_material_table
         NaphthaBaseObject.__init__(self)
+    
+    def get_mat(self, mat_code):
+        return NaphthaBaseObject.getdesc(self, mat_code)
 
     
 class MaterialCodes(object):
