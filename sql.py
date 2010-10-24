@@ -1,7 +1,9 @@
 """ sql.py  -- Contains Sql queries for R&R Access DB and NaphthaBase.
 """
 
-# Table Creation
+#----------------------------------------------------------------------------#
+# NaphthaBase Table Creation
+#----------------------------------------------------------------------------#
 create_material_table = """
     CREATE TABLE Material (
     Code text,
@@ -117,7 +119,34 @@ create_hauliers_table = """
     )
     """
 
+create_customer_table = """
+    CREATE TABLE Customer (
+    CustomerID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    WebSite text,
+    ContactName text,
+    VAT text,
+    Comment text,
+    Memo text,
+    CreditLimit text,
+    Terms text,
+    LastUpdated date
+    )
+    """
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+#----------------------------------------------------------------------------#
 # Material Selection (R&R Database)
+#----------------------------------------------------------------------------#
 material_codes = """
     SELECT
     Formula.Key AS Code,
@@ -128,13 +157,19 @@ material_codes = """
     WHERE (Formula.\"Customer Key\"='ANY')
     ORDER BY Formula.Key
     """
-                 
+
+#----------------------------------------------------------------------------#
 # Clear Material Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_material_table = """
     DELETE FROM Material
     """
 
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
 # Purchase Order Selection (R&R Database)
+#----------------------------------------------------------------------------#
 po_data = """
     SELECT
     \"Purchase Order\".\"Order Number\" AS PO_Num,
@@ -161,7 +196,9 @@ po_data = """
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
+#----------------------------------------------------------------------------#
 # Purchase Order Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
 purchase_orders = """
     SELECT
     PO_Num,
@@ -188,13 +225,18 @@ purchase_orders = """
     ORDER BY Code
     """
 
-
+#----------------------------------------------------------------------------#
 # Clear Purchase Orders Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_po_table = """
     DELETE FROM Purchases
     """             
 
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
 # Stock Selection (R&R Database)
+#----------------------------------------------------------------------------#
 get_stock = """
     SELECT
     \"Formula Stock\".Batch,
@@ -224,7 +266,9 @@ get_stock = """
     \"Formula Stock Usage\".\"Last Updated\"
     """
 
+#----------------------------------------------------------------------------#
 # Stock Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
 get_batch = """
     SELECT
     Batch,
@@ -251,14 +295,19 @@ get_batch = """
     FROM Stock
     WHERE Batch = %(batch_num)s
     """
-    
+
+#----------------------------------------------------------------------------#
 # Clear Stock Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_stock_table = """
     DELETE FROM Stock
     """
 
+#****************************************************************************#
 
+#----------------------------------------------------------------------------#
 # Sales Order Selection (R&R Database)
+#----------------------------------------------------------------------------#
 get_sales = """
     SELECT
     \"Sales Order\".Key AS WO_Num,
@@ -307,7 +356,9 @@ get_sales = """
     (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
     """
 
+#----------------------------------------------------------------------------#
 # Sales Order Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
 sales_orders = """
     SELECT
     WO_Num,
@@ -355,13 +406,18 @@ sales_orders = """
     ORDER BY WO_Num
     """
 
+#----------------------------------------------------------------------------#
 # Clear Sales Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_sales_table = """
     DELETE FROM Sales
     """
 
+#****************************************************************************#
 
+#----------------------------------------------------------------------------#
 # Deleted Sales Orders(R&R Database)
+#----------------------------------------------------------------------------#
 get_deleted_sales = """
     SELECT
     \"Missing Order Number\".Key AS WO_Num,
@@ -372,7 +428,9 @@ get_deleted_sales = """
     WHERE \"Missing Order Number\".Key > '1'
     """
 
+#----------------------------------------------------------------------------#
 # Deleted Sales Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
 deleted_sales_orders = """
     SELECT
     WO_Num,
@@ -382,13 +440,19 @@ deleted_sales_orders = """
     FROM DeletedSales
     WHERE WO_Num = %(wo_num)s
     """
-    
+
+#----------------------------------------------------------------------------#
 # Clear Deleted Sales Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_deleted_sales_table = """
     DELETE FROM DeletedSales
     """
 
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
 # Hauliers Selection (R&R Database)
+#----------------------------------------------------------------------------#
 get_hauliers = """
     SELECT
     \"Additional Items\".Key AS HaulierKey,
@@ -397,8 +461,76 @@ get_hauliers = """
     FROM \"Additional Items\"
     ORDER BY \"Additional Items\".\"Record Number\"
     """
-                 
+
+#----------------------------------------------------------------------------#
 # Clear Hauliers Table (NaphthaBase)
+#----------------------------------------------------------------------------#
 clear_hauliers_table = """
     DELETE FROM Hauliers
+    """
+
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Customer Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_customer = """
+    SELECT
+    Customer.ID AS CustomerID,
+    Customer.Name,
+    Customer.Address1,
+    Customer.Address2,
+    Customer.Address3,
+    Customer.Address4,
+    Customer.Address5,
+    Customer.\"Post Code\" AS PostCode,
+    Customer.Telephone,
+    Customer.Fax,
+    Customer.Email,
+    Customer.\"Web Site\" AS WebSite,
+    Customer.\"Contact Name\" AS ContactName,
+    Customer.\"Vat Registration Number\" AS VAT,
+    Customer.Comment,
+    Customer.Memo,
+    Customer.\"Credit Limit\" AS CreditLimit,
+    Customer.Terms,
+    Customer.\"Last Updated\" AS LastUpdated
+    FROM Customer
+    ORDER BY Customer.ID
+    """
+
+#----------------------------------------------------------------------------#
+# Customer Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
+customer = """
+    SELECT
+    CustomerID,
+    Name,
+    Address1,
+    Address2,
+    Address3,
+    Address4,
+    Address5,
+    PostCode,
+    Telephone,
+    Fax,
+    Email,
+    WebSite,
+    ContactName,
+    VAT,
+    Comment,
+    Memo,
+    CreditLimit,
+    Terms,
+    LastUpdated
+    FROM Customer
+    WHERE CustomerID like '%(customer_id)s' OR
+    Name like '%(customer_id)s'
+    """
+
+#----------------------------------------------------------------------------#
+# Clear Customer Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clear_customer_table = """
+    DELETE FROM Customer
     """
