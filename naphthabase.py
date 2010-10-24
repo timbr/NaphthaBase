@@ -145,7 +145,95 @@ def get_columns(table):
     column_names = [col[1] for col in column_data]
     return column_names
 
-        
+
+class NaphthaBaseObject(object):
+    """Universal data object class that can be subclassed.
+    """
+    
+    def __init__(self):
+        if NaphthaBaseChecked == 0:
+            # No connection has been made to the NaphthaBase
+            make_database_connection()
+        if stock_connection == '':
+            # No connection has been made to the R&R stock database
+            self._localonly = 1
+        else:
+            self._localonly = 0
+            # If connection has been made to the R&R stock database then
+            # update the NaphthaBase with the latest codes.
+            self._last_refreshed = \
+                datetime.datetime.now() - datetime.timedelta(minutes=31)
+                # pretend naphthabase hasn't been refreshed for 31 mins)
+            self._update_naphtha_base()
+        self._data = \
+          [row for row in naphthabase_query("select * from %s" % self._table)]
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._clmn = get_column_positions(self._table)
+        self._create_db()
+    
+    def getdesc(self, code):
+        self._update_naphtha_base()
+        return self._getlatest.get(code.upper().upper(), [''])[0]
+        # Return an empty string if no key found    
+    
+    def _create_db(self):
+        """Creates a python dictionary of codes and descriptions.
+        """
+
+        self._getlatest = {}
+        for entry in self._data:
+            code = entry[self._clmn['Code']]
+            lastupdate = entry[self._clmn['LastUpdated']]
+            desc = entry[self._clmn['Description']]
+            recordnum = entry[self._clmn['RecordNo']]
+            if code in self._getlatest.keys():
+                if lastupdate > code[self._clmn['LastUpdated']]:
+                    self._getlatest[code] = [desc, recordnum, lastupdate]
+                    # recordnum is added in position 1 so that lastupdate remains in position 2
+            else:
+                self._getlatest[code] = [desc, recordnum, lastupdate]
+
+    def _update_naphtha_base(self):
+        if self._localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NaphthaBase with latest %s Data.' % self._table
+        RandRcursor = stock_connection.cursor()   
+        RandRdata = RandRcursor.execute(self._randr_query)
+        naphthabase_query(self._cleardb)
+        num_fields = len(get_columns(self._table))
+        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
+        # creates string "insert into <table> values (?,?,?,?, etc)"
+        naphthabase_transfer(RandRdata, 'insert into %s values %s' \
+                                         % (self._table, insert_fields))
+        self._data = \
+          [row for row in naphthabase_query("select * from %s" % self._table)]
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._clmn = get_column_positions(self._table)
+        self._create_db()
+        self._last_refreshed = datetime.datetime.now()
+
+class MatCodes(NaphthaBaseObject):
+    """Updates and provides access to Material Codes and their descriptions.
+    
+    If the R&R database can be connected to, the material codes are read,
+    written to the NaphthaBase and stored in memory as a Python Dictionary.
+    If the R&R database can't be found then only NaphthaBase data is used.
+    """
+    
+    def __init__(self):
+        self._table = 'Material'
+        self._randr_query = sql.material_codes
+        self._cleardb = sql.clear_material_table
+        NaphthaBaseObject.__init__(self)
+
+    
 class MaterialCodes(object):
     """Updates and provides access to Material Codes and their descriptions.
     
