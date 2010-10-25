@@ -167,7 +167,7 @@ class NaphthaBaseObject(object):
                 datetime.datetime.now() - datetime.timedelta(minutes=31)
                 # pretend naphthabase hasn't been refreshed for 31 mins)
             self._update_naphtha_base()
-        self._data = self._getdata # Get a list containing all the data
+        self._data = self._getdata() # Get a list containing all the data
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
         self._clmn = get_column_positions(self._table)
@@ -236,7 +236,7 @@ class NaphthaBaseObject(object):
         # creates string "insert into <table> values (?,?,?,?, etc)"
         naphthabase_transfer(RandR_Stringed, 'insert into %s values %s' \
                                               % (self._table, insert_fields))
-        self._data = self._getdata # Get a list containing all the data
+        self._data = self._getdata() # Get a list containing all the data
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
         self._clmn = get_column_positions(self._table)
