@@ -56,7 +56,7 @@ def check_tables():
                  'Purchases': sql.create_purchases_table,
                  'Stock': sql.create_stock_table,
                  'Sales': sql.create_sales_table,
-                 'DeletedSales': sql.create_deleted_sales_table,
+                 'DeletedSales': sql.create_deletedsales_table,
                  'Hauliers': sql.create_hauliers_table,
                  'Customer': sql.create_customer_table}
     query = \
@@ -227,7 +227,12 @@ class NaphthaBaseObject(object):
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
         print 'Updating NaphthaBase with latest %s Data.' % self._table
-        RandRcursor = stock_connection.cursor()   
+        # Connect to the correct R&R database file.
+        # stock_tables and accounts_tables lists are in settings.py
+        if self._table in stock_tables:
+            RandRcursor = stock_connection.cursor()
+        elif self._table in accounts_tables:
+            RandRcursor = accounts_connection.cursor()
         RandRdata = RandRcursor.execute(self._randr_query)
         naphthabase_query(self._cleardb)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
@@ -399,75 +404,24 @@ class Hauliers(NaphthaBaseObject):
         NaphthaBaseObject._update_naphtha_base(self)
         self._create_db()
 
-        
-class Customer(object):
+
+#////////////////////////////////////////////////////////////////////////////#
+class Customer(NaphthaBaseObject):
     """Updates and provides access to Customer details."""
-    
+#////////////////////////////////////////////////////////////////////////////#
+
     def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            MakeDatabaseConnection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest stock.
-            self._localonly = 0
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._customerdata = \
-          [row for row in naphthabase_query("select * from Customer")]
-        # create a dictionary relating column postions against their names.
-        # ie 'ID': 0, 'Name': 1, etc
-        self._clmn = get_column_positions('Customer')
-    
+        self._table = 'Customer'
+        self._randr_query = sql.get_customer
+        self._nbquery = sql.customer
+        self._cleardb = sql.clear_customer_table
+        NaphthaBaseObject.__init__(self)
+
     def get_customer(self, CustomerID):
-        self._update_naphtha_base()
-        results = \
-          naphthabase_query(sql.customer % {'customer_id': str(CustomerID)})
-        return [line for line in results]
+        return NaphthaBaseObject._sqlquery(self, CustomerID)
 
-    def getdict(self, CustomerID):
-        """Returns a list of dictionaries with customer data.
-        
-        Each entry is returned as a dictionary, with column names as
-        the dictionary keys.
-        """
-        
-        data = self.get_customer(CustomerID)
-        columns = get_columns('Customer')
-        datalist = []
-        for record in data:
-            datadict = {}
-            for index, field in enumerate(record):
-                datadict[columns[index]] = field
-            datalist.append(datadict)
-        return datalist
-
-    def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-         # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Customer Details.'
-        RandRcursor = accounts_connection.cursor()
-        RandRdata = RandRcursor.execute(sql.get_customer)
-        naphthabase_query(sql.clear_customer_table)
-        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
-        naphthabase_transfer(RandR_Stringed, 'insert into Customer values \
-                            (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-        self._customerdata = \
-          [row for row in naphthabase_query("select * from Customer")]
-        # create a dictionary relating column postions against their names.
-        # ie 'ID': 0, 'Name': 1, etc
-        self._clmn = get_column_positions('Customer')
-        self._last_refreshed = datetime.datetime.now()
+    def get_dict(self, CustomerID):
+        return NaphthaBaseObject._sqlquery_as_dict(self, CustomerID)
 
 
 if __name__ == '__main__':

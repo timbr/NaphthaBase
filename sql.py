@@ -102,7 +102,7 @@ create_sales_table = """
     )
     """
 
-create_deleted_sales_table = """
+create_deletedsales_table = """
     CREATE TABLE DeletedSales (
     WO_Num text,
     UserID text,
