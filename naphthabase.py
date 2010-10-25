@@ -184,7 +184,7 @@ class NaphthaBaseObject(object):
     
     def _getfromdict(self, code):
         self._update_naphtha_base()
-        return self._getlatest.get(code.upper().upper(), [''])[0]
+        return self._datadict.get(code.upper().upper(), [''])[0]
         # Return an empty string if no key found    
         
     def _sqlquery(self, query, sql = ''):
@@ -280,6 +280,7 @@ class MaterialCodes(NaphthaBaseObject):
                     # recordnum is added in position 1 so that lastupdate remains in position 2
             else:
                 self._getlatest[code] = [desc, recordnum, lastupdate]
+        self._datadict = self._getlatest
     
     def _update_naphtha_base(self):
         NaphthaBaseObject._update_naphtha_base(self)
@@ -362,74 +363,41 @@ class Sales(NaphthaBaseObject):
         self._deleted = self._getdata('DeletedSales')
         
 
-        
-class Hauliers(object):
+#////////////////////////////////////////////////////////////////////////////#
+class Hauliers(NaphthaBaseObject):
     """Updates and provides access to Haulier names.
     
     If the R&R database can be connected to, the haulier names are read,
     written to the NaphthaBase and stored in memory as a Python Dictionary.
     If the R&R database can't be found then only NaphthaBase data is used.
     """
-    
+#////////////////////////////////////////////////////////////////////////////#
+
     def __init__(self):
-        if NaphthaBaseChecked == 0:
-            # No connection has been made to the NaphthaBase
-            make_database_connection()
-        if stock_connection == '':
-            # No connection has been made to the R&R stock database
-            self._localonly = 1
-        else:
-            self._localonly = 0
-            # If connection has been made to the R&R stock database then
-            # update the NaphthaBase with the latest codes.
-            self._last_refreshed = \
-                datetime.datetime.now() - datetime.timedelta(minutes=31)
-                # pretend naphthabase hasn't been refreshed for 31 mins)
-            self._update_naphtha_base()
-        self._haulierdata = \
-          [row for row in naphthabase_query("select * from Hauliers")]
-        # create a dictionary relating column postions against their names.
-        # ie 'HaulierKey': 0, 'Name': 1, etc
-        self._clmn = get_column_positions('Hauliers')
+        self._table = 'Hauliers'
+        self._randr_query = sql.get_hauliers
+        self._cleardb = sql.clear_hauliers_table
+        NaphthaBaseObject.__init__(self)
         self._create_db()
     
-    def getdesc(self, haulier_key):
-        self._update_naphtha_base()
-        return self._hauliers_dict.get(haulier_key.upper().upper(), [''])[0]
-        # Return an empty string if no key found
+    def get_name(self, haulier_key):
+        return NaphthaBaseObject._getfromdict(self, haulier_key)
     
     def _create_db(self):
         """Creates a python dictionary of haulier codes and descriptions.
         """
 
         self._hauliers_dict = {}
-        for entry in self._haulierdata:
+        for entry in self._data:
             haulier_key = entry[self._clmn['HaulierKey']]
             name = entry[self._clmn['Name']]
             nominal = entry[self._clmn['NominalCode']]
             self._hauliers_dict[haulier_key] = [name, nominal]
-
+        self._datadict = self._hauliers_dict
+    
     def _update_naphtha_base(self):
-        if self._localonly == 1:
-            print 'Unable to update - remote database not found'
-            return
-        # Don't refresh again if last_refreshed is more recent than 30 minutes
-        if self._last_refreshed > \
-                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
-            return
-        print 'Updating NaphthaBase with latest Hauliers.'
-        RandRcursor = stock_connection.cursor()   
-        RandRdata = RandRcursor.execute(sql.get_hauliers)
-        naphthabase_query(sql.clear_hauliers_table)
-        naphthabase_transfer(RandRdata, 'insert into Hauliers values \
-          (?,?,?)')
-        self._haulierdata = \
-          [row for row in naphthabase_query("select * from Hauliers")]
-        # create a dictionary relating column postions against their names.
-        # ie 'HaulierKey': 0, 'Name': 1, etc
-        self._clmn = get_column_positions('Hauliers')
+        NaphthaBaseObject._update_naphtha_base(self)
         self._create_db()
-        self._last_refreshed = datetime.datetime.now()
 
         
 class Customer(object):
