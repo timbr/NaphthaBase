@@ -9,7 +9,7 @@ accountsDBpassword = "bgSoiqOogNMOH"
 # NaphthaBase tables that originate from the R&R 'Naphtha.mdb' database
 stock_tables = ['Material', 'Purchases', 'Stock', 'Sales', 'DeletedSales', 'Hauliers']
 # NaphthaBase tables that originate from the R&R 'Naphtha_accounts.mdb' database
-accounts_tables = ['Customer', 'Depot']
+accounts_tables = ['Customer', 'Depot', 'Contact']
 
 TestDB_New = "C:\\Users\\Tim\\Desktop\\NaphthaBase\\Local Test Databases\\New\\Naphtha.mdb"
 TestDB_Old = "C:\\Users\\Tim\\Desktop\\NaphthaBase\\Local Test Databases\\Old\\Naphtha.mdb"

@@ -59,7 +59,8 @@ def check_tables():
                  'DeletedSales': sql.create_deletedsales_table,
                  'Hauliers': sql.create_hauliers_table,
                  'Customer': sql.create_customer_table,
-                 'Depot': sql.create_depot_table}
+                 'Depot': sql.create_depot_table,
+                 'Contact': sql.create_contact_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -439,6 +440,24 @@ class Depot(NaphthaBaseObject):
         return NaphthaBaseObject._sqlquery_as_dict(self, ClientID)
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class Contact(NaphthaBaseObject):
+    """Updates and provides access to Contact details."""
+#////////////////////////////////////////////////////////////////////////////#
+
+    def __init__(self):
+        self._table = 'Contact'
+        self._randr_query = sql.get_contact
+        self._nbquery = sql.contact
+        NaphthaBaseObject.__init__(self)
+
+    def get_contact(self, ClientID):
+        return NaphthaBaseObject._sqlquery(self, ClientID)
+
+    def get_dict(self, ClientID):
+        return NaphthaBaseObject._sqlquery_as_dict(self, ClientID)
+
+
 if __name__ == '__main__':
     # Tests
     if os.getenv('COMPUTERNAME') == 'ACER5920':
@@ -457,4 +476,5 @@ if __name__ == '__main__':
     haulier = Hauliers()
     customer = Customer()
     depot = Depot()
+    contact = Contact()
        

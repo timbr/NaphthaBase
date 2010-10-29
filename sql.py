@@ -160,6 +160,19 @@ create_depot_table = """
     LastUpdated date
     )
     """
+
+create_contact_table = """
+    CREATE TABLE Contact (
+    ClientID text,
+    Title text,
+    Forename text,
+    Surname text,
+    Phone text,
+    Department text,
+    LastUpdated date
+    )
+    """
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #----------------------------------------------------------------------------#
@@ -550,3 +563,36 @@ depot = """
     WHERE ClientID like '%(query)s'
     """
 
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Contact Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_contact = """
+    SELECT
+    Contact.\"Client ID\" AS ClientID,
+    Contact.Title,
+    Contact.Forename,
+    Contact.Surname,
+    Contact.Phone,
+    Contact.Department,
+    Contact.\"Last Updated\" AS LastUpdated
+    FROM Contact
+    ORDER BY Contact.\"Client ID\"
+    """
+
+#----------------------------------------------------------------------------#
+# Contact Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
+contact = """
+    SELECT
+    ClientID,
+    Title,
+    Forename,
+    Surname,
+    Phone,
+    Department,
+    LastUpdated
+    FROM Contact
+    WHERE ClientID like '%(query)s'
+    """
