@@ -132,7 +132,7 @@ create_customer_table = """
     Telephone text,
     Fax text,
     Email text,
-    WebSite text,
+    Website text,
     ContactName text,
     VAT text,
     Comment text,
@@ -170,6 +170,28 @@ create_contact_table = """
     Phone text,
     Department text,
     LastUpdated date
+    )
+    """
+
+create_supplier_table = """
+    CREATE TABLE Supplier (
+    SupplierID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    Website text,
+    ContactName text,
+    VAT text,
+    Comment text,
+    Memo text,
+    LastUpdated text
     )
     """
 
@@ -476,7 +498,7 @@ get_customer = """
     Customer.Telephone,
     Customer.Fax,
     Customer.Email,
-    Customer.\"Web Site\" AS WebSite,
+    Customer.\"Web Site\" AS Website,
     Customer.\"Contact Name\" AS ContactName,
     Customer.\"Vat Registration Number\" AS VAT,
     Customer.Comment,
@@ -504,7 +526,7 @@ customer = """
     Telephone,
     Fax,
     Email,
-    WebSite,
+    Website,
     ContactName,
     VAT,
     Comment,
@@ -595,4 +617,59 @@ contact = """
     LastUpdated
     FROM Contact
     WHERE ClientID like '%(query)s'
+    """
+
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Supplier Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_supplier = """
+    SELECT
+    Supplier.ID AS SupplierID,
+    Supplier.Name,
+    Supplier.Address1,
+    Supplier.Address2,
+    Supplier.Address3,
+    Supplier.Address4,
+    Supplier.Address5,
+    Supplier.\"Post Code\" AS PostCode,
+    Supplier.Telephone,
+    Supplier.Fax,
+    Supplier.Email,
+    Supplier.\"Web Site\" AS Website,
+    Supplier.\"Contact Name\" AS ContactName,
+    Supplier.\"Vat Registration Number\" AS VAT,
+    Supplier.Comment,
+    Supplier.Memo,
+    Supplier.\"Last Updated\" AS LastUpdated
+    FROM Supplier
+    ORDER BY Supplier.ID
+    """
+
+#----------------------------------------------------------------------------#
+# Supplier Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
+supplier = """
+    SELECT
+    SupplierID,
+    Name,
+    Address1,
+    Address2,
+    Address3,
+    Address4,
+    Address5,
+    PostCode,
+    Telephone,
+    Fax,
+    Email,
+    Website,
+    ContactName,
+    VAT,
+    Comment,
+    Memo,
+    LastUpdated
+    FROM Supplier
+    WHERE SupplierID like '%(query)s' OR
+    Name like '%(query)s'
     """

@@ -60,7 +60,8 @@ def check_tables():
                  'Hauliers': sql.create_hauliers_table,
                  'Customer': sql.create_customer_table,
                  'Depot': sql.create_depot_table,
-                 'Contact': sql.create_contact_table}
+                 'Contact': sql.create_contact_table,
+                 'Supplier': sql.create_supplier_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -458,6 +459,24 @@ class Contact(NaphthaBaseObject):
         return NaphthaBaseObject._sqlquery_as_dict(self, ClientID)
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class Supplier(NaphthaBaseObject):
+    """Updates and provides access to Supplier details."""
+#////////////////////////////////////////////////////////////////////////////#
+
+    def __init__(self):
+        self._table = 'Supplier'
+        self._randr_query = sql.get_supplier
+        self._nbquery = sql.supplier
+        NaphthaBaseObject.__init__(self)
+
+    def get_supplier(self, SupplierID):
+        return NaphthaBaseObject._sqlquery(self, SupplierID)
+
+    def get_dict(self, SupplierID):
+        return NaphthaBaseObject._sqlquery_as_dict(self, SupplierID)
+
+
 if __name__ == '__main__':
     # Tests
     if os.getenv('COMPUTERNAME') == 'ACER5920':
@@ -477,4 +496,4 @@ if __name__ == '__main__':
     customer = Customer()
     depot = Depot()
     contact = Contact()
-       
+    supplier = Supplier()
