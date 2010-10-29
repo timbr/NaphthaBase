@@ -58,7 +58,8 @@ def check_tables():
                  'Sales': sql.create_sales_table,
                  'DeletedSales': sql.create_deletedsales_table,
                  'Hauliers': sql.create_hauliers_table,
-                 'Customer': sql.create_customer_table}
+                 'Customer': sql.create_customer_table,
+                 'Depot': sql.create_depot_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -233,6 +234,8 @@ class NaphthaBaseObject(object):
             RandRcursor = stock_connection.cursor()
         elif self._table in accounts_tables:
             RandRcursor = accounts_connection.cursor()
+        else:
+            print "Table name needs to be added to list in settings.py"
         RandRdata = RandRcursor.execute(self._randr_query)
         naphthabase_query(self._cleardb)
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
@@ -424,6 +427,25 @@ class Customer(NaphthaBaseObject):
         return NaphthaBaseObject._sqlquery_as_dict(self, CustomerID)
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class Depot(NaphthaBaseObject):
+    """Updates and provides access to Warehouse Address details."""
+#////////////////////////////////////////////////////////////////////////////#
+
+    def __init__(self):
+        self._table = 'Depot'
+        self._randr_query = sql.get_depot
+        self._nbquery = sql.depot
+        self._cleardb = sql.clear_depot_table
+        NaphthaBaseObject.__init__(self)
+
+    def get_depot(self, ClientID):
+        return NaphthaBaseObject._sqlquery(self, ClientID)
+
+    def get_dict(self, ClientID):
+        return NaphthaBaseObject._sqlquery_as_dict(self, ClientID)
+
+
 if __name__ == '__main__':
     # Tests
     if os.getenv('COMPUTERNAME') == 'ACER5920':
@@ -441,4 +463,5 @@ if __name__ == '__main__':
     so = Sales()
     haulier = Hauliers()
     customer = Customer()
+    depot = Depot()
        

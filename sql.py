@@ -142,6 +142,24 @@ create_customer_table = """
     LastUpdated date
     )
     """
+
+create_depot_table = """
+    CREATE TABLE Depot (
+    ClientID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    Comment text,
+    LastUpdated date
+    )
+    """
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #----------------------------------------------------------------------------#
@@ -534,3 +552,57 @@ customer = """
 clear_customer_table = """
     DELETE FROM Customer
     """
+
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Depot Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_depot = """
+    SELECT
+    Depot.\"Client ID\" AS ClientID,
+    Depot.Name,
+    Depot.Address1,
+    Depot.Address2,
+    Depot.Address3,
+    Depot.Address4,
+    Depot.Address5,
+    Depot.\"Post code\" AS PostCode,
+    Depot.Telephone,
+    Depot.Fax,
+    Depot.Email,
+    Depot.Comment,
+    Depot.\"Last Updated\" AS LastUpdated
+    FROM Depot
+    ORDER BY Depot.\"Client ID\"
+    """
+
+#----------------------------------------------------------------------------#
+# Depot Selection (NaphthaBase)
+#----------------------------------------------------------------------------#
+depot = """
+    SELECT
+    ClientID,
+    Name,
+    Address1,
+    Address2,
+    Address3,
+    Address4,
+    Address5,
+    PostCode,
+    Telephone,
+    Fax,
+    Email,
+    Comment,
+    LastUpdated
+    FROM Depot
+    WHERE ClientID like '%(query)s'
+    """
+
+#----------------------------------------------------------------------------#
+# Clear Depot Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clear_depot_table = """
+    DELETE FROM Depot
+    """
+
