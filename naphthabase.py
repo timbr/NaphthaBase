@@ -237,7 +237,7 @@ class NaphthaBaseObject(object):
         else:
             print "Table name needs to be added to list in settings.py"
         RandRdata = RandRcursor.execute(self._randr_query)
-        naphthabase_query(self._cleardb)
+        naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
@@ -264,7 +264,6 @@ class MaterialCodes(NaphthaBaseObject):
     def __init__(self):
         self._table = 'Material'
         self._randr_query = sql.material_codes
-        self._cleardb = sql.clear_material_table
         NaphthaBaseObject.__init__(self)
         self._create_db()
     
@@ -304,7 +303,6 @@ class Purchases(NaphthaBaseObject):
         self._table = 'Purchases'
         self._randr_query = sql.po_data
         self._nbquery = sql.purchase_orders
-        self._cleardb = sql.clear_po_table
         NaphthaBaseObject.__init__(self)
     
     def get_po(self, PO_Num):
@@ -320,7 +318,6 @@ class Stock(NaphthaBaseObject):
         self._table = 'Stock'
         self._randr_query = sql.get_stock
         self._nbquery = sql.get_batch
-        self._cleardb = sql.clear_stock_table
         NaphthaBaseObject.__init__(self)
 
     def get_batch(self, Batch_Num):
@@ -339,7 +336,6 @@ class Sales(NaphthaBaseObject):
         self._table = 'Sales'
         self._randr_query = sql.get_sales
         self._nbquery = sql.sales_orders
-        self._cleardb = sql.clear_sales_table
         NaphthaBaseObject.__init__(self)
         # Create a list of WO numbers that have been deleted
         self._deleted = self._getdata('DeletedSales')
@@ -384,7 +380,6 @@ class Hauliers(NaphthaBaseObject):
     def __init__(self):
         self._table = 'Hauliers'
         self._randr_query = sql.get_hauliers
-        self._cleardb = sql.clear_hauliers_table
         NaphthaBaseObject.__init__(self)
         self._create_db()
     
@@ -417,7 +412,6 @@ class Customer(NaphthaBaseObject):
         self._table = 'Customer'
         self._randr_query = sql.get_customer
         self._nbquery = sql.customer
-        self._cleardb = sql.clear_customer_table
         NaphthaBaseObject.__init__(self)
 
     def get_customer(self, CustomerID):
@@ -436,7 +430,6 @@ class Depot(NaphthaBaseObject):
         self._table = 'Depot'
         self._randr_query = sql.get_depot
         self._nbquery = sql.depot
-        self._cleardb = sql.clear_depot_table
         NaphthaBaseObject.__init__(self)
 
     def get_depot(self, ClientID):
