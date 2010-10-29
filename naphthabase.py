@@ -192,6 +192,9 @@ class NaphthaBaseObject(object):
         
     def _sqlquery(self, query, sql = ''):
         """Returns a list of tuples containing results of sql query
+        
+        query: a dictionary containing query values
+        sql: sql can be specified if the default sql cannot be used
         """
         
         if sql == '':
@@ -199,7 +202,7 @@ class NaphthaBaseObject(object):
             sql = self._nbquery
         self._update_naphtha_base()
         results = \
-          naphthabase_query(sql % {'query': str(query)})
+          naphthabase_query(sql % query)
         return [line for line in results]
     
     def _sqlquery_as_dict(self, query, include_blank_columns = False):
@@ -363,6 +366,12 @@ class Sales(NaphthaBaseObject):
                                                   sql.deleted_sales_orders)
         return [line for line in results]
 
+    def current_orders(self, CustomerID):
+        
+        """Returns all a customer's orders that haven't been despatched"""
+        
+        
+
     def _update_naphtha_base(self):
         NaphthaBaseObject._update_naphtha_base(self)
         # Create a list of WO numbers that have been deleted
@@ -421,6 +430,10 @@ class Customer(NaphthaBaseObject):
 
     def get_dict(self, CustomerID):
         return NaphthaBaseObject._sqlquery_as_dict(self, CustomerID)
+
+    def current_orders(self, CustomerID):
+        self.sales = Sales()
+
 
 
 #////////////////////////////////////////////////////////////////////////////#

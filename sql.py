@@ -433,8 +433,8 @@ sales_orders = """
     FROM Sales,
     (SELECT
         MAX(LastUpdated) AS latest from Sales WHERE
-        WO_Num = %(query)s)
-    WHERE WO_Num = %(query)s and LastUpdated = latest
+        WO_Num = %(WO_Num)s)
+    WHERE WO_Num = %(WO_Num)s and LastUpdated = latest
     ORDER BY WO_Num
     """
 
