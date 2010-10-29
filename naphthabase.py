@@ -319,6 +319,28 @@ class Purchases(NaphthaBaseObject):
     def get_po(self, PO_Num):
         return NaphthaBaseObject._sqlquery(self, PO_Num)
 
+    def getdict(self, PO_Num):
+        """Returns a list of dictionaries with purchase data.
+        
+        Each entry is returned as a dictionary, with column names as
+        the dictionary keys.
+        """
+
+        results = NaphthaBaseObject._sqlquery_as_dict(self, PO_Num)
+        return [line for line in results]
+    
+    def purchase_orders(self, no_blank_columns = True):
+        """Returns purchase orders that haven't been delivered"""
+        
+        purchase_orders = []
+        for entry in self._data:
+            qty_batched = entry[self._clmn['DeliveredQuantity']]
+            status = entry[self._clmn['Status']]
+            if qty_batched == '0.0000' or qty_batched == '1.0000':
+                if status == 4:
+                    purchase_orders.append(entry)
+        return self._return_as_dict(purchase_orders, no_blank_columns)
+
 
 #////////////////////////////////////////////////////////////////////////////#
 class Stock(NaphthaBaseObject):
