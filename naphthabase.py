@@ -201,15 +201,14 @@ class NaphthaBaseObject(object):
         results = \
           naphthabase_query(sql % {'query': str(query)})
         return [line for line in results]
-    
-    def _sqlquery_as_dict(self, query, include_blank_columns = False):
-        """Returns a list of dictionaries containing results of sql query.
+
+    def _return_as_dict(self, data, include_blank_columns = False):
+        """Returns a list of dictionaries for the given list of tuples.
         
         The dictionary keys are the column names. Only columns that contain
-        data are returned
+        data are returned unless otherwise requested.
         """
         
-        data = self._sqlquery(query)
         columns = get_columns(self._table)
         datalist = []
         for record in data:
@@ -220,6 +219,16 @@ class NaphthaBaseObject(object):
                     datadict[columns[index]] = field
             datalist.append(datadict)
         return datalist
+    
+    def _sqlquery_as_dict(self, query, blank_columns = False):
+        """Returns a list of dictionaries containing results of sql query.
+        
+        The dictionary keys are the column names. Only columns that contain
+        data are returned unless otherwise requested.
+        """
+        
+        data = self._sqlquery(query)
+        return self._return_as_dict(data, blank_columns)
 
     def _update_naphtha_base(self):
         if self._localonly == 1:
@@ -362,6 +371,24 @@ class Sales(NaphthaBaseObject):
             results = NaphthaBaseObject._sqlquery(self, WO_Num, \
                                                   sql.deleted_sales_orders)
         return [line for line in results]
+
+    def not_despatched(self):
+        """Returns orders that haven't been despatched"""
+        
+        not_despatched = []
+        for entry in self._data:
+            if entry[self._clmn['Status']] == 0:
+                not_despatched.append(entry)
+        return not_despatched
+
+    def customer_orders(self, CustomerID, blank_columns = False):
+        """Returns a customer's orders that haven't been despatched"""
+        
+        customer_orders = []
+        for entry in self.not_despatched():
+            if entry[self._clmn['CustomerKey']] == CustomerID.upper():
+                customer_orders.append(entry)
+        return self._return_as_dict(customer_orders, blank_columns)
 
     def _update_naphtha_base(self):
         NaphthaBaseObject._update_naphtha_base(self)
