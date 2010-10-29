@@ -341,6 +341,24 @@ class Purchases(NaphthaBaseObject):
                     purchase_orders.append(entry)
         return self._return_as_dict(purchase_orders, no_blank_columns)
 
+    def supplier_history(self, SupplierID, all=False, no_blank_columns=True):
+        """Returns history of orders from suppliers.
+        
+        Orders that haven't been delivered are excluded, unless 'all' is set
+        to True.
+        """
+        
+        supplier_history = []
+        active_POs = [entry['PO_Num'] for entry in self.purchase_orders()]
+        for entry in self._data:
+            if entry[self._clmn['Supplier']] == SupplierID.upper():
+                if all is False:
+                    if entry[self._clmn['PO_Num']] not in active_POs:
+                        supplier_history.append(entry)
+                else:
+                    supplier_history.append(entry)
+        return self._return_as_dict(supplier_history, no_blank_columns)
+
 
 #////////////////////////////////////////////////////////////////////////////#
 class Stock(NaphthaBaseObject):
@@ -422,7 +440,10 @@ class Sales(NaphthaBaseObject):
         customer_history = []
         for entry in self._data:
             if entry[self._clmn['CustomerKey']] == CustomerID.upper():
-                if entry[self._clmn['Status']] != 0:
+                if all is False:
+                    if entry[self._clmn['Status']] != 0:
+                        customer_history.append(entry)
+                else:
                     customer_history.append(entry)
         return self._return_as_dict(customer_history, no_blank_columns)
 
