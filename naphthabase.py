@@ -202,7 +202,7 @@ class NaphthaBaseObject(object):
           naphthabase_query(sql % {'query': str(query)})
         return [line for line in results]
 
-    def _return_as_dict(self, data, include_blank_columns = False):
+    def _return_as_dict(self, data, no_blank_columns = True):
         """Returns a list of dictionaries for the given list of tuples.
         
         The dictionary keys are the column names. Only columns that contain
@@ -214,13 +214,13 @@ class NaphthaBaseObject(object):
         for record in data:
             datadict = {}
             for index, field in enumerate(record):
-                if field != '' or include_blank_columns is True:
+                if field != '' or no_blank_columns is False:
                     # don't include blank columns unless told to
                     datadict[columns[index]] = field
             datalist.append(datadict)
         return datalist
     
-    def _sqlquery_as_dict(self, query, blank_columns = False):
+    def _sqlquery_as_dict(self, query, no_blank_columns = True):
         """Returns a list of dictionaries containing results of sql query.
         
         The dictionary keys are the column names. Only columns that contain
@@ -228,7 +228,7 @@ class NaphthaBaseObject(object):
         """
         
         data = self._sqlquery(query)
-        return self._return_as_dict(data, blank_columns)
+        return self._return_as_dict(data, no_blank_columns)
 
     def _update_naphtha_base(self):
         if self._localonly == 1:
@@ -381,14 +381,28 @@ class Sales(NaphthaBaseObject):
                 not_despatched.append(entry)
         return not_despatched
 
-    def customer_orders(self, CustomerID, blank_columns = False):
+    def customer_orders(self, CustomerID, no_blank_columns = True):
         """Returns a customer's orders that haven't been despatched"""
         
         customer_orders = []
         for entry in self.not_despatched():
             if entry[self._clmn['CustomerKey']] == CustomerID.upper():
                 customer_orders.append(entry)
-        return self._return_as_dict(customer_orders, blank_columns)
+        return self._return_as_dict(customer_orders, no_blank_columns)
+
+    def customer_history(self, CustomerID, all=False, no_blank_columns=True):
+        """Returns history of customer orders.
+        
+        Orders that haven't been despatched are excluded, unless 'all' is set
+        to True.
+        """
+        
+        customer_history = []
+        for entry in self._data:
+            if entry[self._clmn['CustomerKey']] == CustomerID.upper():
+                if entry[self._clmn['Status']] != 0:
+                    customer_history.append(entry)
+        return self._return_as_dict(customer_history, no_blank_columns)
 
     def _update_naphtha_base(self):
         NaphthaBaseObject._update_naphtha_base(self)
