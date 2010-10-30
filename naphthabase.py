@@ -104,7 +104,6 @@ def naphthabase_transfer(data, query):
     NaphthaBase.text_factory = str # solves problem with Pound signs....!
     c = NaphthaBase.cursor()
     for entry in data:
-            entry = tuple(entry + (1,)) # add priority 1 to each entry
             results = [row for row in c.execute(query, entry)]
     NaphthaBase.commit()
     NaphthaBase.close()
@@ -230,7 +229,7 @@ class NaphthaBaseObject(object):
             sql = self._nbquery
         self._update_naphtha_base()
         results = \
-          naphthabase_query(sql % {'query': str(query, 'priority': revis)})
+          naphthabase_query(sql % {'query': str(query), 'priority': revis})
         return [line for line in results]
 
     def _return_as_dict(self, data, revis = 1, no_blank_columns = True):
@@ -271,6 +270,12 @@ class NaphthaBaseObject(object):
             return
         print 'Updating NaphthaBase with latest %s Data.' % self._table
         RandRdata = get_randR_data(self._randr_query, self._table)
+        # Assign priority 1 to each record:
+        tim = ()
+        for record in RandRdata:
+            record.append(1)
+            tim = tuple(tim + (record,))
+        RandRdata = tim
         naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
