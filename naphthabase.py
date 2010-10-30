@@ -109,7 +109,7 @@ def naphthabase_transfer(data, query):
     NaphthaBase.close()
 
 
-def get_randR_data(query, table = '', last_updated = '',
+def get_randr_data(query, table = '', last_updated = '',
                       convert_decimal_to_strings = True):
     """Run an SQL query on the RandR database.
     
@@ -129,13 +129,9 @@ def get_randR_data(query, table = '', last_updated = '',
     else:
         print "no table specified, I'll try both"
         RandRcursor = stock_connection.cursor()
-    
-    try:
-        RandRdata = RandRcursor.execute(query, {'lastupdate': last_updated})
-    except:
-        if table == '':
-            RandRcursor = accounts_connection.cursor()
-            RandRdata = RandRcursor.execute(query, {'lastupdate': last_updated})
+        #TODO: use exceptions to try first the stock_connection, and if it fails, try the accounts_connection.
+
+    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
 
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
@@ -275,7 +271,7 @@ class NaphthaBaseObject(object):
         if table_size[0][0] == 0:
             # It's an empty table so fill it, all records priority 1
             print 'Populating NaphthaBase with %s Data.' % self._table
-            RandRdata = get_randR_data(self._randr_query, self._table)
+            RandRdata = get_randr_data(self._randr_query, self._table)
             # Assign priority 1 to each record:
             tim = ()
             for record in RandRdata:
@@ -283,8 +279,10 @@ class NaphthaBaseObject(object):
                 tim = tuple(tim + (record,))
             RandRdata = tim
         else:
+            # what is the latest update time recorded in the Naphthabase?
             last_updated = naphthabase_query \
-                             ("SELECT MAX(LastUpdated) from %s" % self._table)
+                       ("SELECT MAX(LastUpdated) from %s" % self._table)[0][0]
+            # get new records from the RandR database
             new_records = get_randr_data \
                                 (self._randr_query, self._table, last_updated)
             print [row for row in new_records]
