@@ -104,6 +104,7 @@ def naphthabase_transfer(data, query):
     NaphthaBase.text_factory = str # solves problem with Pound signs....!
     c = NaphthaBase.cursor()
     for entry in data:
+            entry = tuple(entry + (1,)) # add priority 1 to each entry
             results = [row for row in c.execute(query, entry)]
     NaphthaBase.commit()
     NaphthaBase.close()
@@ -211,7 +212,8 @@ class NaphthaBaseObject(object):
         if table == '':
             # If the table isn't specified, use the default table
             table = self._table
-        data = [row for row in naphthabase_query("select * from %s" % table)]
+        data = [row for row in naphthabase_query
+                              ("select * from %s where priority = 1" % table)]
         return data
     
     def _getfromdict(self, code):
@@ -219,7 +221,7 @@ class NaphthaBaseObject(object):
         return self._datadict.get(code.upper().upper(), [''])[0]
         # Return an empty string if no key found    
         
-    def _sqlquery(self, query, sql = ''):
+    def _sqlquery(self, query, revis = 1, sql = ''):
         """Returns a list of tuples containing results of sql query
         """
         
@@ -228,10 +230,10 @@ class NaphthaBaseObject(object):
             sql = self._nbquery
         self._update_naphtha_base()
         results = \
-          naphthabase_query(sql % {'query': str(query)})
+          naphthabase_query(sql % {'query': str(query, 'priority': revis)})
         return [line for line in results]
 
-    def _return_as_dict(self, data, no_blank_columns = True):
+    def _return_as_dict(self, data, revis = 1, no_blank_columns = True):
         """Returns a list of dictionaries for the given list of tuples.
         
         The dictionary keys are the column names. Only columns that contain
@@ -249,7 +251,7 @@ class NaphthaBaseObject(object):
             datalist.append(datadict)
         return datalist
     
-    def _sqlquery_as_dict(self, query, no_blank_columns = True):
+    def _sqlquery_as_dict(self, query, revis = 1, no_blank_columns = True):
         """Returns a list of dictionaries containing results of sql query.
         
         The dictionary keys are the column names. Only columns that contain

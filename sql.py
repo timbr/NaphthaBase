@@ -9,7 +9,8 @@ create_material_table = """
     Code text,
     Description text,
     LastUpdated date,
-    RecordNo int
+    RecordNo int,
+    Priority int
     )
     """
 
@@ -30,7 +31,8 @@ create_purchases_table = """
     PrintedComment text,
     DeliveryComment text,
     Status int,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -56,7 +58,8 @@ create_stock_table = """
     UserID text,
     LastUpdated date,
     InvoiceDate date,
-    BatchUp_Date date
+    BatchUp_Date date,
+    Priority int
     )
     """
 
@@ -98,7 +101,8 @@ create_sales_table = """
     Haulier text,
     BatchDespatched text,
     DespatchedQuantity text,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -107,7 +111,8 @@ create_deletedsales_table = """
     WO_Num text,
     UserID text,
     Reason text,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -115,7 +120,8 @@ create_hauliers_table = """
     CREATE TABLE Hauliers (
     HaulierKey text,
     Name text,
-    NominalCode text
+    NominalCode text,
+    Priority int
     )
     """
 
@@ -139,7 +145,8 @@ create_customer_table = """
     Memo text,
     CreditLimit text,
     Terms text,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -157,7 +164,8 @@ create_depot_table = """
     Fax text,
     Email text,
     Comment text,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -169,7 +177,8 @@ create_contact_table = """
     Surname text,
     Phone text,
     Department text,
-    LastUpdated date
+    LastUpdated date,
+    Priority int
     )
     """
 
@@ -191,7 +200,8 @@ create_supplier_table = """
     VAT text,
     Comment text,
     Memo text,
-    LastUpdated text
+    LastUpdated text,
+    Priority int
     )
     """
 
@@ -262,12 +272,10 @@ purchase_orders = """
     PrintedComment,
     DeliveryComment,
     Status,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Purchases,
-    (SELECT
-        MAX(LastUpdated) AS latest from Purchases WHERE
-        PO_Num = %(query)s)
-    WHERE PO_Num = %(query)s and LastUpdated = latest
+    WHERE PO_Num = %(query)s and Priority = %(priority)i
     ORDER BY Code
     """             
 
@@ -330,9 +338,10 @@ get_batch = """
     UserID,
     LastUpdated,
     InvoiceDate,
-    BatchUp_Date
+    BatchUp_Date,
+    Priority
     FROM Stock
-    WHERE Batch = %(query)s
+    WHERE Batch = %(query)s and Priority = %(priority)i
     """
 
 #****************************************************************************#
@@ -429,12 +438,13 @@ sales_orders = """
     Haulier,
     BatchDespatched,
     DespatchedQuantity,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Sales,
     (SELECT
         MAX(LastUpdated) AS latest from Sales WHERE
         WO_Num = %(query)s)
-    WHERE WO_Num = %(query)s and LastUpdated = latest
+    WHERE WO_Num = %(query)s and Priority = %(priority)i
     ORDER BY WO_Num
     """
 
@@ -461,9 +471,10 @@ deleted_sales_orders = """
     WO_Num,
     UserID,
     Reason,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM DeletedSales
-    WHERE WO_Num = %(query)s
+    WHERE WO_Num = %(query)s and Priority = %(priority)i
     """
 
 #****************************************************************************#
@@ -533,10 +544,12 @@ customer = """
     Memo,
     CreditLimit,
     Terms,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Customer
-    WHERE CustomerID like '%(query)s' OR
-    Name like '%(query)s'
+    WHERE (CustomerID like '%(query)s' OR
+    Name like '%(query)s')
+    AND Priority = %(priority)i
     """
 
 #****************************************************************************#
@@ -580,9 +593,10 @@ depot = """
     Fax,
     Email,
     Comment,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Depot
-    WHERE ClientID like '%(query)s'
+    WHERE ClientID like '%(query)s' and Priority = %(priority)i
     """
 
 #****************************************************************************#
@@ -614,9 +628,10 @@ contact = """
     Surname,
     Phone,
     Department,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Contact
-    WHERE ClientID like '%(query)s'
+    WHERE ClientID like '%(query)s' and Priority like %(priority)i
     """
 
 #****************************************************************************#
@@ -668,8 +683,10 @@ supplier = """
     VAT,
     Comment,
     Memo,
-    LastUpdated
+    LastUpdated,
+    Priority
     FROM Supplier
-    WHERE SupplierID like '%(query)s' OR
-    Name like '%(query)s'
+    WHERE (SupplierID like '%(query)s' OR
+    Name like '%(query)s')
+    AND Priority = %(Priority)i
     """
