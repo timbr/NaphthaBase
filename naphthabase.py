@@ -108,6 +108,35 @@ def naphthabase_transfer(data, query):
     NaphthaBase.commit()
     NaphthaBase.close()
 
+
+def get_randR_data(query, table = '', convert_decimal_to_strings = True):
+    """Run an SQL query on the RandR database.
+    
+    The correct database file is selected according to which table is being
+    queried. Any Decimal type fields are converted to strings by default to
+    avoid errors converting to floats.
+    """
+    
+    # Connect to the correct R&R database file.
+    # stock_tables and accounts_tables lists are in settings.py
+    if table in stock_tables:
+        RandRcursor = stock_connection.cursor()
+    elif table in accounts_tables:
+        RandRcursor = accounts_connection.cursor()
+    else:
+        print "no table specified, I'll try both"
+        RandRcursor = stock_connection.cursor()
+    
+    try:
+        RandRdata = RandRcursor.execute(query)
+    except:
+        if table == '':
+            RandRcursor = accounts_connection.cursor()
+            RandRdata = RandRcursor.execute(query)
+    
+    RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
+    return RandR_Stringed
+    
     
 def stringprocess(datastore):
     """Converts Decimal fields to strings in an sqlite datastore.
@@ -239,22 +268,13 @@ class NaphthaBaseObject(object):
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
         print 'Updating NaphthaBase with latest %s Data.' % self._table
-        # Connect to the correct R&R database file.
-        # stock_tables and accounts_tables lists are in settings.py
-        if self._table in stock_tables:
-            RandRcursor = stock_connection.cursor()
-        elif self._table in accounts_tables:
-            RandRcursor = accounts_connection.cursor()
-        else:
-            print "Table name needs to be added to list in settings.py"
-        RandRdata = RandRcursor.execute(self._randr_query)
+        RandRdata = get_randR_data(self._randr_query, self._table)
         naphthabase_query("DELETE FROM %s" % self._table) # Clear table
-        RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
         # creates string "insert into <table> values (?,?,?,?, etc)"
-        naphthabase_transfer(RandR_Stringed, 'insert into %s values %s' \
-                                              % (self._table, insert_fields))
+        naphthabase_transfer(RandRdata, 'insert into %s values %s' \
+                                       % (self._table, insert_fields))
         self._data = self._getdata() # Get a list containing all the data
         # create a dictionary relating column postions against their names.
         # ie 'Code': 0, 'Description': 1, etc
