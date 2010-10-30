@@ -285,6 +285,12 @@ class NaphthaBaseObject(object):
             # get new records from the RandR database
             new_records = get_randr_data \
                                 (self._randr_query, self._table, last_updated)
+            if len(new_records) == 0:
+                print 'No updates for table %s' % self._table
+                self._data = self._getdata() # Get a list containing all the data
+                self._clmn = get_column_positions(self._table)
+                self._last_refreshed = datetime.datetime.now()
+                return
             print [row for row in new_records]
         #naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         num_fields = len(get_columns(self._table))
@@ -603,8 +609,8 @@ if __name__ == '__main__':
     if os.getenv('COMPUTERNAME') == 'ACER5920':
         # Use dummy R&R database and run some tests
         print '\nACER5920\n========\n'
-        if os.path.exists(NaphthaBase_Dbase):
-            os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
+        #if os.path.exists(NaphthaBase_Dbase):
+            #os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
         make_database_connection(TestDB_Old, TestDB_Acc_Old)
     else:
         make_database_connection()

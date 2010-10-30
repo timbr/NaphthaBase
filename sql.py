@@ -526,7 +526,7 @@ get_customer = """
     Customer.Terms,
     Customer.\"Last Updated\" AS LastUpdated
     FROM Customer
-    WHERE Customer.\"Last Updated\" > %(last_update)s
+    WHERE Customer.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Customer.ID
     """
 
