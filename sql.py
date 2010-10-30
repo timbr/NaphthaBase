@@ -121,6 +121,7 @@ create_hauliers_table = """
     HaulierKey text,
     Name text,
     NominalCode text,
+    LastUpdated date,
     Priority int
     )
     """
@@ -218,6 +219,7 @@ material_codes = """
     Formula.\"Record Number\" AS RecordNo
     FROM Formula
     WHERE (Formula.\"Customer Key\"='ANY')
+    AND Formula.\"Last Updated\" > %(lastupdate)s
     ORDER BY Formula.Key
     """
 
@@ -248,7 +250,8 @@ po_data = """
     \"Purchase Order\".\"Order Number\" = 
     \"Purchase Item\".\"Order Number\") LEFT JOIN \"Formula Stock\" ON
     (\"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key) AND 
-    (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON)       
+    (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON) 
+    WHERE \"Purchase Item\".\"Last Updated\" > %(lastupdate)s
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
@@ -309,6 +312,7 @@ get_stock = """
     \"Formula Stock\".\"Production Date\" AS BatchUp_Date
     FROM \"Formula Stock\", \"Formula Stock Usage\"
     WHERE \"Formula Stock\".Batch = \"Formula Stock Usage\".Batch
+    AND \"Formula Stock Usage\".\"Last Updated\" > %(lastupdate)s
     ORDER BY \"Formula Stock\".Batch,
     \"Formula Stock Usage\".\"Last Updated\"
     """
@@ -395,6 +399,7 @@ get_sales = """
     \"Sales Order Despatch\" ON
     (\"Sales Order Item\".\"Stock Code\" = \"Sales Order Despatch\".\"Stock Code\") AND
     (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
+    WHERE \"Sales Order\".\"Last Updated\" > %(lastupdate)s
     """
 
 #----------------------------------------------------------------------------#
@@ -461,6 +466,7 @@ get_deleted_sales = """
     \"Missing Order Number\".DateTime AS LastUpdated
     FROM \"Missing Order Number\"
     WHERE \"Missing Order Number\".Key > '1'
+    AND \"Missing Order Number\".DateTime > %(lastupdate)s
     """
 
 #----------------------------------------------------------------------------#
@@ -486,8 +492,10 @@ get_hauliers = """
     SELECT
     \"Additional Items\".Key AS HaulierKey,
     \"Additional Items\".Name,
-    \"Additional Items\".\"Nominal Code\" AS NominalCode
+    \"Additional Items\".\"Nominal Code\" AS NominalCode,
+    \"Additional Items\".\"Last Updated\" AS LastUpdated
     FROM \"Additional Items\"
+    WHERE \"Additional Items\".\"Last Updated\" > %(lastupdate)s
     ORDER BY \"Additional Items\".\"Record Number\"
     """
 
@@ -518,6 +526,7 @@ get_customer = """
     Customer.Terms,
     Customer.\"Last Updated\" AS LastUpdated
     FROM Customer
+    WHERE Customer.\"Last Updated\" > %(last_update)s
     ORDER BY Customer.ID
     """
 
@@ -573,6 +582,7 @@ get_depot = """
     Depot.Comment,
     Depot.\"Last Updated\" AS LastUpdated
     FROM Depot
+    WHERE Depot.\"Last Updated\" > %(lastupdate)s
     ORDER BY Depot.\"Client ID\"
     """
 
@@ -614,6 +624,7 @@ get_contact = """
     Contact.Department,
     Contact.\"Last Updated\" AS LastUpdated
     FROM Contact
+    WHERE Contact.\"Last Updated\" > %(lastupdate)s
     ORDER BY Contact.\"Client ID\"
     """
 
@@ -659,6 +670,7 @@ get_supplier = """
     Supplier.Memo,
     Supplier.\"Last Updated\" AS LastUpdated
     FROM Supplier
+    WHERE Supplier.\"Last Updated\" > %(lastupdate)s
     ORDER BY Supplier.ID
     """
 

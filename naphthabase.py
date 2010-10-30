@@ -109,7 +109,8 @@ def naphthabase_transfer(data, query):
     NaphthaBase.close()
 
 
-def get_randR_data(query, table = '', convert_decimal_to_strings = True):
+def get_randR_data(query, table = '', last_updated = '',
+                      convert_decimal_to_strings = True):
     """Run an SQL query on the RandR database.
     
     The correct database file is selected according to which table is being
@@ -117,6 +118,8 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
     avoid errors converting to floats.
     """
     
+    if last_updated == '':
+        last_updated = datetime.datetime(1982,1,1,0,0)
     # Connect to the correct R&R database file.
     # stock_tables and accounts_tables lists are in settings.py
     if table in stock_tables:
@@ -128,12 +131,12 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
         RandRcursor = stock_connection.cursor()
     
     try:
-        RandRdata = RandRcursor.execute(query)
+        RandRdata = RandRcursor.execute(query, {'lastupdate': last_updated})
     except:
         if table == '':
             RandRcursor = accounts_connection.cursor()
-            RandRdata = RandRcursor.execute(query)
-    
+            RandRdata = RandRcursor.execute(query, {'lastupdate': last_updated})
+
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
     
@@ -268,15 +271,24 @@ class NaphthaBaseObject(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NaphthaBase with latest %s Data.' % self._table
-        RandRdata = get_randR_data(self._randr_query, self._table)
-        # Assign priority 1 to each record:
-        tim = ()
-        for record in RandRdata:
-            record.append(1)
-            tim = tuple(tim + (record,))
-        RandRdata = tim
-        naphthabase_query("DELETE FROM %s" % self._table) # Clear table
+        table_size = naphthabase_query("SELECT COUNT(*) FROM %s" %self._table)
+        if table_size[0][0] == 0:
+            # It's an empty table so fill it, all records priority 1
+            print 'Populating NaphthaBase with %s Data.' % self._table
+            RandRdata = get_randR_data(self._randr_query, self._table)
+            # Assign priority 1 to each record:
+            tim = ()
+            for record in RandRdata:
+                record.append(1)
+                tim = tuple(tim + (record,))
+            RandRdata = tim
+        else:
+            last_updated = naphthabase_query \
+                             ("SELECT MAX(LastUpdated) from %s" % self._table)
+            new_records = get_randr_data \
+                                (self._randr_query, self._table, last_updated)
+            print [row for row in new_records]
+        #naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
         # creates string "insert into <table> values (?,?,?,?, etc)"
