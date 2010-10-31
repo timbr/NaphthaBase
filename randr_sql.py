@@ -4,6 +4,12 @@ Routines for cloning the R&R database and updating to the Naphthabase with a
 revision history.
 """
 
+tables = ['Formula', 'Purchase_Order', 'Purchase_Item', 'Formula_Stock',
+          'Formula_Stock_Usage', 'Sales_Order', 'Sales_Order_Item',
+          'Sales_Order_Additional', 'Sales_Order_Despatch',
+          'Missing_Order_Numbers', 'Additional_Items', 'Customer', 'Depot',
+          'Contact', 'Supplier']
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #----------------------------------------------------------------------------#
@@ -19,6 +25,19 @@ Formula = """
     WHERE (Formula.\"Customer Key\"='ANY')
     AND Formula.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Formula.Key
+    """
+
+#----------------------------------------------------------------------------#
+# Create Clone of Formula Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_formula = """
+    CREATE TABLE Formula (
+    Code text,
+    Description text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
     """
 
 #****************************************************************************#
@@ -44,6 +63,26 @@ Purchase_Order = """
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
+#----------------------------------------------------------------------------#
+# Create Clone of Purchase Order Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_purchase_order = """
+    CREATE TABLE Purchase_Order (
+    PO_Num text,
+    OrderValue text,
+    Supplier text,
+    OrderReference text,
+    OrderDate text,
+    PlacedBy text,
+    PrintedComment text,
+    DeliveryComment text,
+    Status text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -63,6 +102,21 @@ Purchase_Item = """
     ORDER BY \"Purchase Item\".\"Record Number\"
     """
 
+#----------------------------------------------------------------------------#
+# Create Clone of Purchase Item Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_purchase_item = """
+    CREATE TABLE Purchase_Item (
+    Code text,
+    Quantity text,
+    Price text,
+    DueDate date,
+    DeliveredQuantity text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -88,6 +142,28 @@ Formula_Stock = """
     ORDER BY \"Formula Stock\".Batch
     """
 
+#----------------------------------------------------------------------------#
+# Create Clone of Formula Stock Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_formula_stock = """
+    CREATE TABLE Formula_Stock (
+    Batch text,
+    Code text,
+    Revision text,
+    BatchStatus text,
+    QuantityNow text,
+    OriginalDeliveredQuantity text,
+    StockInfo text,
+    Supplier text,
+    PONumber text,
+    PurchaseCost text,
+    LastUpdated date,
+    BatchUp_Date date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -110,6 +186,27 @@ Formula_Stock_Usage = """
     FROM \"Formula Stock Usage\"
     WHERE \"Formula Stock Usage\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Formula Stock Usage\".\"Last Updated\"
+    """
+
+#----------------------------------------------------------------------------#
+# Create Clone of Formula Stock Usage Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_formula_stock_usage = """
+    CREATE TABLE Formula_Stock_Usage (
+    Code text,
+    Revision text,
+    Customer text,
+    WONumber text,
+    Price text,
+    UsageReference text,
+    StockAction text,
+    ItemOrder text,
+    QuantityMovement text,
+    UserID text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
     """
 
 #****************************************************************************#
@@ -154,6 +251,46 @@ Sales_Order = """
     WHERE \"Sales Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+#----------------------------------------------------------------------------#
+# Create Clone of Sales Order Table(NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_sales_order = """
+    CREATE TABLE Sales_Order (
+    WO_Num text,
+    Link text,
+    CustomerKey text,
+    CustomerOrderNumber text,
+    DespatchNotes text,
+    OrderValue text,
+    Status int,
+    OrderDate date,
+    DespatchDate date,
+    InvoiceDate date,
+    Operator text,
+    DespatchCompanyName text,
+    DespatchAddress1 text,
+    DespatchAddress2 text,
+    DespatchAddress3 text,
+    DespatchPostCode text,
+    DeliveryNoteComment1 text,
+    DeliveryNoteComment2 text,
+    DeliveryNoteComment3 text,
+    DeliveryNoteComment4 text,
+    DeliveryNoteComment5 text,
+    InvoiceComment1 text,
+    InvoiceComment2 text,
+    InvoiceComment3 text,
+    InvoiceComment4 text,
+    InvoiceComment5 text,
+    InvoiceComment6 text,
+    InvoiceTerms text,
+    ItemCount int,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -172,6 +309,22 @@ Sales_Order_Item = """
     WHERE \"Sales Order Item\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+#----------------------------------------------------------------------------#
+# Clone of Sales Order Item Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_sales_order_item = """
+    CREATE TABLE Sales_Order_Item (
+    Parent text,
+    StockCode text,
+    OrderQuantity text,
+    Price text,
+    RequiredDate date,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -187,6 +340,19 @@ Sales_Order_Additional = """
     WHERE \"Sales Order Additional\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+#----------------------------------------------------------------------------#
+# Clone of Sales Order Additional Table(NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_sales_order_additional = """
+    CREATE TABLE Sales_Order_Additional (
+    WO_Num text,
+    Haulier text,
+    LastUpdated text,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -195,13 +361,28 @@ Sales_Order_Additional = """
 Sales_Order_Despatch = """
     SELECT
     \"Sales Order Despatch\".Key,
-    \"Sales Order Despatch\".\"Stock Code\",
+    \"Sales Order Despatch\".\"Stock Code\" AS StockCode,
     \"Sales Order Despatch\".Batch AS BatchDespatched,
     \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
     \"Sales Order Despatch\".\"Last Updated\" AS LastUpdated
     \"Sales Order Despatch\".\"Record Number\" AS RecordNum
     FROM \"Sales Order Despatch\"    
     WHERE \"Sales Order Despatch\".\"Last Updated\" > #%(lastupdate)s#
+    """
+
+#----------------------------------------------------------------------------#
+# Clone of Sales Order Despatch Table(NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_sales_order_despatch = """
+    CREATE TABLE Sales_Order_Despatch (
+    Key text,
+    StockCode text,
+    BatchDespatched text,
+    DespatchedQuantity text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
     """
 
 #****************************************************************************#
@@ -221,6 +402,20 @@ Missing_Order_Numbers = """
     AND \"Missing Order Number\".DateTime > #%(lastupdate)s#
     """
 
+#----------------------------------------------------------------------------#
+# Clone of Missing Order Numbers Table(NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_missing_order_numbers = """
+    CREATE TABLE Missing_Order_Numbers (
+    WO_Num text,
+    UserID text,
+    Reason text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -232,10 +427,24 @@ Additional_Items = """
     \"Additional Items\".Name,
     \"Additional Items\".\"Nominal Code\" AS NominalCode,
     \"Additional Items\".\"Last Updated\" AS LastUpdated,
-    \"Additional Items\".\"Record Number\"
+    \"Additional Items\".\"Record Number\" AS RecordNum
     FROM \"Additional Items\"
     WHERE \"Additional Items\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Additional Items\".\"Record Number\"
+    """
+
+#----------------------------------------------------------------------------#
+# Clone Additional Items Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_additional_items = """
+    CREATE TABLE Additional_Items (
+    HaulierKey text,
+    Name text,
+    NominalCode text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
     """
 
 #****************************************************************************#
@@ -270,6 +479,35 @@ Customer = """
     ORDER BY Customer.ID
     """
 
+#----------------------------------------------------------------------------#
+# Clone of Customer Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_customer = """
+    CREATE TABLE Customer (
+    CustomerID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    Website text,
+    ContactName text,
+    VAT text,
+    Comment text,
+    Memo text,
+    CreditLimit text,
+    Terms text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -296,6 +534,29 @@ Depot = """
     ORDER BY Depot.\"Client ID\"
     """
 
+#----------------------------------------------------------------------------#
+# Clone of Depot Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_depot = """
+    CREATE TABLE Depot (
+    ClientID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    Comment text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
+    """
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -314,6 +575,23 @@ Contact = """
     FROM Contact
     WHERE Contact.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Contact.\"Client ID\"
+    """
+
+#----------------------------------------------------------------------------#
+# Clone of Contact Table(NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_contact = """
+    CREATE TABLE Contact (
+    ClientID text,
+    Title text,
+    Forename text,
+    Surname text,
+    Phone text,
+    Department text,
+    LastUpdated text,
+    RecordNum int,
+    Priority int
+    )
     """
 
 #****************************************************************************#
@@ -344,4 +622,31 @@ Supplier = """
     FROM Supplier
     WHERE Supplier.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Supplier.ID
+    """
+
+#----------------------------------------------------------------------------#
+# Clone of Supplier Table (NaphthaBase)
+#----------------------------------------------------------------------------#
+clone_supplier = """
+    CREATE TABLE Supplier (
+    SupplierID text,
+    Name text,
+    Address1 text,
+    Address2 text,
+    Address3 text,
+    Address4 text,
+    Address5 text,
+    PostCode text,
+    Telephone text,
+    Fax text,
+    Email text,
+    Website text,
+    ContactName text,
+    VAT text,
+    Comment text,
+    Memo text,
+    LastUpdated date,
+    RecordNum int,
+    Priority int
+    )
     """
