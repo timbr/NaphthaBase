@@ -27,67 +27,45 @@ materialStyle.fontName = 'Times-Roman'
 quantityStyle = ParagraphStyle('Quantity', materialStyle)
 quantityStyle.fontSize = 60
 quantityStyle.leading = 1.2 * 60
- 
-def create_label_pdf(batchnum, matdesc, quant):
-    c = Canvas("batchlabel.pdf", A4)
-    c.setLineWidth(0.12 * cm) # set underline width
-    
-    leftpos = 2.42*cm
-    origin = 0
-    
-    frameBatchHeading = Frame(leftpos, origin+12.76*cm, 5.2*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>BATCH:</u>", headingStyle)   
-    frameBatchHeading.addFromList([p],c)
-    
-    frameBatchDesc = Frame(leftpos+9*cm, origin+10.35*cm, 8*cm, 4.5*cm, showBoundary=0)
-    p = Paragraph("%s" % (batchnum), batchStyle)
-    frameBatchDesc.addFromList([p],c)
-    
-    frameMaterialHeading = Frame(leftpos, origin+9.59*cm, 7.8*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>MATERIAL:</u>", headingStyle)
-    frameMaterialHeading.addFromList([p],c)
-    
-    frameMaterialDesc = Frame(leftpos, origin+3*cm, 18*cm, 6.8*cm, showBoundary=0)
-    p = Paragraph("%s" % (matdesc), materialStyle)
-    frameMaterialDesc.addFromList([p],c)
-    
-    frameQuantHeading = Frame(leftpos, origin+1.57*cm, 7.6*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>QUANTITY:</u>", headingStyle)   
-    frameQuantHeading.addFromList([p],c)
-    
-    frameQuantDesc = Frame(leftpos+9.08*cm, origin+0.9*cm, 8.96*cm, 3*cm, showBoundary=0)
-    p = Paragraph("%s KG" % (quant), quantityStyle)
-    frameQuantDesc.addFromList([p],c)
-    
-    
-    origin = 14.3*cm
-    
-    frameBatchHeading1 = Frame(leftpos, origin+12.76*cm, 5.2*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>BATCH:</u>", headingStyle)   
-    frameBatchHeading1.addFromList([p],c)
-    
-    frameBatchDesc1 = Frame(leftpos+9*cm, origin+10.35*cm, 8*cm, 4.5*cm, showBoundary=0)
-    p = Paragraph("%s" % (batchnum), batchStyle)
-    frameBatchDesc1.addFromList([p],c)
-    
-    frameMaterialHeading1 = Frame(leftpos, origin+9.59*cm, 7.8*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>MATERIAL:</u>", headingStyle)
-    frameMaterialHeading1.addFromList([p],c)
-    
-    frameMaterialDesc1 = Frame(leftpos, origin+3*cm, 18*cm, 6.8*cm, showBoundary=0)
-    p = Paragraph("%s" % (matdesc), materialStyle)
-    frameMaterialDesc1.addFromList([p],c)
-    
-    frameQuantHeading1 = Frame(leftpos, origin+1.57*cm, 7.6*cm, 2.0*cm, showBoundary=0)
-    p = Paragraph("<u>QUANTITY:</u>", headingStyle)   
-    frameQuantHeading1.addFromList([p],c)
-    
-    frameQuantDesc1 = Frame(leftpos+9.08*cm, origin+0.9*cm, 8.96*cm, 3*cm, showBoundary=0)
-    p = Paragraph("%s KG" % (quant), quantityStyle)
-    frameQuantDesc1.addFromList([p],c)
-    
-    
+
+def create_label(filename, label_template):
+    c = Canvas(filename, A4)
+    c.setLineWidth(0.12 * cm) # set underline width 
+    for frame_item in label_template:
+        x, y, l, h = frame_item['x'], frame_item['y'], \
+                     frame_item['l'], frame_item['h']
+        style = frame_item['style']
+        text = frame_item['text']
+        frame = Frame(x*cm, y*cm, l*cm, h*cm, showBoundary = 0)
+        p = Paragraph(text, style)
+        frame.addFromList([p], c)
     c.save()
+    
+def create_label_pdf(batchnum, matdesc, quant):
+    leftpos = 2.42
+    label_template = []
+    for origin in [0, 14.3]:
+        label_template = label_template + [
+        {'name': 'frameBatchHeading', 'style': headingStyle,
+        'x': leftpos, 'y': origin+12.76, 'l': 5.2, 'h': 2.0,
+        'text': "<u>BATCH:</u>"},
+        {'name': 'frameBatchDesc', 'style': batchStyle,
+        'x': leftpos+9, 'y': origin+10.35, 'l': 8, 'h': 4.5,
+        'text': "%s" % (batchnum)},
+        {'name': 'frameMaterialHeading', 'style': headingStyle,
+        'x': leftpos, 'y': origin+9.59, 'l': 7.8, 'h': 2.0,
+        'text': "<u>MATERIAL:</u>"},
+        {'name': 'frameMaterialDesc', 'style': materialStyle,
+        'x': leftpos, 'y': origin+3, 'l': 18, 'h': 6.8,
+        'text': "%s" % (matdesc)},
+        {'name': 'frameQuantHeading', 'style': headingStyle,
+        'x': leftpos, 'y': origin+1.57, 'l': 7.6, 'h':2.0,
+        'text': "<u>QUANTITY:</u>"},
+        {'name': 'frameQuantDesc', 'style': quantityStyle,
+        'x': leftpos+9.08, 'y': origin+0.9, 'l': 8.96, 'h': 3,
+        'text': "%s KG" % (quant)}] 
+    create_label('batchlabel.pdf', label_template)
+
     
 if __name__ == "__main__":
     print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -104,9 +82,7 @@ if __name__ == "__main__":
         print "bye"
     matcode = nb.MaterialCodes()
     stock = nb.Stock()
-    details = stock.get_dict(batchnum)
-    print details
-    details = details[0]
+    details = stock.get_dict(batchnum)[0]
     if details['BatchStatus'] == 'E':
         print 'Batch is empty'
     else:
