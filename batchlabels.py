@@ -92,12 +92,10 @@ if __name__ == "__main__":
         print '\nBatch:', batchnum
         print 'Material:', matdesc
         print 'Quantity:', quant
-        print '\n\nHow many bags or pallets are there?'
-        num_bags = int(raw_input())
-        if num_bags > 1:
-            weights = []
-            while len(weights)!= num_bags:
-                print '\nEnter the weights:'
-                weights = raw_input().split()
+        print '\n\nEnter new weight or press return to use %s KG' % quant
+        new_weight = raw_input()
+        if new_weight != '':
+            quant = int(new_weight)
+            print '\nUsing %s KG' % quant
             
         create_label_pdf(batchnum, matdesc, quant)
