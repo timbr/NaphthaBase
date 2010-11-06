@@ -89,5 +89,15 @@ if __name__ == "__main__":
         batchnum = str(batchnum)
         matdesc = matcode.get_mat(details['Code'])
         quant  = details['QuantityNow']
-        print batchnum, matdesc, quant
+        print '\nBatch:', batchnum
+        print 'Material:', matdesc
+        print 'Quantity:', quant
+        print '\n\nHow many bags or pallets are there?'
+        num_bags = int(raw_input())
+        if num_bags > 1:
+            weights = []
+            while len(weights)!= num_bags:
+                print '\nEnter the weights:'
+                weights = raw_input().split()
+            
         create_label_pdf(batchnum, matdesc, quant)
