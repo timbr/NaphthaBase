@@ -128,8 +128,7 @@ create_sales_order_despatch_table = """
     Key text,
     StockCode text,
     BatchDespatched text,
-    DespatchedQuantity text,
-    LastUpdated date
+    DespatchedQuantity text
     )
     """
 
@@ -258,7 +257,7 @@ purchase_order = """
     \"Purchase Order\".\"Placed By\" AS PlacedBy,
     \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
     \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
-    \"Purchase Order\".Status,   
+    \"Purchase Order\".Status
     FROM \"Purchase Order\"
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
@@ -316,7 +315,7 @@ formula_stock_usage = """
     \"Formula Stock Usage\".\"Item Order\" AS ItemOrder,
     \"Formula Stock Usage\".Quantity AS QuantityMovement,
     \"Formula Stock Usage\".\"User ID\" AS UserID,
-    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
+    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated
     FROM \"Formula Stock Usage\"
     ORDER BY \"Formula Stock Usage\".\"Last Updated\"
     """
@@ -371,7 +370,7 @@ sales_order_item = """
     \"Sales Order Item\".\"Stock Code\" AS StockCode,
     \"Sales Order Item\".Quantity AS OrderQuantity,
     \"Sales Order Item\".Price,
-    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order Item\".\"Required Date\" AS RequiredDate
     FROM \"Sales Order Item\"
     """
 
@@ -393,8 +392,7 @@ sales_order_despatch = """
     \"Sales Order Despatch\".Key,
     \"Sales Order Despatch\".\"Stock Code\" AS StockCode,
     \"Sales Order Despatch\".Batch AS BatchDespatched,
-    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
-    \"Sales Order\".\"Last Updated\" AS LastUpdated
+    \"Sales Order Despatch\".Quantity AS DespatchedQuantity
     FROM \"Sales Order Despatch\"
     """
 
@@ -500,6 +498,7 @@ contact = """
     Contact.Phone,
     Contact.Department,
     Contact.\"Last Updated\" AS LastUpdated
+    FROM Contact
     ORDER BY Contact.\"Client ID\"
     """
 

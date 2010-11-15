@@ -59,7 +59,8 @@ def check_tables():
                  'FormulaStockUsage': sql.create_formula_stock_usage_table,
                  'SalesOrder': sql.create_sales_order_table,
                  'SalesOrderItem': sql.create_sales_order_item_table,
-                 'SalesOrderAddit': sql.create_sales_order_additional_table,
+                 'SalesOrderAdditional': 
+                                      sql.create_sales_order_additional_table,
                  'SalesOrderDespatch': sql.create_sales_order_despatch_table,
                  'MissingOrderNumber': sql.create_missing_order_number_table,
                  'AdditionalItems': sql.create_additional_items_table,
@@ -136,7 +137,7 @@ def get_randr_data(query, table = '', last_updated = '',
         RandRcursor = stock_connection.cursor()
         #TODO: use exceptions to try first the stock_connection, and if it fails, try the accounts_connection.
 
-    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
+    RandRdata = RandRcursor.execute(query)
 
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
