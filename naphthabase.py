@@ -52,12 +52,17 @@ def check_tables():
     
     global NaphthaBaseChecked # TODO Find alternative to global variables
     # Dictionary of table names and the sql query strings needed to create them
-    tablelist = {'Material': sql.create_material_table,
-                 'Purchases': sql.create_purchases_table,
-                 'Stock': sql.create_stock_table,
-                 'Sales': sql.create_sales_table,
-                 'DeletedSales': sql.create_deletedsales_table,
-                 'Hauliers': sql.create_hauliers_table,
+    tablelist = {'Formula': sql.create_formula_table,
+                 'PurchaseOrder': sql.create_purchase_order_table,
+                 'PurchaseItem': sql.create_purchase_item_table,
+                 'FormulaStock': sql.create_formula_stock_table,
+                 'FormulaStockUsage': sql.create_formula_stock_usage_table,
+                 'SalesOrder': sql.create_sales_order_table,
+                 'SalesOrderItem': sql.create_sales_order_item_table,
+                 'SalesOrderAddit': sql.create_sales_order_additional_table,
+                 'SalesOrderDespatch': sql.create_sales_order_despatch_table,
+                 'MissingOrderNumber': sql.create_missing_order_number_table,
+                 'AdditionalItems': sql.create_additional_items_table,
                  'Customer': sql.create_customer_table,
                  'Depot': sql.create_depot_table,
                  'Contact': sql.create_contact_table,
