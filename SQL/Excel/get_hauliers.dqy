@@ -1,0 +1,4 @@
+XLODBC
+1
+DSN=MS Access Database;DBQ=S:\NAPHTHAV6\DATA\Naphtha.mdb;DefaultDir=S:\NAPHTHAV6\DATA;DriverId=281;FIL=MS Access;MaxBufferSize=2048;PageTimeout=5;
+SELECT `Additional Items`.Key AS HaulierKey, `Additional Items`.Name, `Additional Items`.`Nominal Code` AS NominalCode FROM `Additional Items` ORDER BY `Additional Items`.`Record Number`

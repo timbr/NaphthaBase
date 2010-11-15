@@ -1,0 +1,4 @@
+XLODBC
+1
+DBQ=S:\NAPHTHAV6\DATA\Naphtha_accounts.mdb;DefaultDir=S:\NAPHTHAV6\DATA;Driver={Microsoft Access Driver (*.mdb)};DriverId=281;FIL=MS Access;MaxBufferSize=2048;MaxScanRows=8;PageTimeout=5;PWD=bgSoiqOogNMOH;SafeTransactions=0;Threads=3;UID=admin;UserCommitSync=Yes;
+SELECT Contact.`Client ID` AS ClientID, Contact.Title, Contact.Forename, Contact.Surname, Contact.Phone, Contact.Department, Contact.`Last Updated` AS LastUpdated FROM Contact ORDER BY Contact.`Client ID`

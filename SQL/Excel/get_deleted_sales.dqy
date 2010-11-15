@@ -1,0 +1,4 @@
+XLODBC
+1
+DSN=MS Access Database;DBQ=S:\NAPHTHAV6\DATA\Naphtha.mdb;DefaultDir=S:\NAPHTHAV6\DATA;DriverId=281;FIL=MS Access;MaxBufferSize=2048;PageTimeout=5;
+SELECT `Missing Order Number`.Key AS WO_Num, `Missing Order Number`.`User ID` AS UserID, `Missing Order Number`.Reason AS Reason, `Missing Order Number`.DateTime AS LastUpdated FROM `Missing Order Number` WHERE `Missing Order Number`.Key > '1'

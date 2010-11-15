@@ -1,0 +1,4 @@
+XLODBC
+1
+DBQ=S:\NAPHTHAV6\DATA\Naphtha_accounts.mdb;DefaultDir=S:\NAPHTHAV6\DATA;Driver={Microsoft Access Driver (*.mdb)};DriverId=281;FIL=MS Access;MaxBufferSize=2048;MaxScanRows=8;PageTimeout=5;PWD=bgSoiqOogNMOH;SafeTransactions=0;Threads=3;UID=admin;UserCommitSync=Yes;
+SELECT Customer.ID AS CustomerID, Customer.Name, Customer.Address1, Customer.Address2, Customer.Address3, Customer.Address4, Customer.Address5, Customer.`Post Code` AS PostCode, Customer.Telephone, Customer.Fax, Customer.Email, Customer.`Web Site` AS Website, Customer.`Contact Name` AS ContactName, Customer.`Vat Registration Number` AS VAT, Customer.Comment, Customer.Memo, Customer.`Credit Limit` AS CreditLimit, Customer.Terms, Customer.`Last Updated` AS LastUpdated FROM Customer ORDER BY Customer.ID

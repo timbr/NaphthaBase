@@ -1,0 +1,4 @@
+XLODBC
+1
+DBQ=S:\NAPHTHAV6\DATA\Naphtha_accounts.mdb;DefaultDir=S:\NAPHTHAV6\DATA;Driver={Microsoft Access Driver (*.mdb)};DriverId=281;FIL=MS Access;MaxBufferSize=2048;MaxScanRows=8;PageTimeout=5;PWD=bgSoiqOogNMOH;SafeTransactions=0;Threads=3;UID=admin;UserCommitSync=Yes;
+SELECT Supplier.ID AS SupplierID, Supplier.Name, Supplier.Address1, Supplier.Address2, Supplier.Address3, Supplier.Address4, Supplier.Address5, Supplier.`Post Code` AS PostCode, Supplier.Telephone, Supplier.Fax, Supplier.Email, Supplier.`Web Site` AS Website, Supplier.`Contact Name` AS ContactName, Supplier.`Vat Registration Number` AS VAT, Supplier.Comment, Supplier.Memo, Supplier.`Last Updated` AS LastUpdated FROM Supplier ORDER BY Supplier.ID
