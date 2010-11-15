@@ -1,0 +1,9 @@
+ACCESS SQL: get_deleted_sales
+
+SELECT
+[Missing Order Number].Key AS WO_Num,
+[Missing Order Number].[User ID] AS UserID,
+[Missing Order Number].Reason AS Reason,
+[Missing Order Number].DateTime AS LastUpdated
+FROM [Missing Order Number]
+WHERE [Missing Order Number].Key > '1'

@@ -1,0 +1,18 @@
+ACCESS SQL: get_depot
+
+SELECT
+Depot.[Client ID] AS ClientID,
+Depot.Name,
+Depot.Address1,
+Depot.Address2,
+Depot.Address3,
+Depot.Address4,
+Depot.Address5,
+Depot.[Post code] AS PostCode,
+Depot.Telephone,
+Depot.Fax,
+Depot.Email,
+Depot.Comment,
+Depot.[Last Updated] AS LastUpdated
+FROM Depot
+ORDER BY Depot.[Client ID]

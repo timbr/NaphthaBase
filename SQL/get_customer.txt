@@ -1,0 +1,24 @@
+ACCESS SQL: get_customer
+
+SELECT
+Customer.ID AS CustomerID,
+Customer.Name,
+Customer.Address1,
+Customer.Address2,
+Customer.Address3,
+Customer.Address4,
+Customer.Address5,
+Customer.[Post Code] AS PostCode,
+Customer.Telephone,
+Customer.Fax,
+Customer.Email,
+Customer.[Web Site] AS Website,
+Customer.[Contact Name] AS ContactName,
+Customer.[Vat Registration Number] AS VAT,
+Customer.Comment,
+Customer.Memo,
+Customer.[Credit Limit] AS CreditLimit,
+Customer.Terms,
+Customer.[Last Updated] AS LastUpdated
+FROM Customer
+ORDER BY Customer.ID

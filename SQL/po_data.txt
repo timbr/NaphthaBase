@@ -1,0 +1,25 @@
+ACCESS SQL: po_data
+
+SELECT
+[Purchase Order].[Order Number] AS PO_Num,
+[Purchase Item].[Component Code] AS Code,
+[Formula Stock].Batch,
+[Purchase Item].Quantity,
+[Purchase Item].Price,
+[Purchase Order].[Order Value] AS OrderValue,
+[Purchase Order].Supplier,
+[Purchase Order].[Order Reference] AS OrderReference,
+[Purchase Order].[Order Date] AS OrderDate,
+[Purchase Item].[Due Date] AS DueDate,
+[Purchase Order].[Placed By] AS PlacedBy,
+[Purchase Item].[Delivered Quantity] AS DeliveredQuantity,
+[Purchase Order].[Printed Comment] AS PrintedComment,
+[Purchase Order].[Delivery Comment] As DeliveryComment,
+[Purchase Order].Status,
+[Purchase Item].[Last Updated] AS LastUpdated       
+FROM ([Purchase Order] INNER JOIN [Purchase Item] ON
+[Purchase Order].[Order Number] = 
+[Purchase Item].[Order Number]) LEFT JOIN [Formula Stock] ON
+([Purchase Item].[Component Code] = [Formula Stock].Key) AND 
+([Purchase Item].[Order Number] = [Formula Stock].PON)       
+ORDER BY [Purchase Order].[Order Number]

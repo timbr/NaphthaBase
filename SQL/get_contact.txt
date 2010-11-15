@@ -1,0 +1,12 @@
+ACCESS SQL: get_contact
+
+SELECT
+Contact.[Client ID] AS ClientID,
+Contact.Title,
+Contact.Forename,
+Contact.Surname,
+Contact.Phone,
+Contact.Department,
+Contact.[Last Updated] AS LastUpdated
+FROM Contact
+ORDER BY Contact.[Client ID]

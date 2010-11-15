@@ -1,0 +1,8 @@
+ACCESS SQL: get_hauliers
+
+SELECT
+[Additional Items].Key AS HaulierKey,
+[Additional Items].Name,
+[Additional Items].[Nominal Code] AS NominalCode
+FROM [Additional Items]
+ORDER BY [Additional Items].[Record Number]
