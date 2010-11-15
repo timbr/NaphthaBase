@@ -61,7 +61,8 @@ def check_tables():
                  'Customer': sql.create_customer_table,
                  'Depot': sql.create_depot_table,
                  'Contact': sql.create_contact_table,
-                 'Supplier': sql.create_supplier_table}
+                 'Supplier': sql.create_supplier_table,
+                 'temp_Stock': sql.create_temp_Stock_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -389,6 +390,8 @@ class Stock(NaphthaBaseObject):
         self._table = 'Stock'
         self._randr_query = sql.get_stock
         self._nbquery = sql.get_batch
+        self._hashlist = []
+        self._new = []
         NaphthaBaseObject.__init__(self)
 
     def get_batch(self, Batch_Num):
@@ -396,6 +399,34 @@ class Stock(NaphthaBaseObject):
 
     def get_dict(self, Batch_Num):
         return NaphthaBaseObject._sqlquery_as_dict(self, Batch_Num)
+
+    def _update_naphtha_base(self):
+        if self._localonly == 1:
+            print 'Unable to update - remote database not found'
+            return
+        # Don't refresh again if last_refreshed is more recent than 30 minutes
+        if self._last_refreshed > \
+                   datetime.datetime.now() - datetime.timedelta(minutes = 30):
+            return
+        print 'Updating NaphthaBase with latest %s Data.' % self._table
+        RandRdata = get_randR_data(self._randr_query, self._table)
+        #create temporary table
+        naphthabase_query("DELETE FROM temp_Stock") # Clear temp_Stock table
+        num_fields = len(get_columns(self._table))
+        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
+        # creates string "insert into <table> values (?,?,?,?, etc)"
+        naphthabase_transfer(RandRdata, 'insert into %s values %s' \
+                                       % ('temp_Stock', insert_fields))
+
+        naphthabase_query(sql.append_modified_stock)
+
+        self._data = self._getdata() # Get a list containing all the data
+        # create a dictionary relating column postions against their names.
+        # ie 'Code': 0, 'Description': 1, etc
+        self._clmn = get_column_positions(self._table)
+        self._last_refreshed = datetime.datetime.now()
+        
+
 
 
 #////////////////////////////////////////////////////////////////////////////#

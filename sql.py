@@ -60,6 +60,32 @@ create_stock_table = """
     )
     """
 
+create_temp_Stock_table = """
+    CREATE TABLE temp_Stock (
+    Batch text,
+    Code text,
+    Revision text,
+    BatchStatus text,
+    QuantityNow text,
+    OriginalDeliveredQuantity text,
+    StockInfo text,
+    Supplier text,
+    PONumber text,
+    PurchaseCost text,
+    Customer text,
+    WONumber text,
+    Price text,
+    UsageReference text,
+    StockAction text,
+    ItemOrder text,
+    QuantityMovement text,
+    UserID text,
+    LastUpdated date,
+    InvoiceDate date,
+    BatchUp_Date date
+    )
+    """
+
 create_sales_table = """
     CREATE TABLE Sales (
     WO_Num text,
@@ -334,6 +360,40 @@ get_batch = """
     FROM Stock
     WHERE Batch = %(query)s
     """
+
+#----------------------------------------------------------------------------#
+# Append Modified Stock (NaphthaBase)
+#----------------------------------------------------------------------------#
+
+append_modified_stock = """
+    INSERT INTO Stock
+    SELECT
+    temp_Stock.Batch,
+    temp_Stock.Code,
+    temp_Stock.Revision,
+    temp_Stock.BatchStatus,
+    temp_Stock.QuantityNow,
+    temp_Stock.OriginalDeliveredQuantity,
+    temp_Stock.StockInfo,
+    temp_Stock.Supplier,
+    temp_Stock.PONumber,
+    temp_Stock.PurchaseCost,
+    temp_Stock.Customer,
+    temp_Stock.WONumber,
+    temp_Stock.Price,
+    temp_Stock.UsageReference,
+    temp_Stock.StockAction,
+    temp_Stock.ItemOrder,
+    temp_Stock.QuantityMovement,
+    temp_Stock.UserID,
+    temp_Stock.LastUpdated,
+    temp_Stock.InvoiceDate,
+    temp_Stock.BatchUp_Date
+    FROM temp_Stock LEFT OUTER JOIN Stock ON
+    temp_Stock.LastUpdated = Stock.LastUpdated
+    WHERE Stock.LastUpdated IS Null
+    """
+
 
 #****************************************************************************#
 
