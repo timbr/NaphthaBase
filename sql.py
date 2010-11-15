@@ -23,7 +23,8 @@ create_purchase_order_table = """
     PlacedBy text,
     PrintedComment text,
     DeliveryComment text,
-    Status int
+    Status int,
+    RecordNo int
     )
     """
 
@@ -35,7 +36,8 @@ create_purchase_item_table = """
     Price text,
     DueDate date,
     DeliveredQuantity text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )    
     """
 
@@ -50,7 +52,8 @@ create_formula_stock_table = """
     PONumber text,
     PurchaseCost text,
     InvoiceDate date,
-    BatchUp_Date date
+    BatchUp_Date date,
+    RecordNo int
     )
     """
 
@@ -67,7 +70,8 @@ create_formula_stock_usage_table = """
     ItemOrder text,
     QuantityMovement text,
     UserID text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -102,7 +106,8 @@ create_sales_order_table = """
     InvoiceComment6 text,
     InvoiceTerms text,
     ItemCount int,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -112,14 +117,16 @@ create_sales_order_item_table = """
     StockCode text,
     OrderQuantity text,
     Price text,
-    RequiredDate date
+    RequiredDate date,
+    RecordNo int
     )
     """
 
 create_sales_order_additional_table = """
     CREATE TABLE SalesOrderAdditional (    
     Parent text,
-    Haulier text
+    Haulier text,
+    RecordNo int
     )
     """
 
@@ -128,7 +135,8 @@ create_sales_order_despatch_table = """
     Key text,
     StockCode text,
     BatchDespatched text,
-    DespatchedQuantity text
+    DespatchedQuantity text,
+    RecordNo int
     )
     """
 
@@ -137,7 +145,8 @@ create_missing_order_number_table = """
     WO_Num text,
     UserID text,
     Reason text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -146,7 +155,8 @@ create_additional_items_table = """
     HaulierKey text,
     Name text,
     NominalCode text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -170,7 +180,8 @@ create_customer_table = """
     Memo text,
     CreditLimit text,
     Terms text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -188,7 +199,8 @@ create_depot_table = """
     Fax text,
     Email text,
     Comment text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -200,7 +212,8 @@ create_contact_table = """
     Surname text,
     Phone text,
     Department text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -222,7 +235,8 @@ create_supplier_table = """
     VAT text,
     Comment text,
     Memo text,
-    LastUpdated text
+    LastUpdated text,
+    RecordNo int
     )
     """
 
@@ -257,7 +271,8 @@ purchase_order = """
     \"Purchase Order\".\"Placed By\" AS PlacedBy,
     \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
     \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
-    \"Purchase Order\".Status
+    \"Purchase Order\".Status,
+    \"Purchase Order\".\"Record Number\" AS RecordNo
     FROM \"Purchase Order\"
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
@@ -273,7 +288,8 @@ purchase_item = """
     \"Purchase Item\".Price,
     \"Purchase Item\".\"Due Date\" AS DueDate,
     \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
-    \"Purchase Item\".\"Last Updated\" AS LastUpdated       
+    \"Purchase Item\".\"Last Updated\" AS LastUpdated,
+    \"Purchase Item\".\"Record Number\" AS RecordNo
     FROM \"Purchase Item\"
     """
            
@@ -294,7 +310,8 @@ formula_stock = """
     \"Formula Stock\".PON AS PONumber,
     \"Formula Stock\".Cost AS PurchaseCost,
     \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
-    \"Formula Stock\".\"Production Date\" AS BatchUp_Date
+    \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
+    \"Formula Stock\".\"Record Number\" AS RecordNo
     FROM \"Formula Stock\"
     ORDER BY \"Formula Stock\".Batch
     """
@@ -315,7 +332,8 @@ formula_stock_usage = """
     \"Formula Stock Usage\".\"Item Order\" AS ItemOrder,
     \"Formula Stock Usage\".Quantity AS QuantityMovement,
     \"Formula Stock Usage\".\"User ID\" AS UserID,
-    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated
+    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
+    \"Formula Stock Usage\".\"Record Number\" AS RecordNo
     FROM \"Formula Stock Usage\"
     ORDER BY \"Formula Stock Usage\".\"Last Updated\"
     """
@@ -357,7 +375,8 @@ sales_order = """
     \"Sales Order\".\"Invoice Comment6\" AS InvoiceComment6,
     \"Sales Order\".\"Invoice terms\" AS InvoiceTerms,
     \"Sales Order\".\"Item Count\" AS ItemCount,
-    \"Sales Order\".\"Last Updated\" AS LastUpdated
+    \"Sales Order\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order\".\"Record Number\" AS RecordNo
     FROM \"Sales Order\"
     """
 
@@ -370,7 +389,8 @@ sales_order_item = """
     \"Sales Order Item\".\"Stock Code\" AS StockCode,
     \"Sales Order Item\".Quantity AS OrderQuantity,
     \"Sales Order Item\".Price,
-    \"Sales Order Item\".\"Required Date\" AS RequiredDate
+    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order Item\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Item\"
     """
 
@@ -380,7 +400,8 @@ sales_order_item = """
 sales_order_additional = """
     SELECT
     \"Sales Order Additional\".Parent,
-    \"Sales Order Additional\".Description AS Haulier
+    \"Sales Order Additional\".Description AS Haulier,
+    \"Sales Order Additional\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Additional\"
     """
 
@@ -392,7 +413,8 @@ sales_order_despatch = """
     \"Sales Order Despatch\".Key,
     \"Sales Order Despatch\".\"Stock Code\" AS StockCode,
     \"Sales Order Despatch\".Batch AS BatchDespatched,
-    \"Sales Order Despatch\".Quantity AS DespatchedQuantity
+    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
+    \"Sales Order Despatch\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Despatch\"
     """
 
@@ -407,7 +429,8 @@ missing_order_number = """
     \"Missing Order Number\".Key AS WO_Num,
     \"Missing Order Number\".\"User ID\" AS UserID,
     \"Missing Order Number\".Reason AS Reason,
-    \"Missing Order Number\".DateTime AS LastUpdated
+    \"Missing Order Number\".DateTime AS LastUpdated,
+    \"Missing Order Number\".\"Record Number\" AS RecordNo
     FROM \"Missing Order Number\"
     WHERE \"Missing Order Number\".Key > '1'
     """
@@ -423,7 +446,8 @@ additional_items = """
     \"Additional Items\".Key AS HaulierKey,
     \"Additional Items\".Name,
     \"Additional Items\".\"Nominal Code\" AS NominalCode,
-    \"Additional Items\".\"Last Updated\" AS LastUpdated
+    \"Additional Items\".\"Last Updated\" AS LastUpdated,
+    \"Additional Items\".\"Record Number\" AS RecordNo
     FROM \"Additional Items\"
     ORDER BY \"Additional Items\".\"Record Number\"
     """
@@ -453,7 +477,8 @@ customer = """
     Customer.Memo,
     Customer.\"Credit Limit\" AS CreditLimit,
     Customer.Terms,
-    Customer.\"Last Updated\" AS LastUpdated
+    Customer.\"Last Updated\" AS LastUpdated,
+    Customer.\"Record Number\" AS RecordNo
     FROM Customer
     ORDER BY Customer.ID
     """
@@ -478,7 +503,8 @@ depot = """
     Depot.Fax,
     Depot.Email,
     Depot.Comment,
-    Depot.\"Last Updated\" AS LastUpdated
+    Depot.\"Last Updated\" AS LastUpdated,
+    Depot.\"Record Number\" AS RecordNo
     FROM Depot
     ORDER BY Depot.\"Client ID\"
     """
@@ -497,7 +523,8 @@ contact = """
     Contact.Surname,
     Contact.Phone,
     Contact.Department,
-    Contact.\"Last Updated\" AS LastUpdated
+    Contact.\"Last Updated\" AS LastUpdated,
+    Contact.\"Record Number\" AS RecordNo
     FROM Contact
     ORDER BY Contact.\"Client ID\"
     """
@@ -526,7 +553,8 @@ supplier = """
     Supplier.\"Vat Registration Number\" AS VAT,
     Supplier.Comment,
     Supplier.Memo,
-    Supplier.\"Last Updated\" AS LastUpdated
+    Supplier.\"Last Updated\" AS LastUpdated,
+    Supplier.\"Record Number\" AS RecordNo
     FROM Supplier
     ORDER BY Supplier.ID
     """
