@@ -6,241 +6,255 @@
 #----------------------------------------------------------------------------#
 create_formula_table = """
     CREATE TABLE Formula (
-    Code text,
-    Description text,
-    LastUpdated date,
+    id INTEGER PRIMARY KEY,
+    Code varchar(10),
+    Description varchar(40),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_purchase_order_table = """
     CREATE TABLE PurchaseOrder (
-    PO_Num text,
-    OrderValue text,
-    Supplier text,
-    OrderReference text,
+    id INTEGER PRIMARY KEY,
+    PO_Num varchar(10),
+    OrderValue varchar(15),
+    Supplier varchar(10),
+    OrderReference varchar(30),
     OrderDate date,
-    PlacedBy text,
+    PlacedBy varchar(30),
     PrintedComment text,
     DeliveryComment text,
     Status int,
-    LastUpdated date,
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_purchase_item_table = """
     CREATE TABLE PurchaseItem (
-    PO_Num text,
-    Code text,
-    Quantity text,
-    Price text,
+    id INTEGER PRIMARY KEY,
+    PO_Num varchar(10),
+    Code varchar(10),
+    Quantity varchar(15),
+    Price varchar(15),
     DueDate date,
-    DeliveredQuantity text,
-    LastUpdated date,
+    DeliveredQuantity varchar(15),
+    LastUpdated datetime,
     RecordNo int
     )    
     """
 
 create_formula_stock_table = """
     CREATE TABLE FormulaStock (
-    Batch text,
-    BatchStatus text,
-    QuantityNow text,
-    OriginalDeliveredQuantity text,
+    id INTEGER PRIMARY KEY,
+    Batch varchar(10),
+    BatchStatus varchar(10),
+    QuantityNow varchar(15),
+    OriginalDeliveredQuantity varchar(15),
     StockInfo text,
-    Supplier text,
-    PONumber text,
-    PurchaseCost text,
-    InvoiceDate date,
-    BatchUp_Date date,
-    LastUpdated date,
+    Supplier varchar(15),
+    PONumber varchar(10),
+    PurchaseCost varchar(15),
+    BatchUp_Date datetime,
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_formula_stock_usage_table = """
     CREATE TABLE FormulaStockUsage (
-    Batch text,
-    Code text,
+    id INTEGER PRIMARY KEY,
+    Batch varchar(10),
+    Code varchar(10),
     Revision int,
-    Customer text,
-    WONumber text,
-    Price text,
+    Customer varchar(10),
+    WONumber varchar(10),
+    Price varchar(15),
     UsageReference text,
     StockAction text,
-    ItemOrder text,
-    QuantityMovement text,
-    UserID text,
-    LastUpdated date,
+    ItemOrder varchar(10),
+    QuantityMovement varchar(15),
+    UserID varchar(10),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_sales_order_table = """
     CREATE TABLE SalesOrder (
-    WO_Num text,
-    Link text,
-    CustomerKey text,
-    CustomerOrderNumber text,
+    id INTEGER PRIMARY KEY,
+    WO_Num varchar(10),
+    Link varchar(10),
+    CustomerKey varchar(10),
+    CustomerOrderNumber varchar(30),
     DespatchNotes text,
-    OrderValue text,
+    OrderValue varchar(15),
     Status int,
     OrderDate date,
     DespatchDate date,
     InvoiceDate date,
-    Operator text,
-    DespatchCompanyName text,
-    DespatchAddress1 text,
-    DespatchAddress2 text,
-    DespatchAddress3 text,
-    DespatchPostCode text,
-    DeliveryNoteComment1 text,
-    DeliveryNoteComment2 text,
-    DeliveryNoteComment3 text,
-    DeliveryNoteComment4 text,
-    DeliveryNoteComment5 text,
-    InvoiceComment1 text,
-    InvoiceComment2 text,
-    InvoiceComment3 text,
-    InvoiceComment4 text,
-    InvoiceComment5 text,
-    InvoiceComment6 text,
-    InvoiceTerms text,
+    Operator varchar(30),
+    DespatchCompanyName varchar(40),
+    DespatchAddress1 varchar(40),
+    DespatchAddress2 varchar(40),
+    DespatchAddress3 varchar(40),
+    DespatchPostCode varchar(15),
+    DeliveryNoteComment1 varchar(40),
+    DeliveryNoteComment2 varchar(40),
+    DeliveryNoteComment3 varchar(40),
+    DeliveryNoteComment4 varchar(40),
+    DeliveryNoteComment5 varchar(40),
+    InvoiceComment1 varchar(40),
+    InvoiceComment2 varchar(40),
+    InvoiceComment3 varchar(40),
+    InvoiceComment4 varchar(40),
+    InvoiceComment5 varchar(40),
+    InvoiceComment6 varchar(40),
+    InvoiceTerms varchar(40),
     ItemCount int,
-    LastUpdated date,
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_sales_order_item_table = """
     CREATE TABLE SalesOrderItem (
-    Parent text,
-    StockCode text,
-    OrderQuantity text,
-    Price text,
+    id INTEGER PRIMARY KEY,
+    Parent varchar(10),
+    StockCode varchar(10),
+    OrderQuantity varchar(15),
+    Price varchar(15),
     RequiredDate date,
-    LastUpdated date,
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_sales_order_additional_table = """
-    CREATE TABLE SalesOrderAdditional (    
-    Parent text,
-    Haulier text,
-    LastUpdated date,
+    CREATE TABLE SalesOrderAdditional (
+    id INTEGER PRIMARY KEY,
+    Parent varchar(10),
+    Haulier varchar(40),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_sales_order_despatch_table = """
-    CREATE TABLE SalesOrderDespatch (    
-    Key text,
-    StockCode text,
-    BatchDespatched text,
-    DespatchedQuantity text,
-    LastUpdated date,
+    CREATE TABLE SalesOrderDespatch (
+    id INTEGER PRIMARY KEY,
+    Key varchar(10),
+    StockCode varchar(10),
+    BatchDespatched varchar(10),
+    DespatchedQuantity varchar(15),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_missing_order_number_table = """
     CREATE TABLE MissingOrderNumber (
-    WO_Num text,
-    UserID text,
-    Reason text,
-    LastUpdated date,
+    id INTEGER PRIMARY KEY,
+    WO_Num varchar(10),
+    UserID varchar(30),
+    Reason varchar(40),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_additional_items_table = """
     CREATE TABLE AdditionalItems (
-    HaulierKey text,
-    Name text,
-    NominalCode text,
-    LastUpdated date,
+    id INTEGER PRIMARY KEY,
+    HaulierKey varchar(10),
+    Name varchar(30),
+    NominalCode varchar(10),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_customer_table = """
     CREATE TABLE Customer (
-    CustomerID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
-    Website text,
-    ContactName text,
-    VAT text,
+    id INTEGER PRIMARY KEY,
+    CustomerID varchar(10),
+    Name varchar(30),
+    Address1 varchar(30),
+    Address2 varchar(30),
+    Address3 varchar(30),
+    Address4 varchar(30),
+    Address5 varchar(30),
+    PostCode varchar(10),
+    Telephone varchar(15),
+    Fax varchar(15),
+    Email varchar(30),
+    Website varchar(30),
+    ContactName varchar(30),
+    VAT varchar(30),
     Comment text,
     Memo text,
-    CreditLimit text,
-    Terms text,
-    LastUpdated date,
+    CreditLimit varchar(30),
+    Terms varchar(30),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_depot_table = """
     CREATE TABLE Depot (
-    ClientID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
+    id INTEGER PRIMARY KEY,
+    ClientID varchar(10),
+    Name varchar(40),
+    Address1 varchar(40),
+    Address2 varchar(40),
+    Address3 varchar(40),
+    Address4 varchar(40),
+    Address5 varchar(40),
+    PostCode varchar(10),
+    Telephone varchar(15),
+    Fax varchar(15),
+    Email varchar(40),
     Comment text,
-    LastUpdated date,
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_contact_table = """
     CREATE TABLE Contact (
-    ClientID text,
-    Title text,
-    Forename text,
-    Surname text,
-    Phone text,
-    Department text,
-    LastUpdated date,
+    id INTEGER PRIMARY KEY,
+    ClientID varchar(10),
+    Title varchar(10),
+    Forename varchar(40),
+    Surname varchar(40),
+    Phone varchar(15),
+    Department varchar(40),
+    LastUpdated datetime,
     RecordNo int
     )
     """
 
 create_supplier_table = """
     CREATE TABLE Supplier (
-    SupplierID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
-    Website text,
-    ContactName text,
-    VAT text,
+    id INTEGER PRIMARY KEY,
+    SupplierID varchar(10),
+    Name varchar(40),
+    Address1 varchar(40),
+    Address2 varchar(40),
+    Address3 varchar(40),
+    Address4 varchar(40),
+    Address5 varchar(40),
+    PostCode varchar(10),
+    Telephone varchar(15),
+    Fax varchar(15),
+    Email varchar(40),
+    Website varchar(40),
+    ContactName varchar(40),
+    VAT varchar(40),
     Comment text,
     Memo text,
-    LastUpdated date,
+    LastUpdated datetime,
     RecordNo int
     )
     """
@@ -318,7 +332,6 @@ formula_stock = """
     \"Formula Stock\".Supplier,
     \"Formula Stock\".PON AS PONumber,
     \"Formula Stock\".Cost AS PurchaseCost,
-    \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
     \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
     \"Formula Stock\".\"Last Updated\" AS LastUpdated,
     \"Formula Stock\".\"Record Number\" AS RecordNo

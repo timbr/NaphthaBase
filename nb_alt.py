@@ -29,7 +29,7 @@ for table in tablelist.keys():
     #nb.naphthabase_query("DELETE FROM %s" % table) # Clear table
     RandRdata = nb.get_randr_data(tablelist[table], table, last_updated)
     num_fields = len(nb.get_columns(table))
-    insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
+    insert_fields = '(null,' + '?,' * (num_fields - 2) + '?)'
     # creates string "insert into <table> values (?,?,?,?, etc)"
     nb.naphthabase_transfer(RandRdata, 'insert into %s values %s' \
                                        % (table, insert_fields))
