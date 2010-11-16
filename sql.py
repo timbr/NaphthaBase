@@ -24,6 +24,7 @@ create_purchase_order_table = """
     PrintedComment text,
     DeliveryComment text,
     Status int,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -53,6 +54,7 @@ create_formula_stock_table = """
     PurchaseCost text,
     InvoiceDate date,
     BatchUp_Date date,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -118,6 +120,7 @@ create_sales_order_item_table = """
     OrderQuantity text,
     Price text,
     RequiredDate date,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -126,6 +129,7 @@ create_sales_order_additional_table = """
     CREATE TABLE SalesOrderAdditional (    
     Parent text,
     Haulier text,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -136,6 +140,7 @@ create_sales_order_despatch_table = """
     StockCode text,
     BatchDespatched text,
     DespatchedQuantity text,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -235,7 +240,7 @@ create_supplier_table = """
     VAT text,
     Comment text,
     Memo text,
-    LastUpdated text,
+    LastUpdated date,
     RecordNo int
     )
     """
@@ -253,6 +258,7 @@ formula = """
     Formula.\"Record Number\" AS RecordNo
     FROM Formula
     WHERE (Formula.\"Customer Key\"='ANY')
+    AND Formula.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Formula.Key
     """
 
@@ -272,8 +278,10 @@ purchase_order = """
     \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
     \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
     \"Purchase Order\".Status,
+    \"Purchase Order\".\"Last Updated\" AS LastUpdated,
     \"Purchase Order\".\"Record Number\" AS RecordNo
     FROM \"Purchase Order\"
+    WHERE \"Purchase Order\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
@@ -291,6 +299,7 @@ purchase_item = """
     \"Purchase Item\".\"Last Updated\" AS LastUpdated,
     \"Purchase Item\".\"Record Number\" AS RecordNo
     FROM \"Purchase Item\"
+    WHERE \"Purchase Item\".\"Last Updated\" > #%(lastupdate)s#
     """
            
 
@@ -311,8 +320,10 @@ formula_stock = """
     \"Formula Stock\".Cost AS PurchaseCost,
     \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
     \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
+    \"Formula Stock\".\"Last Updated\" AS LastUpdated,
     \"Formula Stock\".\"Record Number\" AS RecordNo
     FROM \"Formula Stock\"
+    WHERE \"Formula Stock\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Formula Stock\".Batch
     """
     
@@ -335,6 +346,7 @@ formula_stock_usage = """
     \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
     \"Formula Stock Usage\".\"Record Number\" AS RecordNo
     FROM \"Formula Stock Usage\"
+    WHERE \"Formula Stock Usage\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Formula Stock Usage\".\"Last Updated\"
     """
 
@@ -378,6 +390,7 @@ sales_order = """
     \"Sales Order\".\"Last Updated\" AS LastUpdated,
     \"Sales Order\".\"Record Number\" AS RecordNo
     FROM \"Sales Order\"
+    WHERE \"Sales Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -390,8 +403,10 @@ sales_order_item = """
     \"Sales Order Item\".Quantity AS OrderQuantity,
     \"Sales Order Item\".Price,
     \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order Item\".\"Last Updated\" AS LastUpdated,
     \"Sales Order Item\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Item\"
+    WHERE \"Sales Order Item\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -401,8 +416,10 @@ sales_order_additional = """
     SELECT
     \"Sales Order Additional\".Parent,
     \"Sales Order Additional\".Description AS Haulier,
+    \"Sales Order Additional\".\"Last Updated\" AS LastUpdated,
     \"Sales Order Additional\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Additional\"
+    WHERE \"Sales Order Additional\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -414,8 +431,10 @@ sales_order_despatch = """
     \"Sales Order Despatch\".\"Stock Code\" AS StockCode,
     \"Sales Order Despatch\".Batch AS BatchDespatched,
     \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
+    \"Sales Order Despatch\".\"Last Updated\",
     \"Sales Order Despatch\".\"Record Number\" AS RecordNo
     FROM \"Sales Order Despatch\"
+    WHERE \"Sales Order Despatch\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 
@@ -432,7 +451,8 @@ missing_order_number = """
     \"Missing Order Number\".DateTime AS LastUpdated,
     \"Missing Order Number\".\"Record Number\" AS RecordNo
     FROM \"Missing Order Number\"
-    WHERE \"Missing Order Number\".Key > '1'
+    WHERE (\"Missing Order Number\".Key > '1')
+    AND (\"Missing Order Number\".DateTime > #%(lastupdate)s#)
     """
 
 
@@ -449,6 +469,7 @@ additional_items = """
     \"Additional Items\".\"Last Updated\" AS LastUpdated,
     \"Additional Items\".\"Record Number\" AS RecordNo
     FROM \"Additional Items\"
+    WHERE \"Additional Items\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Additional Items\".\"Record Number\"
     """
 
@@ -480,6 +501,7 @@ customer = """
     Customer.\"Last Updated\" AS LastUpdated,
     Customer.\"Record Number\" AS RecordNo
     FROM Customer
+    WHERE Customer.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Customer.ID
     """
 
@@ -506,6 +528,7 @@ depot = """
     Depot.\"Last Updated\" AS LastUpdated,
     Depot.\"Record Number\" AS RecordNo
     FROM Depot
+    WHERE Depot.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Depot.\"Client ID\"
     """
 
@@ -526,6 +549,7 @@ contact = """
     Contact.\"Last Updated\" AS LastUpdated,
     Contact.\"Record Number\" AS RecordNo
     FROM Contact
+    WHERE Contact.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Contact.\"Client ID\"
     """
 
@@ -556,6 +580,7 @@ supplier = """
     Supplier.\"Last Updated\" AS LastUpdated,
     Supplier.\"Record Number\" AS RecordNo
     FROM Supplier
+    WHERE Supplier.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Supplier.ID
     """
 

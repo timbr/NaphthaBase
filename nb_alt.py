@@ -1,5 +1,6 @@
 import naphthabase as nb
 import sql
+import datetime
 
 nb.make_database_connection()
 tablelist = {'Formula': sql.formula,
@@ -18,10 +19,15 @@ tablelist = {'Formula': sql.formula,
              'Contact': sql.contact,
              'Supplier': sql.supplier}
 
+
 for table in tablelist.keys():
     print table
-    nb.naphthabase_query("DELETE FROM %s" % table) # Clear table
-    RandRdata = nb.get_randr_data(tablelist[table], table)
+    last_updated = nb.naphthabase_query \
+                       ("SELECT MAX(LastUpdated) from %s" % table)[0][0]
+    if last_updated == None:
+        last_updated = datetime.datetime(1982,1,1,0,0)
+    #nb.naphthabase_query("DELETE FROM %s" % table) # Clear table
+    RandRdata = nb.get_randr_data(tablelist[table], table, last_updated)
     num_fields = len(nb.get_columns(table))
     insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
     # creates string "insert into <table> values (?,?,?,?, etc)"

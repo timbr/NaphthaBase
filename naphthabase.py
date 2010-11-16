@@ -137,7 +137,7 @@ def get_randr_data(query, table = '', last_updated = '',
         RandRcursor = stock_connection.cursor()
         #TODO: use exceptions to try first the stock_connection, and if it fails, try the accounts_connection.
 
-    RandRdata = RandRcursor.execute(query)
+    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
 
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
@@ -322,10 +322,10 @@ class MaterialCodes(NaphthaBaseObject):
 #////////////////////////////////////////////////////////////////////////////#
     
     def __init__(self):
-        self._table = 'Material'
-        self._randr_query = sql.material_codes
-        NaphthaBaseObject.__init__(self)
-        self._create_db()
+        self._table = 'Formula'
+        self._randr_query = sql.formula
+        #NaphthaBaseObject.__init__(self)
+        #self._create_db()
     
     def get_mat(self, mat_code):
         # This method is probably not needed
@@ -361,9 +361,9 @@ class Purchases(NaphthaBaseObject):
 
     def __init__(self):
         self._table = 'Purchases'
-        self._randr_query = sql.po_data
-        self._nbquery = sql.purchase_orders
-        NaphthaBaseObject.__init__(self)
+        self._randr_query = sql.purchase_order
+        self._nbquery = sql.purchase_order
+       # NaphthaBaseObject.__init__(self)
     
     def get_po(self, PO_Num):
         return NaphthaBaseObject._sqlquery(self, PO_Num)
