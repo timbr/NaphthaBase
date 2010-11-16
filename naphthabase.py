@@ -52,12 +52,18 @@ def check_tables():
     
     global NaphthaBaseChecked # TODO Find alternative to global variables
     # Dictionary of table names and the sql query strings needed to create them
-    tablelist = {'Material': sql.create_material_table,
-                 'Purchases': sql.create_purchases_table,
-                 'Stock': sql.create_stock_table,
-                 'Sales': sql.create_sales_table,
-                 'DeletedSales': sql.create_deletedsales_table,
-                 'Hauliers': sql.create_hauliers_table,
+    tablelist = {'Formula': sql.create_formula_table,
+                 'PurchaseOrder': sql.create_purchase_order_table,
+                 'PurchaseItem': sql.create_purchase_item_table,
+                 'FormulaStock': sql.create_formula_stock_table,
+                 'FormulaStockUsage': sql.create_formula_stock_usage_table,
+                 'SalesOrder': sql.create_sales_order_table,
+                 'SalesOrderItem': sql.create_sales_order_item_table,
+                 'SalesOrderAdditional': 
+                                      sql.create_sales_order_additional_table,
+                 'SalesOrderDespatch': sql.create_sales_order_despatch_table,
+                 'MissingOrderNumber': sql.create_missing_order_number_table,
+                 'AdditionalItems': sql.create_additional_items_table,
                  'Customer': sql.create_customer_table,
                  'Depot': sql.create_depot_table,
                  'Contact': sql.create_contact_table,
@@ -109,7 +115,8 @@ def naphthabase_transfer(data, query):
     NaphthaBase.close()
 
 
-def get_randR_data(query, table = '', convert_decimal_to_strings = True):
+def get_randr_data(query, table = '', last_updated = '',
+                      convert_decimal_to_strings = True):
     """Run an SQL query on the RandR database.
     
     The correct database file is selected according to which table is being
@@ -117,6 +124,8 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
     avoid errors converting to floats.
     """
     
+    if last_updated == '':
+        last_updated = datetime.datetime(1982,1,1,0,0)
     # Connect to the correct R&R database file.
     # stock_tables and accounts_tables lists are in settings.py
     if table in stock_tables:
@@ -126,14 +135,10 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
     else:
         print "no table specified, I'll try both"
         RandRcursor = stock_connection.cursor()
-    
-    try:
-        RandRdata = RandRcursor.execute(query)
-    except:
-        if table == '':
-            RandRcursor = accounts_connection.cursor()
-            RandRdata = RandRcursor.execute(query)
-    
+        #TODO: use exceptions to try first the stock_connection, and if it fails, try the accounts_connection.
+
+    RandRdata = RandRcursor.execute(query)
+
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
     
@@ -211,7 +216,8 @@ class NaphthaBaseObject(object):
         if table == '':
             # If the table isn't specified, use the default table
             table = self._table
-        data = [row for row in naphthabase_query("select * from %s" % table)]
+        data = [row for row in naphthabase_query
+                              ("select * from %s where priority = 1" % table)]
         return data
     
     def _getfromdict(self, code):
@@ -219,7 +225,7 @@ class NaphthaBaseObject(object):
         return self._datadict.get(code.upper().upper(), [''])[0]
         # Return an empty string if no key found    
         
-    def _sqlquery(self, query, sql = ''):
+    def _sqlquery(self, query, revis = 1, sql = ''):
         """Returns a list of tuples containing results of sql query
         """
         
@@ -228,10 +234,10 @@ class NaphthaBaseObject(object):
             sql = self._nbquery
         self._update_naphtha_base()
         results = \
-          naphthabase_query(sql % {'query': str(query)})
+          naphthabase_query(sql % {'query': str(query), 'priority': revis})
         return [line for line in results]
 
-    def _return_as_dict(self, data, no_blank_columns = True):
+    def _return_as_dict(self, data, revis = 1, no_blank_columns = True):
         """Returns a list of dictionaries for the given list of tuples.
         
         The dictionary keys are the column names. Only columns that contain
@@ -249,7 +255,7 @@ class NaphthaBaseObject(object):
             datalist.append(datadict)
         return datalist
     
-    def _sqlquery_as_dict(self, query, no_blank_columns = True):
+    def _sqlquery_as_dict(self, query, revis = 1, no_blank_columns = True):
         """Returns a list of dictionaries containing results of sql query.
         
         The dictionary keys are the column names. Only columns that contain
@@ -267,9 +273,32 @@ class NaphthaBaseObject(object):
         if self._last_refreshed > \
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
-        print 'Updating NaphthaBase with latest %s Data.' % self._table
-        RandRdata = get_randR_data(self._randr_query, self._table)
-        naphthabase_query("DELETE FROM %s" % self._table) # Clear table
+        table_size = naphthabase_query("SELECT COUNT(*) FROM %s" %self._table)
+        if table_size[0][0] == 0:
+            # It's an empty table so fill it, all records priority 1
+            print 'Populating NaphthaBase with %s Data.' % self._table
+            RandRdata = get_randr_data(self._randr_query, self._table)
+            # Assign priority 1 to each record:
+            tim = ()
+            for record in RandRdata:
+                record.append(1)
+                tim = tuple(tim + (record,))
+            RandRdata = tim
+        else:
+            # what is the latest update time recorded in the Naphthabase?
+            last_updated = naphthabase_query \
+                       ("SELECT MAX(LastUpdated) from %s" % self._table)[0][0]
+            # get new records from the RandR database
+            new_records = get_randr_data \
+                                (self._randr_query, self._table, last_updated)
+            if len(new_records) == 0:
+                print 'No updates for table %s' % self._table
+                self._data = self._getdata() # Get a list containing all the data
+                self._clmn = get_column_positions(self._table)
+                self._last_refreshed = datetime.datetime.now()
+                return
+            print [row for row in new_records]
+        #naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
         # creates string "insert into <table> values (?,?,?,?, etc)"
@@ -586,8 +615,8 @@ if __name__ == '__main__':
     if os.getenv('COMPUTERNAME') == 'ACER5920':
         # Use dummy R&R database and run some tests
         print '\nACER5920\n========\n'
-        if os.path.exists(NaphthaBase_Dbase):
-            os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
+        #if os.path.exists(NaphthaBase_Dbase):
+            #os.remove(NaphthaBase_Dbase) # delete existing NaphthaBase file
         make_database_connection(TestDB_Old, TestDB_Acc_Old)
     else:
         make_database_connection()

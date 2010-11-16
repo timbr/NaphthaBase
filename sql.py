@@ -4,8 +4,8 @@
 #----------------------------------------------------------------------------#
 # NaphthaBase Table Creation
 #----------------------------------------------------------------------------#
-create_material_table = """
-    CREATE TABLE Material (
+create_formula_table = """
+    CREATE TABLE Formula (
     Code text,
     Description text,
     LastUpdated date,
@@ -13,32 +13,37 @@ create_material_table = """
     )
     """
 
-create_purchases_table = """
-    CREATE TABLE Purchases (
+create_purchase_order_table = """
+    CREATE TABLE PurchaseOrder (
     PO_Num text,
-    Code text,
-    Batch text,
-    Quantity text,
-    Price text,
     OrderValue text,
     Supplier text,
     OrderReference text,
     OrderDate date,
-    DueDate date,
     PlacedBy text,
-    DeliveredQuantity text,
     PrintedComment text,
     DeliveryComment text,
     Status int,
-    LastUpdated date
+    RecordNo int
     )
     """
 
-create_stock_table = """
-    CREATE TABLE Stock (
-    Batch text,
+create_purchase_item_table = """
+    CREATE TABLE PurchaseItem (
+    PO_Num text,
     Code text,
-    Revision text,
+    Quantity text,
+    Price text,
+    DueDate date,
+    DeliveredQuantity text,
+    LastUpdated date,
+    RecordNo int
+    )    
+    """
+
+create_formula_stock_table = """
+    CREATE TABLE FormulaStock (
+    Batch text,
     BatchStatus text,
     QuantityNow text,
     OriginalDeliveredQuantity text,
@@ -46,6 +51,17 @@ create_stock_table = """
     Supplier text,
     PONumber text,
     PurchaseCost text,
+    InvoiceDate date,
+    BatchUp_Date date,
+    RecordNo int
+    )
+    """
+
+create_formula_stock_usage_table = """
+    CREATE TABLE FormulaStockUsage (
+    Batch text,
+    Code text,
+    Revision int,
     Customer text,
     WONumber text,
     Price text,
@@ -55,25 +71,20 @@ create_stock_table = """
     QuantityMovement text,
     UserID text,
     LastUpdated date,
-    InvoiceDate date,
-    BatchUp_Date date
+    RecordNo int
     )
     """
 
-create_sales_table = """
-    CREATE TABLE Sales (
+create_sales_order_table = """
+    CREATE TABLE SalesOrder (
     WO_Num text,
     Link text,
-    StockCode text,
     CustomerKey text,
     CustomerOrderNumber text,
     DespatchNotes text,
-    OrderQuantity text,
-    Price text,
     OrderValue text,
     Status int,
     OrderDate date,
-    RequiredDate date,
     DespatchDate date,
     InvoiceDate date,
     Operator text,
@@ -95,27 +106,57 @@ create_sales_table = """
     InvoiceComment6 text,
     InvoiceTerms text,
     ItemCount int,
-    Haulier text,
-    BatchDespatched text,
-    DespatchedQuantity text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
-create_deletedsales_table = """
-    CREATE TABLE DeletedSales (
+create_sales_order_item_table = """
+    CREATE TABLE SalesOrderItem (
+    Parent text,
+    StockCode text,
+    OrderQuantity text,
+    Price text,
+    RequiredDate date,
+    RecordNo int
+    )
+    """
+
+create_sales_order_additional_table = """
+    CREATE TABLE SalesOrderAdditional (    
+    Parent text,
+    Haulier text,
+    RecordNo int
+    )
+    """
+
+create_sales_order_despatch_table = """
+    CREATE TABLE SalesOrderDespatch (    
+    Key text,
+    StockCode text,
+    BatchDespatched text,
+    DespatchedQuantity text,
+    RecordNo int
+    )
+    """
+
+create_missing_order_number_table = """
+    CREATE TABLE MissingOrderNumber (
     WO_Num text,
     UserID text,
     Reason text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
-create_hauliers_table = """
-    CREATE TABLE Hauliers (
+create_additional_items_table = """
+    CREATE TABLE AdditionalItems (
     HaulierKey text,
     Name text,
-    NominalCode text
+    NominalCode text,
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -139,7 +180,8 @@ create_customer_table = """
     Memo text,
     CreditLimit text,
     Terms text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -157,7 +199,8 @@ create_depot_table = """
     Fax text,
     Email text,
     Comment text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -169,7 +212,8 @@ create_contact_table = """
     Surname text,
     Phone text,
     Department text,
-    LastUpdated date
+    LastUpdated date,
+    RecordNo int
     )
     """
 
@@ -191,16 +235,17 @@ create_supplier_table = """
     VAT text,
     Comment text,
     Memo text,
-    LastUpdated text
+    LastUpdated text,
+    RecordNo int
     )
     """
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 #----------------------------------------------------------------------------#
-# Material Selection (R&R Database)
+# Formula Table
 #----------------------------------------------------------------------------#
-material_codes = """
+formula = """
     SELECT
     Formula.Key AS Code,
     Formula.Description,
@@ -214,73 +259,49 @@ material_codes = """
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Purchase Order Selection (R&R Database)
+# Purchase Order Table
 #----------------------------------------------------------------------------#
-po_data = """
+purchase_order = """
     SELECT
     \"Purchase Order\".\"Order Number\" AS PO_Num,
-    \"Purchase Item\".\"Component Code\" AS Code,
-    \"Formula Stock\".Batch,
-    \"Purchase Item\".Quantity,
-    \"Purchase Item\".Price,
     \"Purchase Order\".\"Order Value\" AS OrderValue,
     \"Purchase Order\".Supplier,
     \"Purchase Order\".\"Order Reference\" AS OrderReference,
     \"Purchase Order\".\"Order Date\" AS OrderDate,
-    \"Purchase Item\".\"Due Date\" AS DueDate,
     \"Purchase Order\".\"Placed By\" AS PlacedBy,
-    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
     \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
     \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
     \"Purchase Order\".Status,
-    \"Purchase Item\".\"Last Updated\" AS LastUpdated       
-    FROM (\"Purchase Order\" INNER JOIN \"Purchase Item\" ON
-    \"Purchase Order\".\"Order Number\" = 
-    \"Purchase Item\".\"Order Number\") LEFT JOIN \"Formula Stock\" ON
-    (\"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key) AND 
-    (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON)       
+    \"Purchase Order\".\"Record Number\" AS RecordNo
+    FROM \"Purchase Order\"
     ORDER BY \"Purchase Order\".\"Order Number\"
     """
 
 #----------------------------------------------------------------------------#
-# Purchase Order Selection (NaphthaBase)
+# Purchase Item Table
 #----------------------------------------------------------------------------#
-purchase_orders = """
+purchase_item = """
     SELECT
-    PO_Num,
-    Code,
-    Batch,
-    Quantity,
-    Price,
-    OrderValue,
-    Supplier,
-    OrderReference,
-    OrderDate,
-    DueDate,
-    PlacedBy,
-    DeliveredQuantity,
-    PrintedComment,
-    DeliveryComment,
-    Status,
-    LastUpdated
-    FROM Purchases,
-    (SELECT
-        MAX(LastUpdated) AS latest from Purchases WHERE
-        PO_Num = %(query)s)
-    WHERE PO_Num = %(query)s and LastUpdated = latest
-    ORDER BY Code
-    """             
+    \"Purchase Item\".\"Order Number\" AS PO_Num,
+    \"Purchase Item\".\"Component Code\" AS Code,
+    \"Purchase Item\".Quantity,
+    \"Purchase Item\".Price,
+    \"Purchase Item\".\"Due Date\" AS DueDate,
+    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
+    \"Purchase Item\".\"Last Updated\" AS LastUpdated,
+    \"Purchase Item\".\"Record Number\" AS RecordNo
+    FROM \"Purchase Item\"
+    """
+           
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Stock Selection (R&R Database)
+# Formula Stock Table
 #----------------------------------------------------------------------------#
-get_stock = """
+formula_stock = """
     SELECT
     \"Formula Stock\".Batch,
-    \"Formula Stock Usage\".Formula AS Code,
-    \"Formula Stock Usage\".Revision,
     \"Formula Stock\".Type AS BatchStatus,
     \"Formula Stock\".Quantity AS QuantityNow,
     \"Formula Stock\".\"Original Quantity\" AS OriginalDeliveredQuantity,
@@ -288,6 +309,21 @@ get_stock = """
     \"Formula Stock\".Supplier,
     \"Formula Stock\".PON AS PONumber,
     \"Formula Stock\".Cost AS PurchaseCost,
+    \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
+    \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
+    \"Formula Stock\".\"Record Number\" AS RecordNo
+    FROM \"Formula Stock\"
+    ORDER BY \"Formula Stock\".Batch
+    """
+    
+#----------------------------------------------------------------------------#
+# Formula Stock UsageTable
+#----------------------------------------------------------------------------#
+formula_stock_usage = """
+    SELECT
+    \"Formula Stock Usage\".Batch,
+    \"Formula Stock Usage\".Formula AS Code,
+    \"Formula Stock Usage\".Revision,
     \"Formula Stock Usage\".Customer,
     \"Formula Stock Usage\".\"Works order Number\" AS WONumber,
     \"Formula Stock Usage\".Price,
@@ -297,63 +333,27 @@ get_stock = """
     \"Formula Stock Usage\".Quantity AS QuantityMovement,
     \"Formula Stock Usage\".\"User ID\" AS UserID,
     \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
-    \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
-    \"Formula Stock\".\"Production Date\" AS BatchUp_Date
-    FROM \"Formula Stock\", \"Formula Stock Usage\"
-    WHERE \"Formula Stock\".Batch = \"Formula Stock Usage\".Batch
-    ORDER BY \"Formula Stock\".Batch,
-    \"Formula Stock Usage\".\"Last Updated\"
+    \"Formula Stock Usage\".\"Record Number\" AS RecordNo
+    FROM \"Formula Stock Usage\"
+    ORDER BY \"Formula Stock Usage\".\"Last Updated\"
     """
 
-#----------------------------------------------------------------------------#
-# Stock Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-get_batch = """
-    SELECT
-    Batch,
-    Code,
-    Revision,
-    BatchStatus,
-    QuantityNow,
-    OriginalDeliveredQuantity,
-    StockInfo,
-    Supplier,
-    PONumber,
-    PurchaseCost,
-    Customer,
-    WONumber,
-    Price,
-    UsageReference,
-    StockAction,
-    ItemOrder,
-    QuantityMovement,
-    UserID,
-    LastUpdated,
-    InvoiceDate,
-    BatchUp_Date
-    FROM Stock
-    WHERE Batch = %(query)s
-    """
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Sales Order Selection (R&R Database)
+# Sales Order Table
 #----------------------------------------------------------------------------#
-get_sales = """
+sales_order = """
     SELECT
     \"Sales Order\".Key AS WO_Num,
     \"Sales Order\".Link,
-    \"Sales Order Item\".\"Stock Code\" AS StockCode,
     \"Sales Order\".CustomerKey,
     \"Sales Order\".\"Customer Order Number\" AS CustomerOrderNumber,
     \"Sales Order\".Comment AS DespatchNotes,
-    \"Sales Order Item\".Quantity AS OrderQuantity,
-    \"Sales Order Item\".Price,
     \"Sales Order\".\"Order Value\" AS OrderValue,
     \"Sales Order\".Status,
     \"Sales Order\".\"Order Date\" AS OrderDate,
-    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
     \"Sales Order\".\"Despatch Date\" AS DespatchDate,
     \"Sales Order\".\"Invoice Date\" AS InvoiceDate,
     \"Sales Order\".Operator,
@@ -375,107 +375,79 @@ get_sales = """
     \"Sales Order\".\"Invoice Comment6\" AS InvoiceComment6,
     \"Sales Order\".\"Invoice terms\" AS InvoiceTerms,
     \"Sales Order\".\"Item Count\" AS ItemCount,
-    \"Sales Order Additional\".Description AS Haulier,
-    \"Sales Order Despatch\".Batch AS BatchDespatched,
-    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
-    \"Sales Order\".\"Last Updated\" AS LastUpdated
-    FROM ((\"Sales Order\" LEFT JOIN \"Sales Order Additional\" ON
-    \"Sales Order\".Key = \"Sales Order Additional\".Parent) LEFT JOIN
-    \"Sales Order Item\" ON
-    \"Sales Order\".Key = \"Sales Order Item\".Parent) LEFT JOIN
-    \"Sales Order Despatch\" ON
-    (\"Sales Order Item\".\"Stock Code\" = \"Sales Order Despatch\".\"Stock Code\") AND
-    (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
+    \"Sales Order\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order\".\"Record Number\" AS RecordNo
+    FROM \"Sales Order\"
     """
 
 #----------------------------------------------------------------------------#
-# Sales Order Selection (NaphthaBase)
+# Sales Order Item Table
 #----------------------------------------------------------------------------#
-sales_orders = """
+sales_order_item = """
     SELECT
-    WO_Num,
-    Link,
-    StockCode,
-    CustomerKey,
-    CustomerOrderNumber,
-    DespatchNotes,
-    OrderQuantity,
-    Price,
-    OrderValue,
-    Status,
-    OrderDate,
-    RequiredDate,
-    DespatchDate,
-    InvoiceDate,
-    Operator,
-    DespatchCompanyName,
-    DespatchAddress1,
-    DespatchAddress2,
-    DespatchAddress3,
-    DespatchPostCode,
-    DeliveryNoteComment1,
-    DeliveryNoteComment2,
-    DeliveryNoteComment3,
-    DeliveryNoteComment4,
-    DeliveryNoteComment5,
-    InvoiceComment1,
-    InvoiceComment2,
-    InvoiceComment3,
-    InvoiceComment4,
-    InvoiceComment5,
-    InvoiceComment6,
-    InvoiceTerms,
-    ItemCount,
-    Haulier,
-    BatchDespatched,
-    DespatchedQuantity,
-    LastUpdated
-    FROM Sales,
-    (SELECT
-        MAX(LastUpdated) AS latest from Sales WHERE
-        WO_Num = %(query)s)
-    WHERE WO_Num = %(query)s and LastUpdated = latest
-    ORDER BY WO_Num
+    \"Sales Order Item\".Parent,
+    \"Sales Order Item\".\"Stock Code\" AS StockCode,
+    \"Sales Order Item\".Quantity AS OrderQuantity,
+    \"Sales Order Item\".Price,
+    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order Item\".\"Record Number\" AS RecordNo
+    FROM \"Sales Order Item\"
     """
+
+#----------------------------------------------------------------------------#
+# Sales Order Additional Table
+#----------------------------------------------------------------------------#
+sales_order_additional = """
+    SELECT
+    \"Sales Order Additional\".Parent,
+    \"Sales Order Additional\".Description AS Haulier,
+    \"Sales Order Additional\".\"Record Number\" AS RecordNo
+    FROM \"Sales Order Additional\"
+    """
+
+#----------------------------------------------------------------------------#
+# Sales Order DespatchTable
+#----------------------------------------------------------------------------#
+sales_order_despatch = """
+    SELECT
+    \"Sales Order Despatch\".Key,
+    \"Sales Order Despatch\".\"Stock Code\" AS StockCode,
+    \"Sales Order Despatch\".Batch AS BatchDespatched,
+    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
+    \"Sales Order Despatch\".\"Record Number\" AS RecordNo
+    FROM \"Sales Order Despatch\"
+    """
+
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Deleted Sales Orders(R&R Database)
+# Missing Order Number Table
 #----------------------------------------------------------------------------#
-get_deleted_sales = """
+missing_order_number = """
     SELECT
     \"Missing Order Number\".Key AS WO_Num,
     \"Missing Order Number\".\"User ID\" AS UserID,
     \"Missing Order Number\".Reason AS Reason,
-    \"Missing Order Number\".DateTime AS LastUpdated
+    \"Missing Order Number\".DateTime AS LastUpdated,
+    \"Missing Order Number\".\"Record Number\" AS RecordNo
     FROM \"Missing Order Number\"
     WHERE \"Missing Order Number\".Key > '1'
     """
 
-#----------------------------------------------------------------------------#
-# Deleted Sales Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-deleted_sales_orders = """
-    SELECT
-    WO_Num,
-    UserID,
-    Reason,
-    LastUpdated
-    FROM DeletedSales
-    WHERE WO_Num = %(query)s
-    """
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Hauliers Selection (R&R Database)
+# Additional Items Table
 #----------------------------------------------------------------------------#
-get_hauliers = """
+additional_items = """
     SELECT
     \"Additional Items\".Key AS HaulierKey,
     \"Additional Items\".Name,
-    \"Additional Items\".\"Nominal Code\" AS NominalCode
+    \"Additional Items\".\"Nominal Code\" AS NominalCode,
+    \"Additional Items\".\"Last Updated\" AS LastUpdated,
+    \"Additional Items\".\"Record Number\" AS RecordNo
     FROM \"Additional Items\"
     ORDER BY \"Additional Items\".\"Record Number\"
     """
@@ -483,9 +455,9 @@ get_hauliers = """
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Customer Selection (R&R Database)
+# Customer Table
 #----------------------------------------------------------------------------#
-get_customer = """
+customer = """
     SELECT
     Customer.ID AS CustomerID,
     Customer.Name,
@@ -505,46 +477,19 @@ get_customer = """
     Customer.Memo,
     Customer.\"Credit Limit\" AS CreditLimit,
     Customer.Terms,
-    Customer.\"Last Updated\" AS LastUpdated
+    Customer.\"Last Updated\" AS LastUpdated,
+    Customer.\"Record Number\" AS RecordNo
     FROM Customer
     ORDER BY Customer.ID
     """
 
-#----------------------------------------------------------------------------#
-# Customer Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-customer = """
-    SELECT
-    CustomerID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Website,
-    ContactName,
-    VAT,
-    Comment,
-    Memo,
-    CreditLimit,
-    Terms,
-    LastUpdated
-    FROM Customer
-    WHERE CustomerID like '%(query)s' OR
-    Name like '%(query)s'
-    """
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Depot Selection (R&R Database)
+# Depot Table
 #----------------------------------------------------------------------------#
-get_depot = """
+depot = """
     SELECT
     Depot.\"Client ID\" AS ClientID,
     Depot.Name,
@@ -558,39 +503,19 @@ get_depot = """
     Depot.Fax,
     Depot.Email,
     Depot.Comment,
-    Depot.\"Last Updated\" AS LastUpdated
+    Depot.\"Last Updated\" AS LastUpdated,
+    Depot.\"Record Number\" AS RecordNo
     FROM Depot
     ORDER BY Depot.\"Client ID\"
     """
 
-#----------------------------------------------------------------------------#
-# Depot Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-depot = """
-    SELECT
-    ClientID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Comment,
-    LastUpdated
-    FROM Depot
-    WHERE ClientID like '%(query)s'
-    """
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Contact Selection (R&R Database)
+# Contact Table
 #----------------------------------------------------------------------------#
-get_contact = """
+contact = """
     SELECT
     Contact.\"Client ID\" AS ClientID,
     Contact.Title,
@@ -598,33 +523,19 @@ get_contact = """
     Contact.Surname,
     Contact.Phone,
     Contact.Department,
-    Contact.\"Last Updated\" AS LastUpdated
+    Contact.\"Last Updated\" AS LastUpdated,
+    Contact.\"Record Number\" AS RecordNo
     FROM Contact
     ORDER BY Contact.\"Client ID\"
     """
 
-#----------------------------------------------------------------------------#
-# Contact Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-contact = """
-    SELECT
-    ClientID,
-    Title,
-    Forename,
-    Surname,
-    Phone,
-    Department,
-    LastUpdated
-    FROM Contact
-    WHERE ClientID like '%(query)s'
-    """
 
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
-# Supplier Selection (R&R Database)
+# Supplier Table
 #----------------------------------------------------------------------------#
-get_supplier = """
+supplier = """
     SELECT
     Supplier.ID AS SupplierID,
     Supplier.Name,
@@ -642,34 +553,9 @@ get_supplier = """
     Supplier.\"Vat Registration Number\" AS VAT,
     Supplier.Comment,
     Supplier.Memo,
-    Supplier.\"Last Updated\" AS LastUpdated
+    Supplier.\"Last Updated\" AS LastUpdated,
+    Supplier.\"Record Number\" AS RecordNo
     FROM Supplier
     ORDER BY Supplier.ID
     """
 
-#----------------------------------------------------------------------------#
-# Supplier Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-supplier = """
-    SELECT
-    SupplierID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Website,
-    ContactName,
-    VAT,
-    Comment,
-    Memo,
-    LastUpdated
-    FROM Supplier
-    WHERE SupplierID like '%(query)s' OR
-    Name like '%(query)s'
-    """
