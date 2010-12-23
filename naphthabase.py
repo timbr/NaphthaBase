@@ -14,7 +14,7 @@ import sqlite3
 import datetime
 import decimal
 
-from settings import *
+from nbsettings import *
 import sql
 
 
@@ -52,16 +52,19 @@ def check_tables():
     
     global NaphthaBaseChecked # TODO Find alternative to global variables
     # Dictionary of table names and the sql query strings needed to create them
-    tablelist = {'Material': sql.create_material_table,
-                 'Purchases': sql.create_purchases_table,
-                 'Stock': sql.create_stock_table,
-                 'Sales': sql.create_sales_table,
-                 'DeletedSales': sql.create_deletedsales_table,
-                 'Hauliers': sql.create_hauliers_table,
-                 'Customer': sql.create_customer_table,
-                 'Depot': sql.create_depot_table,
-                 'Contact': sql.create_contact_table,
-                 'Supplier': sql.create_supplier_table}
+    tablelist = {'purchaseorder': sql.create_purchaseorder_table,
+                 'purchaseitem': sql.create_purchaseitem_table,
+                 'material': sql.create_material_table,
+                 'stock': sql.create_stock_table,
+                 'stockmovement': sql.create_stockmovement_table,
+                 'salesorder': sql.create_salesorder_table,
+                 'salesitem': sql.create_salesitem_table,
+                 'despatch': sql.create_despatch_table,
+                 'deletedsales': sql.create_deletedsales_table,
+                 'hauliers': sql.create_hauliers_table,
+                 'customer': sql.create_customer_table,
+                 'contact': sql.create_contact_table,
+                 'depot': sql.create_depot_table}
     query = \
       naphthabase_query("select * from sqlite_master where type = 'table'")
     # What tables are in the NaphthaBase?
@@ -104,12 +107,14 @@ def naphthabase_transfer(data, query):
     NaphthaBase.text_factory = str # solves problem with Pound signs....!
     c = NaphthaBase.cursor()
     for entry in data:
-            results = [row for row in c.execute(query, entry)]
+        entry = [None] + entry # Add null value so that primary key autoincrements
+        results = [row for row in c.execute(query, entry)]
     NaphthaBase.commit()
     NaphthaBase.close()
 
 
-def get_randR_data(query, table = '', convert_decimal_to_strings = True):
+def get_randr_data(query, table = '', last_updated = '',
+                      convert_decimal_to_strings = True):
     """Run an SQL query on the RandR database.
     
     The correct database file is selected according to which table is being
@@ -117,6 +122,8 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
     avoid errors converting to floats.
     """
     
+    if last_updated == '':
+        last_updated = datetime.datetime(1982,1,1,0,0)
     # Connect to the correct R&R database file.
     # stock_tables and accounts_tables lists are in settings.py
     if table in stock_tables:
@@ -128,11 +135,11 @@ def get_randR_data(query, table = '', convert_decimal_to_strings = True):
         RandRcursor = stock_connection.cursor()
     
     try:
-        RandRdata = RandRcursor.execute(query)
+        RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
     except:
         if table == '':
             RandRcursor = accounts_connection.cursor()
-            RandRdata = RandRcursor.execute(query)
+            RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
     
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed
@@ -268,7 +275,7 @@ class NaphthaBaseObject(object):
                    datetime.datetime.now() - datetime.timedelta(minutes = 30):
             return
         print 'Updating NaphthaBase with latest %s Data.' % self._table
-        RandRdata = get_randR_data(self._randr_query, self._table)
+        RandRdata = get_randr_data(self._randr_query, self._table)
         naphthabase_query("DELETE FROM %s" % self._table) # Clear table
         num_fields = len(get_columns(self._table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
@@ -308,12 +315,12 @@ class MaterialCodes(NaphthaBaseObject):
 
         self._getlatest = {}
         for entry in self._data:
-            code = entry[self._clmn['Code']]
-            lastupdate = entry[self._clmn['LastUpdated']]
-            desc = entry[self._clmn['Description']]
-            recordnum = entry[self._clmn['RecordNo']]
+            code = entry[self._clmn['code']]
+            lastupdate = entry[self._clmn['lastupdated']]
+            desc = entry[self._clmn['description']]
+            recordnum = entry[self._clmn['rr_recordno']]
             if code in self._getlatest.keys():
-                if lastupdate > code[self._clmn['LastUpdated']]:
+                if lastupdate > code[self._clmn['lastupdated']]:
                     self._getlatest[code] = [desc, recordnum, lastupdate]
                     # recordnum is added in position 1 so that lastupdate remains in position 2
             else:

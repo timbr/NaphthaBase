@@ -4,196 +4,233 @@
 #----------------------------------------------------------------------------#
 # NaphthaBase Table Creation
 #----------------------------------------------------------------------------#
-create_material_table = """
-    CREATE TABLE Material (
-    Code text,
-    Description text,
-    LastUpdated date,
-    RecordNo int
+
+create_purchaseorder_table = """
+    CREATE TABLE purchaseorder (
+    id integer NOT NULL PRIMARY KEY,
+    pon integer,
+    ordervalue varchar(15) NOT NULL,
+    supplier_id varchar(10) REFERENCES supplier (id),
+    orderref varchar(20) NOT NULL,
+    orderdate datetime NOT NULL,
+    placedby varchar(50) NOT NULL,
+    printedcomment varchar(100),
+    deliverycomment varchar(100),
+    status integer,
+    purchaseitem_id integer REFERENCES purchaseitem (id),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
-create_purchases_table = """
-    CREATE TABLE Purchases (
-    PO_Num text,
-    Code text,
-    Batch text,
-    Quantity text,
-    Price text,
-    OrderValue text,
-    Supplier text,
-    OrderReference text,
-    OrderDate date,
-    DueDate date,
-    PlacedBy text,
-    DeliveredQuantity text,
-    PrintedComment text,
-    DeliveryComment text,
-    Status int,
-    LastUpdated date
+create_purchaseitem_table = """
+    CREATE TABLE purchaseitem (
+    id integer NOT NULL PRIMARY KEY,
+    pon integer,
+    material_id integer references material (id),
+    quantity varchar(15) NOT NULL,
+    price varchar(15) NOT NULL,
+    duedate datetime NOT NULL,
+    delivered_quantity varchar(15) NOT NULL,
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
+create_material_table = """
+    CREATE TABLE material (
+    id integer NOT NULL PRIMARY KEY,
+    code varchar(10) NOT NULL,
+    description varchar(50) NOT NULL,
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
 create_stock_table = """
-    CREATE TABLE Stock (
-    Batch text,
-    Code text,
-    Revision text,
-    BatchStatus text,
-    QuantityNow text,
-    OriginalDeliveredQuantity text,
-    StockInfo text,
-    Supplier text,
-    PONumber text,
-    PurchaseCost text,
-    Customer text,
-    WONumber text,
-    Price text,
-    UsageReference text,
-    StockAction text,
-    ItemOrder text,
-    QuantityMovement text,
-    UserID text,
-    LastUpdated date,
-    InvoiceDate date,
-    BatchUp_Date date
+    CREATE TABLE stock (
+    id integer NOT NULL PRIMARY KEY,
+    batch integer NOT NULL,
+    material_id integer REFERENCES material (id),
+    status varchar(1) NOT NULL,
+    supplier_id integer REFERENCES supplier (id),
+    purchaseorder_id integer REFERENCES purchaseorder (id),
+    costprice varchar(20) NOT NULL,
+    batchup_quantity varchar(20) NOT NULL,
+    batchup_date datetime NOT NULL,
+    stockquantity varchar(20) NOT NULL,
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
-create_sales_table = """
-    CREATE TABLE Sales (
-    WO_Num text,
-    Link text,
-    StockCode text,
-    CustomerKey text,
-    CustomerOrderNumber text,
-    DespatchNotes text,
-    OrderQuantity text,
-    Price text,
-    OrderValue text,
-    Status int,
-    OrderDate date,
-    RequiredDate date,
-    DespatchDate date,
-    InvoiceDate date,
-    Operator text,
-    DespatchCompanyName text,
-    DespatchAddress1 text,
-    DespatchAddress2 text,
-    DespatchAddress3 text,
-    DespatchPostCode text,
-    DeliveryNoteComment1 text,
-    DeliveryNoteComment2 text,
-    DeliveryNoteComment3 text,
-    DeliveryNoteComment4 text,
-    DeliveryNoteComment5 text,
-    InvoiceComment1 text,
-    InvoiceComment2 text,
-    InvoiceComment3 text,
-    InvoiceComment4 text,
-    InvoiceComment5 text,
-    InvoiceComment6 text,
-    InvoiceTerms text,
-    ItemCount int,
-    Haulier text,
-    BatchDespatched text,
-    DespatchedQuantity text,
-    LastUpdated date
+create_stockmovement_table = """
+    CREATE TABLE stockmovement (
+    id integer NOT NULL PRIMARY KEY,
+    stock_id integer REFERENCES stock (id),
+    action varchar(10),
+    customer integer REFERENCES customer (id),
+    worksorder integer REFERENCES salesorder (id),
+    salesprice varchar(20),
+    movement_description varchar(100),
+    movement_quantity varchar(20),
+    item_order integer,
+    user_id varchar(20),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
+create_salesorder_table = """
+    CREATE TABLE salesorder (
+    id integer NOT NULL PRIMARY KEY,
+    won integer NOT NULL,
+    followon_link integer,
+    customer integer REFERENCES customer (id),
+    customer_orderno varchar(20),
+    picklist_comment varchar(200),
+    ordervalue varchar(15) NOT NULL,
+    status integer,
+    orderdate datetime NOT NULL,
+    despatchdate datetime NOT NULL,
+    invoicedate datetime NOT NULL,
+    operator varchar(20) NOT NULL,
+    delivery_name varchar(100),
+    delivery_address varchar(200),
+    delivery_postcode varchar(20),
+    printed_comments varchar(200),
+    invoice_comments varchar(200),
+    invoice_terms varchar(100),
+    item_count integer,
+    salesitem_id integer REFERENCES salesitem (id),
+    haulier_id integer REFERENCES haulier (id),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
+create_salesitem_table = """
+    CREATE TABLE salesitem (
+    id integer NOT NULL PRIMARY KEY,
+    won integer,
+    material_id integer references material (id),
+    quantity varchar(15) NOT NULL,
+    price varchar(15) NOT NULL,
+    required_date datetime NOT NULL,
+    despatch_id integer REFERENCES despatch (id),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+    
+create_despatch_table = """
+    CREATE TABLE despatch (
+    id integer NOT NULL PRIMARY KEY,
+    won integer,
+    materialcode varchar(20) NOT NULL,
+    stock_id integer REFERENCES stock (id),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
 create_deletedsales_table = """
-    CREATE TABLE DeletedSales (
-    WO_Num text,
-    UserID text,
-    Reason text,
-    LastUpdated date
+    CREATE TABLE deletedsales (
+    id integer NOT NULL PRIMARY KEY,
+    won integer,
+    operator varchar(20) NOT NULL,
+    reason varchar(50),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
 create_hauliers_table = """
-    CREATE TABLE Hauliers (
-    HaulierKey text,
-    Name text,
-    NominalCode text
+    CREATE TABLE hauliers (
+    id integer NOT NULL PRIMARY KEY,
+    haulierkey varchar(20) NOT NULL,
+    name varchar(50) NOT NULL,
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
 create_customer_table = """
-    CREATE TABLE Customer (
-    CustomerID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
-    Website text,
-    ContactName text,
-    VAT text,
-    Comment text,
-    Memo text,
-    CreditLimit text,
-    Terms text,
-    LastUpdated date
-    )
-    """
-
-create_depot_table = """
-    CREATE TABLE Depot (
-    ClientID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
-    Comment text,
-    LastUpdated date
-    )
-    """
-
-create_contact_table = """
-    CREATE TABLE Contact (
-    ClientID text,
-    Title text,
-    Forename text,
-    Surname text,
-    Phone text,
-    Department text,
-    LastUpdated date
+    CREATE TABLE customer (
+    id integer NOT NULL PRIMARY KEY,
+    customer_code varchar(10) NOT NULL,
+    name varchar(50) NOT NULL,
+    address varchar(200),
+    postcode varchar(10),
+    phone varchar(20),
+    fax varchar(20),
+    email varchar(50),
+    website varchar(50),
+    contactname varchar(30),
+    vat varchar(20),
+    comment varchar(100),
+    memo varchar(100),
+    creditlimit varchar(15),
+    terms varchar(20),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
 
 create_supplier_table = """
-    CREATE TABLE Supplier (
-    SupplierID text,
-    Name text,
-    Address1 text,
-    Address2 text,
-    Address3 text,
-    Address4 text,
-    Address5 text,
-    PostCode text,
-    Telephone text,
-    Fax text,
-    Email text,
-    Website text,
-    ContactName text,
-    VAT text,
-    Comment text,
-    Memo text,
-    LastUpdated text
+    CREATE TABLE supplier (
+    id integer NOT NULL PRIMARY KEY,
+    supplier_code varchar(10) NOT NULL,
+    name varchar(50) NOT NULL,
+    address varchar(200),
+    postcode varchar(10),
+    phone varchar(20),
+    fax varchar(20),
+    email varchar(50),
+    website varchar(50),
+    contactname varchar(30),
+    vat varchar(20),
+    comment varchar(100),
+    memo varchar(100),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
     )
     """
+
+create_contact_table = """
+    CREATE TABLE contact (
+    id integer NOT NULL PRIMARY KEY,
+    clientcode varchar(10) NOT NULL,
+    title varchar(10),
+    forename varchar(20),
+    surname varchar(20),
+    phone varchar(20),
+    department varchar(50),
+    customer_id integer REFERENCES customer (id),
+    supplier_id integer REFERENCES supplier (id),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
+create_depot_table = """
+    CREATE TABLE depot (
+    id integer NOT NULL PRIMARY KEY,
+    clientid varchar(10) NOT NULL,
+    clientname varchar(20),
+    address varchar(200),
+    postcode varchar(10),
+    phone varchar(20),
+    fax varchar(20),
+    email varchar(50),
+    comment varchar(100),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -208,6 +245,7 @@ material_codes = """
     Formula.\"Record Number\" AS RecordNo
     FROM Formula
     WHERE (Formula.\"Customer Key\"='ANY')
+    AND Formula.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Formula.Key
     """
 
