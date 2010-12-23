@@ -61,6 +61,36 @@ for item in data:
     newdata.append(line)
 update(newdata, 'contact')
 
+data = getdata(nb.sql.get_purchaseorder, '\"Purchase Order\"')
+newdata = []
+for item in data:
+    line = []
+    line[0:2] = item[0:2]
+    suppliercode = nb.naphthabase_query("select id from supplier where supplier_code='%(code)s'" % {'code': item[2]})
+    if len(suppliercode) > 0:
+        line.append(suppliercode[0][0])
+    else:
+        line.append(None)
+    line[3:] = item[3:]
+    newdata.append(line)
+update(newdata, 'purchaseorder')
+
 data = getdata(nb.sql.get_purchaseitem, '\"Purchase Item\"')
-update(data, 'purchaseitem')
-    
+newdata = []
+for item in data:
+    line = []
+    line.append(item[0])
+    purchaseorder = nb.naphthabase_query("select id from purchaseorder where pon='%(pon)s'" % {'pon': item[0]})
+    if len(purchaseorder) > 0:
+        line.append(purchaseorder[0][0])
+    else:
+        line.append(None)
+    materialcode = nb.naphthabase_query("select id from material where code='%(code)s'" % {'code': item[1]})
+    if len(materialcode) > 0:
+        line.append(materialcode[0][0])
+    else:
+        line.append(None)
+    line[3:] = item[2:]
+    newdata.append(line)
+update(newdata, 'purchaseitem')
+

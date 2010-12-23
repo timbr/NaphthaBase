@@ -9,7 +9,7 @@ create_purchaseorder_table = """
     CREATE TABLE purchaseorder (
     id integer NOT NULL PRIMARY KEY,
     pon integer,
-    ordervalue varchar(15) NOT NULL,
+    ordervalue varchar(15),
     supplier_id varchar(10) REFERENCES supplier (id),
     orderref varchar(20) NOT NULL,
     orderdate datetime NOT NULL,
@@ -17,7 +17,6 @@ create_purchaseorder_table = """
     printedcomment varchar(100),
     deliverycomment varchar(100),
     status integer,
-    purchaseitem_id integer REFERENCES purchaseitem (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -27,6 +26,7 @@ create_purchaseitem_table = """
     CREATE TABLE purchaseitem (
     id integer NOT NULL PRIMARY KEY,
     pon integer,
+    purchaseorder_id integer REFERENCES purchaseorder (id),
     material_id integer REFERENCES material (id),
     quantity varchar(15) NOT NULL,
     price varchar(15) NOT NULL,
@@ -270,30 +270,20 @@ get_purchaseitem = """
 #----------------------------------------------------------------------------#
 # Purchase Order Selection (R&R Database)
 #----------------------------------------------------------------------------#
-po_data = """
+get_purchaseorder = """
     SELECT
     \"Purchase Order\".\"Order Number\" AS PO_Num,
-    \"Purchase Item\".\"Component Code\" AS Code,
-    \"Formula Stock\".Batch,
-    \"Purchase Item\".Quantity,
-    \"Purchase Item\".Price,
     \"Purchase Order\".\"Order Value\" AS OrderValue,
     \"Purchase Order\".Supplier,
     \"Purchase Order\".\"Order Reference\" AS OrderReference,
     \"Purchase Order\".\"Order Date\" AS OrderDate,
-    \"Purchase Item\".\"Due Date\" AS DueDate,
     \"Purchase Order\".\"Placed By\" AS PlacedBy,
-    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
     \"Purchase Order\".\"Printed Comment\" AS PrintedComment,
     \"Purchase Order\".\"Delivery Comment\" As DeliveryComment,
     \"Purchase Order\".Status,
-    \"Purchase Item\".\"Last Updated\" AS LastUpdated       
-    FROM (\"Purchase Order\" INNER JOIN \"Purchase Item\" ON
-    \"Purchase Order\".\"Order Number\" = 
-    \"Purchase Item\".\"Order Number\") LEFT JOIN \"Formula Stock\" ON
-    (\"Purchase Item\".\"Component Code\" = \"Formula Stock\".Key) AND 
-    (\"Purchase Item\".\"Order Number\" = \"Formula Stock\".PON)       
-    ORDER BY \"Purchase Order\".\"Order Number\"
+    \"Purchase Order\".\"Last Updated\" AS LastUpdated,
+    \"Purchase Order\".\"Record Number\" AS RecordNumber     
+    FROM \"Purchase Order\"
     """
 
 #----------------------------------------------------------------------------#
