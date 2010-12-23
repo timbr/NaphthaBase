@@ -27,7 +27,7 @@ create_purchaseitem_table = """
     CREATE TABLE purchaseitem (
     id integer NOT NULL PRIMARY KEY,
     pon integer,
-    material_id integer references material (id),
+    material_id integer REFERENCES material (id),
     quantity varchar(15) NOT NULL,
     price varchar(15) NOT NULL,
     duedate datetime NOT NULL,
@@ -250,6 +250,22 @@ material_codes = """
     """
 
 #****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Purchase Item Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_purchaseitem = """
+    SELECT
+    \"Purchase Item\".\"Order Number\" AS PO_Num,
+    \"Purchase Item\".\"Component Code\" AS Code,
+    \"Purchase Item\".Quantity,
+    \"Purchase Item\".Price,
+    \"Purchase Item\".\"Due Date\" AS DueDate,
+    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
+    \"Purchase Item\".\"Last Updated\" AS LastUpdated,
+    \"Purchase Item\".\"Record Number\" AS RecordNumber
+    FROM \"Purchase Item\"
+    """
 
 #----------------------------------------------------------------------------#
 # Purchase Order Selection (R&R Database)

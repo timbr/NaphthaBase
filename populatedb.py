@@ -41,7 +41,7 @@ for item in data:
     newdata.append(line)
 update(newdata, 'supplier')
 
-tim = nb.naphthabase_query("select id from customer where customer_code='%(code)s'" % {'code': 'VERIFY'})
+
 data = getdata(nb.sql.get_contact, 'Contact')
 newdata = []
 for item in data:
@@ -59,6 +59,8 @@ for item in data:
         line.append(None)
     line[8:] = item[5:]
     newdata.append(line)
-    print line
 update(newdata, 'contact')
+
+data = getdata(nb.sql.get_purchaseitem, '\"Purchase Item\"')
+update(data, 'purchaseitem')
     
