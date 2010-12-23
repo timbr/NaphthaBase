@@ -159,7 +159,7 @@ create_customer_table = """
     CREATE TABLE customer (
     id integer NOT NULL PRIMARY KEY,
     customer_code varchar(10) NOT NULL,
-    name varchar(50) NOT NULL,
+    name varchar(50),
     address varchar(200),
     postcode varchar(10),
     phone varchar(20),
@@ -181,7 +181,7 @@ create_supplier_table = """
     CREATE TABLE supplier (
     id integer NOT NULL PRIMARY KEY,
     supplier_code varchar(10) NOT NULL,
-    name varchar(50) NOT NULL,
+    name varchar(50),
     address varchar(200),
     postcode varchar(10),
     phone varchar(20),
@@ -285,7 +285,7 @@ po_data = """
 #----------------------------------------------------------------------------#
 purchase_orders = """
     SELECT
-    PO_Num,
+    pon,
     Code,
     Batch,
     Quantity,
@@ -543,7 +543,8 @@ get_customer = """
     Customer.Memo,
     Customer.\"Credit Limit\" AS CreditLimit,
     Customer.Terms,
-    Customer.\"Last Updated\" AS LastUpdated
+    Customer.\"Last Updated\" AS LastUpdated,
+    Customer.\"Record Number\" AS RecordNumber
     FROM Customer
     ORDER BY Customer.ID
     """
@@ -636,7 +637,8 @@ get_contact = """
     Contact.Surname,
     Contact.Phone,
     Contact.Department,
-    Contact.\"Last Updated\" AS LastUpdated
+    Contact.\"Last Updated\" AS LastUpdated,
+    Contact.\"Record Number\" AS RecordNumber
     FROM Contact
     ORDER BY Contact.\"Client ID\"
     """
@@ -680,7 +682,8 @@ get_supplier = """
     Supplier.\"Vat Registration Number\" AS VAT,
     Supplier.Comment,
     Supplier.Memo,
-    Supplier.\"Last Updated\" AS LastUpdated
+    Supplier.\"Last Updated\" AS LastUpdated,
+    Supplier.\"Record Number\" AS RecordNumber
     FROM Supplier
     ORDER BY Supplier.ID
     """

@@ -63,6 +63,7 @@ def check_tables():
                  'deletedsales': sql.create_deletedsales_table,
                  'hauliers': sql.create_hauliers_table,
                  'customer': sql.create_customer_table,
+                 'supplier': sql.create_supplier_table,
                  'contact': sql.create_contact_table,
                  'depot': sql.create_depot_table}
     query = \
@@ -333,12 +334,12 @@ class MaterialCodes(NaphthaBaseObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Purchases(NaphthaBaseObject):
+class PurchaseOrder(NaphthaBaseObject):
     """Updates and provides access to Purchase Order information."""
 #////////////////////////////////////////////////////////////////////////////#
 
     def __init__(self):
-        self._table = 'Purchases'
+        self._table = 'purchaseorder'
         self._randr_query = sql.po_data
         self._nbquery = sql.purchase_orders
         NaphthaBaseObject.__init__(self)
