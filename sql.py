@@ -352,6 +352,29 @@ get_stock = """
     WHERE \"Formula Stock\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Stock Usage Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_stockusage = """
+    SELECT
+    \"Formula Stock Usage\".Batch,
+    \"Formula Stock Usage\".\"Record Type\" AS Action,
+    \"Formula Stock Usage\".Customer,
+    \"Formula Stock Usage\".\"Works Order Number\" AS WON,
+    \"Formula Stock Usage\".Price,
+    \"Formula Stock Usage\".\"Usage Reference\" AS UsageRef,
+    \"Formula Stock Usage\".Quantity,
+    \"Formula Stock Usage\".\"Item Order\" AS ItemOrder,
+    \"Formula Stock Usage\".\"User ID\" AS UserID,
+    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
+    \"Formula Stock Usage\".\"Record Number\" AS RecordNumber
+    FROM \"Formula Stock Usage\"
+    WHERE \"Formula Stock Usage\".\"Last Updated\" > #%(lastupdate)s#
+    """    
+
+
 #----------------------------------------------------------------------------#
 # Stock Selection (NaphthaBase)
 #----------------------------------------------------------------------------#

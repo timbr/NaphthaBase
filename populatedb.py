@@ -209,4 +209,26 @@ for item in data:
 update(newdata, 'despatch')
 
 
-
+data = getdata(nb.sql.get_stockusage, '\"Formula Stock Usage\"')
+newdata = []
+for item in data:
+    line = []
+    stockcode = [data[1] for data in stockdata if data[0] == item[0]]
+    if len(stockcode) > 0:
+        line.append(stockcode[0])
+    else:
+        line.append(None)
+    line.append(item[1])
+    customercode = [data[1] for data in customerdata if data[0] == item[2]]
+    if len(customercode) > 0:
+        line.append(customercode[0])
+    else:
+        line.append(None)
+    salesordercode = [data[1] for data in salesorderdata if data[0] == item[3]]
+    if len(salesordercode) > 0:
+        line.append(salesordercode[0])
+    else:
+        line.append(None)
+    line[4:] = item[4:]
+    newdata.append(line)
+update(newdata, 'stockmovement')
