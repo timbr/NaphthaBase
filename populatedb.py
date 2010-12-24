@@ -74,6 +74,30 @@ for item in data:
     newdata.append(line)
 update(newdata, 'contact')
 
+
+data = getdata(nb.sql.get_depot, 'Depot')
+newdata = []
+for item in data:
+    line = []
+    line.append(item[0])
+    line.append(item[1])
+    line.append("%s\n%s\n%s\n%s\n%s" % (item[2], item[3], item[4], item[5], item[6]))
+    line[4:8] = item[7:12]
+    customercode = [data[1] for data in customerdata if data[0] == item[0]]
+    if len(customercode) > 0:
+        line.append(customercode[0])
+    else:
+        line.append(None)
+    suppliercode = [data[1] for data in supplierdata if data[0] == item[0]]
+    if len(suppliercode) > 0:
+        line.append(suppliercode[0])
+    else:
+        line.append(None)
+    line[11:] = item[12:]
+    newdata.append(line)
+update(newdata, 'depot')
+
+
 data = getdata(nb.sql.get_purchaseorder, '\"Purchase Order\"')
 newdata = []
 for item in data:

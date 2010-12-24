@@ -236,6 +236,8 @@ create_depot_table = """
     fax varchar(20),
     email varchar(50),
     comment varchar(100),
+    customer_id integer REFERENCES customer (id),
+    supplier_id integer REFERENCES supplier (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -671,8 +673,10 @@ get_depot = """
     Depot.Fax,
     Depot.Email,
     Depot.Comment,
-    Depot.\"Last Updated\" AS LastUpdated
+    Depot.\"Last Updated\" AS LastUpdated,
+    Depot.\"Record Number\" AS RecordNo
     FROM Depot
+    WHERE Depot.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Depot.\"Client ID\"
     """
 
