@@ -113,12 +113,11 @@ create_salesorder_table = """
 create_salesitem_table = """
     CREATE TABLE salesitem (
     id integer NOT NULL PRIMARY KEY,
-    won integer,
+    won varchar(10),
     material_id integer references material (id),
     quantity varchar(15) NOT NULL,
     price varchar(15) NOT NULL,
     required_date datetime NOT NULL,
-    despatch_id integer REFERENCES despatch (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -127,9 +126,10 @@ create_salesitem_table = """
 create_despatch_table = """
     CREATE TABLE despatch (
     id integer NOT NULL PRIMARY KEY,
-    won integer,
+    won varchar(10),
     materialcode varchar(20) NOT NULL,
     stock_id integer REFERENCES stock (id),
+    salesitem_id REFERENCES salesitem (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -388,6 +388,24 @@ get_despatch = """
     WHERE \"Sales Order Despatch\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+
+#----------------------------------------------------------------------------#
+# Sales Order Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_salesitem = """
+    SELECT
+    \"Sales Order Item\".Parent AS WO_Num,
+    \"Sales Order Item\".\"Stock Code\" AS StockCode,
+    \"Sales Order Item\".Quantity AS OrderQuantity,
+    \"Sales Order Item\".Price,
+    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
+    \"Sales Order Item\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order Item\".\"Record Number\" AS RecordNumber
+    FROM \"Sales Order Item\"
+    WHERE \"Sales Order Item\".\"Last Updated\" > #%(lastupdate)s#
+    """
+    
+    
 #----------------------------------------------------------------------------#
 # Sales Order Selection (R&R Database)
 #----------------------------------------------------------------------------#

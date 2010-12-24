@@ -129,6 +129,22 @@ update(newdata, 'stock')
 stockdata = [row for row in nb.naphthabase_query("select batch, id from stock")]
 
 
+data = getdata(nb.sql.get_salesitem, '\"Sales Order Item\"')
+newdata = []
+for item in data:
+    line = []
+    line.append(item[0])
+    materialcode = [data[1] for data in materialdata if data[0] == item[1]]
+    if len(materialcode) > 0:
+        line.append(materialcode[0])
+    else:
+        line.append(None)
+    line[2:] = item[2:]
+    newdata.append(line)
+update(newdata, 'salesitem')
+salesitemdata = [row for row in nb.naphthabase_query("select won, id from salesitem")]
+
+
 data = getdata(nb.sql.get_despatch, '\"Sales Order Despatch\"')
 newdata = []
 for item in data:
@@ -136,11 +152,18 @@ for item in data:
     line.append(item[0])
     line.append(item[1])
     stockcode = [data[1] for data in stockdata if data[0] == item[2]]
-    print item[2], stockcode
     if len(stockcode) > 0:
         line.append(stockcode[0])
     else:
         line.append(None)
-    line[3:] = item[4:]
+    salesitemcode = [data[1] for data in salesitemdata if data[0] == item[0]]
+    if len(salesitemcode) > 0:
+        line.append(salesitemcode[0])
+    else:
+        line.append(None)
+    line[4:] = item[4:]
     newdata.append(line)
 update(newdata, 'despatch')
+
+
+
