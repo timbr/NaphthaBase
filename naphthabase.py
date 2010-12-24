@@ -135,12 +135,17 @@ def get_randr_data(query, table = '', last_updated = '',
         print "no table specified, I'll try both"
         RandRcursor = stock_connection.cursor()
     
-    try:
-        RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
-    except:
-        if table == '':
-            RandRcursor = accounts_connection.cursor()
-            RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
+    print query
+    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
+    print 'got R&R stock data'
+    #try:
+    #    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
+     #   print 'got R&R stock date'
+    #except:
+    #    if table == '':
+    #        RandRcursor = accounts_connection.cursor()
+    #        RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
+    #        print 'got R&R accounts data'
     
     RandR_Stringed = stringprocess(RandRdata) # convert decimal types to strings
     return RandR_Stringed

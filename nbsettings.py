@@ -7,7 +7,7 @@ RandR_Accounts_Dbase = "S:\\NAPHTHAV6\\DATA\\Naphtha_accounts.mdb"
 accountsDBpassword = "bgSoiqOogNMOH"
 
 # NaphthaBase tables that originate from the R&R 'Naphtha.mdb' database
-stock_tables = ['Material', 'Purchases', 'Stock', 'Sales', 'DeletedSales', 'Hauliers']
+stock_tables = ['Material', 'Purchases', 'Stock', 'Sales', 'DeletedSales', 'Hauliers', 'Formula Stock']
 # NaphthaBase tables that originate from the R&R 'Naphtha_accounts.mdb' database
 accounts_tables = ['Customer', 'Depot', 'Contact', 'Supplier']
 

@@ -52,10 +52,11 @@ create_stock_table = """
     id integer NOT NULL PRIMARY KEY,
     batch integer NOT NULL,
     material_id integer REFERENCES material (id),
+    stockinfo varchar(200),
     status varchar(1) NOT NULL,
     supplier_id integer REFERENCES supplier (id),
     purchaseorder_id integer REFERENCES purchaseorder (id),
-    costprice varchar(20) NOT NULL,
+    costprice varchar(20),
     batchup_quantity varchar(20) NOT NULL,
     batchup_date datetime NOT NULL,
     stockquantity varchar(20) NOT NULL,
@@ -265,6 +266,7 @@ get_purchaseitem = """
     \"Purchase Item\".\"Last Updated\" AS LastUpdated,
     \"Purchase Item\".\"Record Number\" AS RecordNumber
     FROM \"Purchase Item\"
+    WHERE \"Purchase Item\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -284,6 +286,7 @@ get_purchaseorder = """
     \"Purchase Order\".\"Last Updated\" AS LastUpdated,
     \"Purchase Order\".\"Record Number\" AS RecordNumber     
     FROM \"Purchase Order\"
+    WHERE \"Purchase Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -323,30 +326,19 @@ purchase_orders = """
 get_stock = """
     SELECT
     \"Formula Stock\".Batch,
-    \"Formula Stock Usage\".Formula AS Code,
-    \"Formula Stock Usage\".Revision,
-    \"Formula Stock\".Type AS BatchStatus,
-    \"Formula Stock\".Quantity AS QuantityNow,
-    \"Formula Stock\".\"Original Quantity\" AS OriginalDeliveredQuantity,
+    \"Formula Stock\".Key AS Code,
     \"Formula Stock\".Location AS StockInfo,
+    \"Formula Stock\".Type AS BatchStatus,
     \"Formula Stock\".Supplier,
     \"Formula Stock\".PON AS PONumber,
     \"Formula Stock\".Cost AS PurchaseCost,
-    \"Formula Stock Usage\".Customer,
-    \"Formula Stock Usage\".\"Works order Number\" AS WONumber,
-    \"Formula Stock Usage\".Price,
-    \"Formula Stock Usage\".\"Usage Reference\" AS UsageReference,
-    \"Formula Stock Usage\".\"Record Type\" AS StockAction,
-    \"Formula Stock Usage\".\"Item Order\" AS ItemOrder,
-    \"Formula Stock Usage\".Quantity AS QuantityMovement,
-    \"Formula Stock Usage\".\"User ID\" AS UserID,
-    \"Formula Stock Usage\".\"Last Updated\" AS LastUpdated,
-    \"Formula Stock\".\"Last Updated\" AS InvoiceDate,
-    \"Formula Stock\".\"Production Date\" AS BatchUp_Date
-    FROM \"Formula Stock\", \"Formula Stock Usage\"
-    WHERE \"Formula Stock\".Batch = \"Formula Stock Usage\".Batch
-    ORDER BY \"Formula Stock\".Batch,
-    \"Formula Stock Usage\".\"Last Updated\"
+    \"Formula Stock\".\"Original Quantity\" AS OriginalDeliveredQuantity,
+    \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
+    \"Formula Stock\".Quantity AS QuantityNow,
+    \"Formula Stock\".\"Last Updated\" AS LastUpdated,
+    \"Formula Stock\".\"Record Number\" AS RecordNumber
+    FROM \"Formula Stock\"
+    WHERE \"Formula Stock\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -552,6 +544,7 @@ get_customer = """
     Customer.\"Last Updated\" AS LastUpdated,
     Customer.\"Record Number\" AS RecordNumber
     FROM Customer
+    WHERE Customer.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Customer.ID
     """
 
@@ -646,6 +639,7 @@ get_contact = """
     Contact.\"Last Updated\" AS LastUpdated,
     Contact.\"Record Number\" AS RecordNumber
     FROM Contact
+    WHERE Contact.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Contact.\"Client ID\"
     """
 
@@ -691,6 +685,7 @@ get_supplier = """
     Supplier.\"Last Updated\" AS LastUpdated,
     Supplier.\"Record Number\" AS RecordNumber
     FROM Supplier
+    WHERE Supplier.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Supplier.ID
     """
 
