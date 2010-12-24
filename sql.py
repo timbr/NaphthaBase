@@ -50,7 +50,7 @@ create_material_table = """
 create_stock_table = """
     CREATE TABLE stock (
     id integer NOT NULL PRIMARY KEY,
-    batch integer NOT NULL,
+    batch varchar(10) NOT NULL,
     material_id integer REFERENCES material (id),
     stockinfo varchar(200),
     status varchar(1) NOT NULL,
@@ -372,6 +372,21 @@ get_batch = """
     """
 
 #****************************************************************************#
+
+#----------------------------------------------------------------------------#
+# Sales Order Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_despatch = """
+    SELECT
+    \"Sales Order Despatch\".Key AS WON,
+    \"Sales Order Despatch\".\"Stock Code\" AS Material,
+    \"Sales Order Despatch\".Batch AS BatchDespatched,
+    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
+    \"Sales Order Despatch\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order Despatch\".\"Record Number\" AS RecordNumber
+    FROM \"Sales Order Despatch\"
+    WHERE \"Sales Order Despatch\".\"Last Updated\" > #%(lastupdate)s#
+    """
 
 #----------------------------------------------------------------------------#
 # Sales Order Selection (R&R Database)

@@ -137,7 +137,6 @@ def get_randr_data(query, table = '', last_updated = '',
     
     print query
     RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
-    print 'got R&R stock data'
     #try:
     #    RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
      #   print 'got R&R stock date'
