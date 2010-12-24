@@ -62,6 +62,7 @@ def check_tables():
                  'despatch': sql.create_despatch_table,
                  'deletedsales': sql.create_deletedsales_table,
                  'hauliers': sql.create_hauliers_table,
+                 'carrier': sql.create_carrier_table,
                  'customer': sql.create_customer_table,
                  'supplier': sql.create_supplier_table,
                  'contact': sql.create_contact_table,

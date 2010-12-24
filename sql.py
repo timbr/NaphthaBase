@@ -85,7 +85,7 @@ create_stockmovement_table = """
 create_salesorder_table = """
     CREATE TABLE salesorder (
     id integer NOT NULL PRIMARY KEY,
-    won integer NOT NULL,
+    won varchar(10) NOT NULL,
     followon_link integer,
     customer integer REFERENCES customer (id),
     customer_orderno varchar(20),
@@ -103,7 +103,6 @@ create_salesorder_table = """
     invoice_comments varchar(200),
     invoice_terms varchar(100),
     item_count integer,
-    salesitem_id integer REFERENCES salesitem (id),
     haulier_id integer REFERENCES haulier (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
@@ -114,6 +113,7 @@ create_salesitem_table = """
     CREATE TABLE salesitem (
     id integer NOT NULL PRIMARY KEY,
     won varchar(10),
+    salesorder_id integer references salesorder (id),
     material_id integer references material (id),
     quantity varchar(15) NOT NULL,
     price varchar(15) NOT NULL,
@@ -135,6 +135,16 @@ create_despatch_table = """
     )
     """
 
+create_carrier_table = """
+    CREATE TABLE carrier (
+    id integer NOT NULL PRIMARY KEY,
+    won varchar(10),
+    description varchar(50),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
+
 create_deletedsales_table = """
     CREATE TABLE deletedsales (
     id integer NOT NULL PRIMARY KEY,
@@ -151,6 +161,7 @@ create_hauliers_table = """
     id integer NOT NULL PRIMARY KEY,
     haulierkey varchar(20) NOT NULL,
     name varchar(50) NOT NULL,
+    nominalcode varchar(10),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -409,20 +420,16 @@ get_salesitem = """
 #----------------------------------------------------------------------------#
 # Sales Order Selection (R&R Database)
 #----------------------------------------------------------------------------#
-get_sales = """
+get_salesorder = """
     SELECT
     \"Sales Order\".Key AS WO_Num,
     \"Sales Order\".Link,
-    \"Sales Order Item\".\"Stock Code\" AS StockCode,
     \"Sales Order\".CustomerKey,
     \"Sales Order\".\"Customer Order Number\" AS CustomerOrderNumber,
     \"Sales Order\".Comment AS DespatchNotes,
-    \"Sales Order Item\".Quantity AS OrderQuantity,
-    \"Sales Order Item\".Price,
     \"Sales Order\".\"Order Value\" AS OrderValue,
     \"Sales Order\".Status,
     \"Sales Order\".\"Order Date\" AS OrderDate,
-    \"Sales Order Item\".\"Required Date\" AS RequiredDate,
     \"Sales Order\".\"Despatch Date\" AS DespatchDate,
     \"Sales Order\".\"Invoice Date\" AS InvoiceDate,
     \"Sales Order\".Operator,
@@ -430,6 +437,7 @@ get_sales = """
     \"Sales Order\".Address1 AS DespatchAddress1,
     \"Sales Order\".Address2 AS DespatchAddress2,
     \"Sales Order\".Address3 AS DespatchAddress3,
+    \"Sales Order\".Address4 AS DespatchAddress4,
     \"Sales Order\".\"Post Code\" AS DespatchPostCode,
     \"Sales Order\".\"Printed Comment1\" AS DeliveryNoteComment1,
     \"Sales Order\".\"Printed Comment2\" AS DeliveryNoteComment2,
@@ -444,17 +452,10 @@ get_sales = """
     \"Sales Order\".\"Invoice Comment6\" AS InvoiceComment6,
     \"Sales Order\".\"Invoice terms\" AS InvoiceTerms,
     \"Sales Order\".\"Item Count\" AS ItemCount,
-    \"Sales Order Additional\".Description AS Haulier,
-    \"Sales Order Despatch\".Batch AS BatchDespatched,
-    \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
-    \"Sales Order\".\"Last Updated\" AS LastUpdated
-    FROM ((\"Sales Order\" LEFT JOIN \"Sales Order Additional\" ON
-    \"Sales Order\".Key = \"Sales Order Additional\".Parent) LEFT JOIN
-    \"Sales Order Item\" ON
-    \"Sales Order\".Key = \"Sales Order Item\".Parent) LEFT JOIN
-    \"Sales Order Despatch\" ON
-    (\"Sales Order Item\".\"Stock Code\" = \"Sales Order Despatch\".\"Stock Code\") AND
-    (\"Sales Order Item\".Parent = \"Sales Order Despatch\".Key)
+    \"Sales Order\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order\".\"Record Number\" AS RecordNumber
+    FROM \"Sales Order\"
+    WHERE \"Sales Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
 #----------------------------------------------------------------------------#
@@ -510,6 +511,21 @@ sales_orders = """
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
+# Sales Order Additional(R&R Database)
+#----------------------------------------------------------------------------#
+get_carrier = """
+    SELECT
+    \"Sales Order Additional\".Parent AS WO_Num,
+    \"Sales Order Additional\".Description AS Description,
+    \"Sales Order Additional\".\"Last Updated\" AS LastUpdated,
+    \"Sales Order Additional\".\"Record Number\" AS RecordNumber
+    FROM \"Sales Order Additional\"
+    WHERE \"Sales Order Additional\".\"Last Updated\" > #%(lastupdate)s#
+    """    
+
+#****************************************************************************#
+
+#----------------------------------------------------------------------------#
 # Deleted Sales Orders(R&R Database)
 #----------------------------------------------------------------------------#
 get_deleted_sales = """
@@ -544,8 +560,11 @@ get_hauliers = """
     SELECT
     \"Additional Items\".Key AS HaulierKey,
     \"Additional Items\".Name,
-    \"Additional Items\".\"Nominal Code\" AS NominalCode
+    \"Additional Items\".\"Nominal Code\" AS NominalCode,
+    \"Additional Items\".\"Last Updated\" AS LastUpdated,
+    \"Additional Items\".\"Record Number\" AS RecordNumber
     FROM \"Additional Items\"
+    WHERE \"Additional Items\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Additional Items\".\"Record Number\"
     """
 
