@@ -8,7 +8,7 @@
 create_purchaseorder_table = """
     CREATE TABLE purchaseorder (
     id integer NOT NULL PRIMARY KEY,
-    pon integer,
+    pon varchar(10),
     ordervalue varchar(15),
     supplier_id varchar(10) REFERENCES supplier (id),
     orderref varchar(20) NOT NULL,
@@ -25,7 +25,7 @@ create_purchaseorder_table = """
 create_purchaseitem_table = """
     CREATE TABLE purchaseitem (
     id integer NOT NULL PRIMARY KEY,
-    pon integer,
+    pon varchar(10),
     purchaseorder_id integer REFERENCES purchaseorder (id),
     material_id integer REFERENCES material (id),
     quantity varchar(15) NOT NULL,
@@ -70,8 +70,8 @@ create_stockmovement_table = """
     id integer NOT NULL PRIMARY KEY,
     stock_id integer REFERENCES stock (id),
     action varchar(10),
-    customer integer REFERENCES customer (id),
-    worksorder integer REFERENCES salesorder (id),
+    customer_id integer REFERENCES customer (id),
+    worksorder_id integer REFERENCES salesorder (id),
     salesprice varchar(20),
     movement_description varchar(100),
     movement_quantity varchar(20),
@@ -86,8 +86,8 @@ create_salesorder_table = """
     CREATE TABLE salesorder (
     id integer NOT NULL PRIMARY KEY,
     won varchar(10) NOT NULL,
-    followon_link integer,
-    customer integer REFERENCES customer (id),
+    followon_link varchar(10),
+    customer_id integer REFERENCES customer (id),
     customer_orderno varchar(20),
     picklist_comment varchar(200),
     ordervalue varchar(15) NOT NULL,
@@ -103,7 +103,7 @@ create_salesorder_table = """
     invoice_comments varchar(200),
     invoice_terms varchar(100),
     item_count integer,
-    haulier_id integer REFERENCES haulier (id),
+    carrier_id integer REFERENCES carrier (id),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
