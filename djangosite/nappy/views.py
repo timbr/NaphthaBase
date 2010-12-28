@@ -1,6 +1,6 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem, Stock
+from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem
 from django.template import Context, loader
 from decimal import Decimal
 
@@ -45,4 +45,14 @@ def singlebatch(request, batch_num):
         chargecolor = ''
     t = loader.get_template('Batch.html')
     c = Context({'batch': batch, 'links': {'prev': int(batch_num) - 1, 'next': int(batch_num) + 1}, 'other': {'handling': handling, 'chargecolor': chargecolor}})
+    return HttpResponse(t.render(c))
+
+def singlewo(request, wo_num):
+    wo = SalesOrder.objects.filter(won = wo_num)
+    if len(wo) != 1:
+        return HttpResponse("Sales Order number %s has %s records in the database" % (wo_num, len(wo)))
+    wo = wo[0]
+    print wo
+    t = loader.get_template('SalesOrder.html')
+    c = Context({'wo': wo, 'links': {'prev': int(wo_num) - 1, 'next': int(wo_num) + 1}})
     return HttpResponse(t.render(c))

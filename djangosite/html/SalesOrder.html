@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    table {
+	margin: 0.5em 0 0 0.5em;
+	border-collapse: collapse;
+}
+
+th, td
+{
+	padding: 0.25em 0.5em 0.25em 0.5em;
+	border: 1px solid #c0c0c0;
+}
+
+td p {
+	margin: 0;
+	padding: 0;
+}
+  </style>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Sales Order {{ wo.won }}</title>
+
+
+
+</head>
+<body>
+
+<table style="text-align: left; width: 90%; height: 90px;" border="1" cellpadding="2" cellspacing="2">
+
+
+  <tbody>
+
+    <tr>
+
+      <th style="width: 43px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">WON</span></th>
+
+      <th style="width: 85px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Customer</span></th>
+
+      <th style="width: 79px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Order Ref</span></th>
+
+      <th style="width: 477px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Picklist Comment</span></th>
+
+      <th style="width: 104px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Order Date</span></th>
+
+      <th style="width: 69px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Status</span></th>
+
+      <th style="width: 86px; text-align: center; vertical-align: top; height: 20px;"><span style="font-weight: bold;">Operator</span></th>
+
+    </tr>
+
+    <tr>
+
+      <td style="width: 43px; text-align: center; vertical-align: top; height: 39px;">{{ wo.won }}</td>
+
+      <td style="width: 85px; text-align: center; vertical-align: top; height: 39px;" title = "{{ wo.customer.name }}">{{ wo.customer.customer_code }}</td>
+
+      <td style="width: 79px; text-align: center; vertical-align: top; height: 39px;">{{ wo.customer_orderno }}</td>
+
+      <td style="width: 477px; vertical-align: top; height: 39px; text-align: left;">{{ wo.picklist_comment|linebreaks }}</td>
+
+      <td style="width: 104px; text-align: left; vertical-align: top; height: 39px;">{{ wo.orderdate|date:"l jS F Y" }}  </td>
+
+      <td style="width: 69px; vertical-align: top; height: 39px;">{{ wo.getstatus }}</td>
+
+      <td style="width: 86px; vertical-align: top; height: 39px;">{{ wo.operator }}</td>
+
+    </tr>
+
+  </tbody>
+</table>
+<br>
+{{ wo.followon_link }}<br>
+{{ wo.despatchdate }}<br>
+{{ wo.invoicedate }}<br>
+{{ wo.delivery_name }}<br>
+{{ wo.delivery_address }}<br>
+{{ wo.delivery_postcode }}<br>
+{{ wo.printed_comments }}<br>
+{{ wo.invoice_comments }}<br>
+{{ wo.invoice_terms }}<br>
+{{ wo.item_count }}<br>
+{{ wo.carrier.description }}<br>
+
+<br>
+
+<table style="text-align: left; width: 90%; height: 43px;" border="1" cellpadding="2" cellspacing="2">
+
+  <tbody>
+
+    <tr>
+
+      <th style="font-weight: bold; text-align: center; vertical-align: top; height: 19px;">Material
+Code</th>
+
+      <th style="text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Material Description</span></th>
+
+      <th style="text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Quantity</span></th>
+
+      <th style="text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Price</span></th>
+
+      <th style="width: 73px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Required Date</span></th>
+
+      <th style="width: 11px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Assigned</span></th>
+
+      <th style="width: 248px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Info</span></th>
+
+      <th style="width: 119px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Quantity Delivered</span></th>
+
+    </tr>
+{% for item in wo.salesitem_set.all %}
+
+    <tr>
+
+      <td style="height: 18px;" align="undefined" valign="undefined">{{ item.material.code }}</td>
+
+      <td style="height: 18px;" align="undefined" valign="undefined">{{ item.material.description }}</td>
+
+      <td style="height: 18px;" align="undefined" valign="undefined">{{ item.quantity|floatformat }} Kg</td>
+
+      <td style="height: 18px;" align="undefined" valign="undefined">&pound;{{ item.price|floatformat:3 }}</td>
+
+      <td style="width: 73px; height: 18px;" align="undefined" valign="undefined">{{ item.required_date|date:"l jS F Y" }}</td>
+
+      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined"><a href='../../stock/{{ item.stock_set.all.0.batch }}'></a></td>
+
+      <td style="width: 248px; height: 18px;" align="undefined" valign="undefined"></td>
+
+      <td style="width: 119px; height: 18px;" align="undefined" valign="undefined"></td>
+
+    </tr>
+{% endfor %}
+
+  </tbody>
+</table>
+<br>
+<hr>
+<br>
+<a href = '../{{ links.prev }}'>previous    </a>
+<a href = '../{{ links.next }}'>next</a>
+</body>
+</html>

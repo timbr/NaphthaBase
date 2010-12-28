@@ -312,9 +312,6 @@ class StockMovement(models.Model):
             'M': 'Stock Adjustment',
             'P': 'Opening Stock'}
         return movment_status[self.action]
-
-
-
     
     def __unicode__(self):
         return self.stock.batch
