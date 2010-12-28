@@ -16,3 +16,13 @@ def po(request):
     
     print purchase_items
     return HttpResponse(t.render(c))
+
+def singlepo(request, po_num):
+    po = PurchaseOrder.objects.filter(pon = po_num)
+    if len(po) != 1:
+        return HttpResponse("PO number %s has %s records in the database" % (po_num, len(po)))
+    po = po[0]
+    print po
+    t = loader.get_template('PurchaseOrder.html')
+    c = Context({'po': po, 'links': {'prev': int(po_num) - 1, 'next': int(po_num) + 1}})
+    return HttpResponse(t.render(c))
