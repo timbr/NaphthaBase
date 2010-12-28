@@ -1,7 +1,8 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem
+from nappy.models import PurchaseOrder, PurchaseItem, Stock
 from django.template import Context, loader
+from decimal import Decimal
 
 def po(request):
     latest_purchase_orders = PurchaseOrder.objects.all().filter(orderdate__gt='2010-11-01').order_by('-pon')
@@ -25,4 +26,23 @@ def singlepo(request, po_num):
     print po
     t = loader.get_template('PurchaseOrder.html')
     c = Context({'po': po, 'links': {'prev': int(po_num) - 1, 'next': int(po_num) + 1}})
+    return HttpResponse(t.render(c))
+
+def singlebatch(request, batch_num):
+    batch = Stock.objects.filter(batch = batch_num)
+    if len(batch) != 1:
+        return HttpResponse("Batch number %s has %s records in the database" % (batch_num, len(batch)))
+    batch = batch[0]
+    print batch
+    if batch.purchaseitem != None:
+        handling = Decimal(batch.costprice) - Decimal(batch.purchaseitem.price)
+        if handling != Decimal('0.045'):
+            chargecolor = '#FF0000'
+        else:
+            chargecolor = '#00FF00'
+    else:
+        handling = ''
+        chargecolor = ''
+    t = loader.get_template('Batch.html')
+    c = Context({'batch': batch, 'links': {'prev': int(batch_num) - 1, 'next': int(batch_num) + 1}, 'other': {'handling': handling, 'chargecolor': chargecolor}})
     return HttpResponse(t.render(c))

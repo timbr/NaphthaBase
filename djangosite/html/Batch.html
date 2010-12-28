@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    table {
+	margin: 0.5em 0 0 0.5em;
+	border-collapse: collapse;
+}
+
+th, td
+{
+	padding: 0.25em 0.5em 0.25em 0.5em;
+	border: 1px solid #c0c0c0;
+}
+
+td p {
+	margin: 0;
+	padding: 0;
+}
+  </style>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Batch: {{ batch.batch }}</title>
+
+
+
+</head>
+<body>
+<ul>
+  <li>
+Material Code:  {{ batch.material.code }}<br>
+Material Description:  {{ batch.material.description }}<br>
+Stock Info:  {{ batch.stockinfo }}<br>
+Status:  {{ batch.getstatus }}<br>
+Supplier Name:  {{ batch.supplier.name }}<br>
+Quantity in Stock:  {{ batch.stockquantity }} Kg<br>
+Cost:  &pound;{{ batch.costprice|floatformat:3 }};  (Purchase Price = &pound;{{ batch.purchaseitem.price|floatformat:3 }}:: Handling Charge = <font color = '{{ other.chargecolor }}'>&pound;{{ other.handling|floatformat:3 }}</font>)<br>
+Original Quantity booked into stock:  {{ batch.batchup_quantity }} Kg<br>
+Original Batch-up Date:  {{ batch.batchup_date }}<br>
+Purchase Order:   <a href='../../purchase_order/{{ batch.purchaseitem.pon }}'>{{ batch.purchaseitem.pon }}</a>, {{ batch.purchaseitem.delivered_quantity|floatformat }} Kg<br>
+  </li>
+<br>
+<li>
+{% for movement in batch.stockmovement_set.all %}
+{{ movement.getstatus }}:: {{ movement.movement_description }}; {{ movement.movement_quantity|floatformat }} Kg, {{ movement.customer.customer_code }}, {{ movement.worksorder }}, &pound;{{ movement.salesprice|floatformat:3 }}<br>
+{% endfor %}
+</li>
+
+</ul>
+<br>
+<hr>
+<br>
+<a href = '../{{ links.prev }}'>previous    </a>
+<a href = '../{{ links.next }}'>next</a>
+</body>
+</html>

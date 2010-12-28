@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     # (r'^djangosite/', include('djangosite.foo.urls')),
     (r'^purchase_order/$', 'nappy.views.po'),
     (r'^purchase_order/(?P<po_num>\d+)/$', 'nappy.views.singlepo'),
+    (r'^stock/(?P<batch_num>\d+)/$', 'nappy.views.singlebatch'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),

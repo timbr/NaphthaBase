@@ -120,7 +120,7 @@ Code</th>
 
       <td style="width: 73px; height: 18px;" align="undefined" valign="undefined">{{ item.duedate|date:"l jS F Y" }}</td>
 
-      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined">{{ item.stock_set.all.0.batch }}</td>
+      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined"><a href='../../stock/{{ item.stock_set.all.0.batch }}'>{{ item.stock_set.all.0.batch }}</a></td>
 
       <td style="width: 248px; height: 18px;" align="undefined" valign="undefined">{{ item.stock_set.all.0.stockinfo }}</td>
 

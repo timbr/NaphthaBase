@@ -200,6 +200,14 @@ class Stock(models.Model):
     class Meta:
         db_table = 'stock'
     
+    def getstatus(self):
+        stock_status = {
+            'E': 'Empty',
+            'S': 'In Stock',
+            'C': 'Not Sure (C)',
+            'R': 'Not Sure (R)'}
+        return stock_status[self.status]
+    
     def __unicode__(self):
         return self.batch
 
@@ -295,6 +303,18 @@ class StockMovement(models.Model):
     
     class Meta:
         db_table = 'stockmovement'
+        ordering = ['rr_recordno']
+        
+    def getstatus(self):
+        movment_status = {
+            'G': 'Goods In',
+            'D': 'Despatch',
+            'M': 'Stock Adjustment',
+            'P': 'Opening Stock'}
+        return movment_status[self.action]
+
+
+
     
     def __unicode__(self):
         return self.stock.batch
