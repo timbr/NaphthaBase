@@ -52,7 +52,7 @@ Purchase Order:   <a href='../../purchase_order/{{ batch.purchaseitem.pon }}'>{{
 <br>
 <li>
 {% for movement in batch.stockmovement_set.all %}
-{{ movement.getstatus }}:: {{ movement.movement_description }}; {{ movement.movement_quantity|floatformat }} Kg, {{ movement.customer.customer_code }}, {{ movement.worksorder }}, &pound;{{ movement.salesprice|floatformat:3 }}<br>
+{{ movement.getstatus }}:: {{ movement.movement_description }}; {{ movement.movement_quantity|floatformat }} Kg, {{ movement.customer.customer_code }}, <a href='../../sales_order/{{ movement.salesitem.won }}'>{{ movement.salesitem.won }}</a>, &pound;{{ movement.salesprice|floatformat:3 }}<br>
 {% endfor %}
 </li>
 

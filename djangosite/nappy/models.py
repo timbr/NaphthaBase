@@ -292,7 +292,7 @@ class StockMovement(models.Model):
     stock = models.ForeignKey(Stock, null=True)
     action = models.CharField(max_length=10, null=True)
     customer = models.ForeignKey(Customer, null=True)
-    worksorder = models.ForeignKey(SalesOrder, null=True)
+    salesitem = models.ForeignKey(SalesItem, null=True)
     salesprice = models.CharField(max_length=20, null=True)
     movement_description = models.CharField(max_length=100, null=True)
     movement_quantity = models.CharField(max_length=20, null=True)

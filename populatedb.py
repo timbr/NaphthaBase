@@ -224,7 +224,7 @@ def salesitem():
         newdata.append(line)
     update(newdata, 'salesitem')
     global salesitemdata
-    salesitemdata = [row for row in nb.naphthabase_query("select won, id from salesitem")]
+    salesitemdata = [row for row in nb.naphthabase_query("select won, material_id, id from salesitem")]
 
 def despatch():
     data = getdata(nb.sql.get_despatch, '\"Sales Order Despatch\"')
@@ -238,7 +238,7 @@ def despatch():
             line.append(stockcode[0])
         else:
             line.append(None)
-        salesitemcode = [data[1] for data in salesitemdata if data[0] == item[0]]
+        salesitemcode = [data[2] for data in salesitemdata if data[0] == item[0]]
         if len(salesitemcode) > 0:
             line.append(salesitemcode[0])
         else:
@@ -263,12 +263,17 @@ def stockusage():
             line.append(customercode[0])
         else:
             line.append(None)
-        salesordercode = [data[1] for data in salesorderdata if data[0] == item[3]]
-        if len(salesordercode) > 0:
-            line.append(salesordercode[0])
+        materialcode = [data[1] for data in materialdata if data[0] == item[4]]
+        if len(materialcode) != 1:
+            materialcode = None
+        else:
+            materialcode = materialcode[0]
+        salesitemcode = [data[2] for data in salesitemdata if data[0] == item[3] and data[1] == materialcode]
+        if len(salesitemcode) > 0:
+            line.append(salesitemcode[0])
         else:
             line.append(None)
-        line[4:] = item[4:]
+        line[4:] = item[5:]
         newdata.append(line)
     update(newdata, 'stockmovement')
 

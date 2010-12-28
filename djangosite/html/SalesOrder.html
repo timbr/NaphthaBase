@@ -111,11 +111,11 @@ Code</th>
 
       <th style="width: 73px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Required Date</span></th>
 
-      <th style="width: 11px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Assigned</span></th>
+      <th style="width: 11px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Despatched</span></th>
 
-      <th style="width: 248px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Info</span></th>
+      <th style="width: 248px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch</span></th>
 
-      <th style="width: 119px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Quantity Delivered</span></th>
+      <th style="width: 119px; text-align: center; vertical-align: top; height: 19px;"><span style="font-weight: bold;">Batch Movement</span></th>
 
     </tr>
 {% for item in wo.salesitem_set.all %}
@@ -132,11 +132,11 @@ Code</th>
 
       <td style="width: 73px; height: 18px;" align="undefined" valign="undefined">{{ item.required_date|date:"l jS F Y" }}</td>
 
-      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined"><a href='../../stock/{{ item.stock_set.all.0.batch }}'></a></td>
+      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined"><a href='../../stock/{{ item.stockmovement_set.all.0.stock.batch }}'>{{ item.stockmovement_set.all.0.stock.batch }}</a></td>
 
-      <td style="width: 248px; height: 18px;" align="undefined" valign="undefined"></td>
+      <td style="width: 248px; height: 18px;" align="undefined" valign="undefined">{{ item.stockmovement_set.all.0.movement_description }}</td>
 
-      <td style="width: 119px; height: 18px;" align="undefined" valign="undefined"></td>
+      <td style="width: 119px; height: 18px;" align="undefined" valign="undefined">{{ item.stockmovement_set.all.0.movement_quantity }} Kg</td>
 
     </tr>
 {% endfor %}
