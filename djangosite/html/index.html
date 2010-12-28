@@ -1,0 +1,35 @@
+<html>
+<style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+  </style>
+
+
+{% if latest_purchase_orders %}
+    <ul>
+    {% for po in latest_purchase_orders %}
+        <H3>{{ po.pon }}:    {{ po.supplier }}:    {{ po.orderreference }}</H3>
+        <li>{{ po.deliverycomment|linebreaks }}</li>
+        <li>Order Date: {{ po.orderdate|date:"l dS F Y" }}            Placed By: {{ po.placedby }}</li>
+        <li>Status: {{ po.getstatus }}</li>
+        <br>
+        {% for item in purchase_items %}
+            {% if item.pon == po.pon %}
+                {{ item.material.description }} Quantity: {{ item.quantity|floatformat }} Kg  Price: &pound;{{ item.price|floatformat:3 }}<br>
+            {% endif %}
+        {% endfor %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No purchase orders are available.</p>
+{% endif %}
+</html>
