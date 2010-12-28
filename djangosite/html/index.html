@@ -18,7 +18,7 @@
     {% for po in latest_purchase_orders %}
         <H3>{{ po.pon }}:    {{ po.supplier }}:    {{ po.orderreference }}</H3>
         <li>{{ po.deliverycomment|linebreaks }}</li>
-        <li>Order Date: {{ po.orderdate|date:"l dS F Y" }}            Placed By: {{ po.placedby }}</li>
+        <li>Order Date: {{ po.orderdate|date:"l jS F Y" }}            Placed By: {{ po.placedby }}</li>
         <li>Status: {{ po.getstatus }}</li>
         <br>
         {% for item in purchase_items %}

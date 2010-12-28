@@ -148,6 +148,19 @@ class PurchaseOrder(models.Model):
     class Meta:
         db_table = 'purchaseorder'
     
+    def getstatus(self):
+        po_status = {
+            0: 'Undefined',
+            1: 'Awaiting',
+            2: 'Printed',
+            3: 'Delivered',
+            4: 'Part Delivered',
+            5: 'Invoiced',
+            6: 'Verified',
+            7: 'Updated',
+            8: 'Cancelled'}
+        return po_status[self.status]
+    
     def __unicode__(self):
         return self.pon
  
@@ -215,6 +228,22 @@ class SalesOrder(models.Model):
     
     class Meta:
         db_table = 'salesorder'
+    
+    def getstatus(self):
+        so_status = {
+            0: 'Awaiting',
+            1: 'Delivered',
+            2: 'Not Sure (3)',
+            3: 'Invoiced',
+            4: 'Updated',
+            5: 'Not Sure (5)',
+            6: 'Verified',
+            7: 'Not Sure (7)',
+            8: 'Not Sure (8)'}
+        return so_status[self.status]
+    
+    def __unicode__(self):
+        return self.pon
     
     def __unicode__(self):
         return self.won
