@@ -67,7 +67,7 @@ def contact():
     newdata = []
     for item in data:
         line = []
-        line[0:5] = item[0:5]
+        line[0:6] = item[0:6]
         customercode = [data[1] for data in customerdata if data[0] == item[0]]
         if len(customercode) > 0:
             line.append(customercode[0])
@@ -78,7 +78,7 @@ def contact():
             line.append(suppliercode[0])
         else:
             line.append(None)
-        line[8:] = item[5:]
+        line[9:] = item[6:]
         newdata.append(line)
     update(newdata, 'contact')
 
