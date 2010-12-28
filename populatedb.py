@@ -141,6 +141,8 @@ def purchaseitem():
         line[3:] = item[2:]
         newdata.append(line)
     update(newdata, 'purchaseitem')
+    global purchaseitemdata
+    purchaseitemdata = [row for row in nb.naphthabase_query("select pon, material_id, id from purchaseitem")]
 
 def formula():
     data = getdata(nb.sql.get_stock, 'Formula Stock')
@@ -160,9 +162,9 @@ def formula():
             line.append(suppliercode[0])
         else:
             line.append(None)
-        purchaseorder = [data[1] for data in purchasedata if data[0] == item[5]]
-        if len(purchaseorder) > 0:
-            line.append(purchaseorder[0])
+        purchaseitem = [data[2] for data in purchaseitemdata if data[0] == item[5] and data[1] == line[1]]
+        if len(purchaseitem) > 0:
+            line.append(purchaseitem[0])
         else:
             line.append(None)
         line[6:] = item[6:]

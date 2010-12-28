@@ -55,7 +55,7 @@ create_stock_table = """
     stockinfo varchar(200),
     status varchar(1) NOT NULL,
     supplier_id integer REFERENCES supplier (id),
-    purchaseorder_id integer REFERENCES purchaseorder (id),
+    purchaseitem_id integer REFERENCES purchaseitem (id),
     costprice varchar(20),
     batchup_quantity varchar(20) NOT NULL,
     batchup_date datetime NOT NULL,

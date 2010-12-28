@@ -189,7 +189,7 @@ class Stock(models.Model):
     stockinfo = models.CharField(max_length=200, null=True)
     status = models.CharField(max_length=1)
     supplier = models.ForeignKey(Supplier, null=True)
-    purchaseorder = models.ForeignKey(PurchaseOrder, null=True)
+    purchaseitem = models.ForeignKey(PurchaseItem, null=True)
     costprice = models.CharField(max_length=20, null=True)
     batchup_quantity = models.CharField(max_length=20)
     batchup_date = models.DateTimeField('batch-up date')
