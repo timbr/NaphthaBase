@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    table {
+	margin: 0.5em 0 0 0.5em;
+	border-collapse: collapse;
+}
+
+th, td
+{
+	padding: 0.25em 0.5em 0.25em 0.5em;
+	border: 1px solid #c0c0c0;
+}
+
+td p {
+	margin: 0;
+	padding: 0;
+}
+  </style>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Material: {{ material.code }} : {{ material.description }}</title>
+
+
+
+</head>
+<body>
+<br>
+<big>
+<span style="color: rgb(57, 151, 137);">Material: {{ material.code }} : {{ material.description }}</span></big></h1>
+<br>
+---->  IN STOCK
+<br>
+<ul>
+
+{% for batch in instock %}
+<li>
+<a href = '../../stock/{{ batch.batch }}'>{{ batch.batch }}</a>  ::  {{ batch.batchup_date|date:"j/n/Y" }}  ::  {{ batch.material }}  ::  <a href='../../supplier/{{ batch.supplier }}'>{{ batch.supplier }}</a>  ::  {{ batch.stockquantity }} Kg  ::  &pound;{{ batch.costprice|floatformat:3 }}<br><br>
+</li>
+{% endfor %}
+</ul>
+<br>
+<hr>
+---> LAST 10 PURCHASES
+<br>
+<ul>
+{% for purchase in purchases %}
+<li>
+<a href='../../purchases/{{ purchase.pon }}'>{{ purchase.pon }}</a>  ::  {{ purchase.stock_set.all.0.batchup_date|date:"j/n/Y" }}  ::  <a href='../../supplier/{{ purchase.purchaseorder.supplier.supplier_code }}'>{{ purchase.purchaseorder.supplier.supplier_code }}</a>  ::  <a href='../../stock/{{ purchase.stock_set.all.0.batch }}'>{{ purchase.stock_set.all.0.batch }}</a>  ::  {{ purchase.purchaseorder.getstatus }}  ::  {{ purchase.delivered_quantity|floatformat }} Kg  ::  &pound;{{ purchase.price|floatformat:3 }}<br><br>
+</li>
+{% endfor %}
+</ul>
+<br>
+<br>
+
+<a href = '../{{ links.prev }}'>previous    </a>
+<a href = '../{{ links.next }}'>next</a>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales, Customer, Supplier, Contact, Depot
+from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales, Customer, Supplier, Contact, Depot, Material
 from django.template import Context, loader
 from decimal import Decimal
 
@@ -78,4 +78,15 @@ def singlesupplier(request, supplier_code):
     supplier = supplier[0]
     t = loader.get_template('Supplier.html')
     c = Context({'supplier': supplier})
+    return HttpResponse(t.render(c))
+
+def singlematerial(request, material_code):
+    material = Material.objects.filter(code = material_code.upper())
+    if len(material) != 1:
+        return HttpResponse("Material code %s has %s records in the database" % (material_code, len(material)))
+    material = material[0]
+    instock = material.stock_set.all().filter(status = 'S').order_by('-batch')
+    purchases = material.purchaseitem_set.all().order_by('-pon')[:10]
+    t = loader.get_template('Material.html')
+    c = Context({'instock': instock, 'material': material, 'purchases': purchases})
     return HttpResponse(t.render(c))

@@ -38,7 +38,7 @@ td p {
 <ul>
   <li>
 Batch Number:  {{ batch.batch }}<br>
-Material Code:  {{ batch.material.code }}<br>
+Material Code:  <a href='../../material/{{ batch.material.code }}'>{{ batch.material.code }}</a><br>
 Material Description:  {{ batch.material.description }}<br>
 Stock Info:  {{ batch.stockinfo }}<br>
 Status:  {{ batch.getstatus }}<br>
