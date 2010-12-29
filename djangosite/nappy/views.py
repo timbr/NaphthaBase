@@ -70,3 +70,12 @@ def singlecustomer(request, customer_code):
     t = loader.get_template('Customer.html')
     c = Context({'customer': customer})
     return HttpResponse(t.render(c))
+
+def singlesupplier(request, supplier_code):
+    supplier = Supplier.objects.filter(supplier_code = supplier_code.upper())
+    if len(supplier) != 1:
+        return HttpResponse("Supplier code %s has %s records in the database" % (supplier_code, len(supplier)))
+    supplier = supplier[0]
+    t = loader.get_template('Supplier.html')
+    c = Context({'supplier': supplier})
+    return HttpResponse(t.render(c))

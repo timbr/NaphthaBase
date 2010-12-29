@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    table {
+	margin: 0.5em 0 0 0.5em;
+	border-collapse: collapse;
+}
+
+th, td
+{
+	padding: 0.25em 0.5em 0.25em 0.5em;
+	border: 1px solid #c0c0c0;
+}
+
+td p {
+	margin: 0;
+	padding: 0;
+}
+  </style>
+<head>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <title>Supplier Details for {{ supplier.supplier_code }}</title>
+
+
+
+</head>
+<body>
+<table style="text-align: left; width: 791px; height: 349px;"
+ border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">{{ supplier.supplier_code }}</td>
+      <td colspan="3" rowspan="1" style="width: 319px;"
+ align="undefined" valign="undefined">
+      <h2>{{ supplier.name }}</h2>
+      </td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Address:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined">{{ supplier.address|linebreaks }}
+{{ supplier.postcode }}</td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined">Memo:</td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined">{{ supplier.memo|linebreaks }}</td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Phone:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined"><big><big><big>{{ supplier.phone }}</big></big></big></td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined">Comment:</td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined">{{ supplier.comment|linebreaks }}</td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Fax</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined"><big>{{ supplier.fax }}</big></td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined">VAT:</td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined">{{ supplier.vat }}</td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Primary Email:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined"><a href="mailto:{{ customer.email }}">{{ supplier.email }}</a></td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined"></td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined"></td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Website:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined"><a href='{{ customer.website }}'>{{ supplier.website }}</a></td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined"></td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined"></td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Primary Contact:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined">{{ supplier.contactname }}</td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined"></td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined"></td>
+    </tr>
+    <tr>
+      <td style="width: 92px;" align="undefined"
+ valign="undefined">Depot:</td>
+      <td style="width: 319px;" align="undefined"
+ valign="undefined">
+{% for depot in supplier.depot_set.all %}
+{{ depot.address }}{{ depot.postcode }}<br>  {% endfor %}</td>
+      <td style="width: 83px;" align="undefined"
+ valign="undefined"></td>
+      <td style="width: 195px;" align="undefined"
+ valign="undefined"></td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<table style="text-align: left; width: 792px; height: 80px;"
+ border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="width: 180px;" align="undefined"
+ valign="undefined">Contact Name</td>
+      <td style="width: 315px;" align="undefined"
+ valign="undefined">Department</td>
+      <td style="width: 269px;" align="undefined"
+ valign="undefined">Phone</td>
+    </tr>
+{% for contact in supplier.contact_set.all %}
+    <tr>
+      <td style="width: 180px;" align="undefined"
+ valign="undefined">{{ contact.title }} {{ contact.forename }} {{ contact.surname }}</td>
+      <td style="width: 315px;" align="undefined"
+ valign="undefined">{{ contact.department }}</td>
+      <td style="width: 269px;" align="undefined"
+ valign="undefined">{{ contact.phone }}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+<br>
+<br>
+
+
+
+
+
+<br>
+<hr>
+<br>
+
+</body>
+</html>
