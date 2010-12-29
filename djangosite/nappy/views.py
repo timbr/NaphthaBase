@@ -67,8 +67,9 @@ def singlecustomer(request, customer_code):
     if len(customer) != 1:
         return HttpResponse("Customer code %s has %s records in the database" % (customer_code, len(customer)))
     customer = customer[0]
+    sales = SalesItem.objects.filter(salesorder__customer__customer_code=customer_code.upper()).order_by('-won')[:10]
     t = loader.get_template('Customer.html')
-    c = Context({'customer': customer})
+    c = Context({'customer': customer, 'sales': sales})
     return HttpResponse(t.render(c))
 
 def singlesupplier(request, supplier_code):

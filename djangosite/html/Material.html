@@ -45,7 +45,7 @@ td p {
 
 {% for batch in instock %}
 <li>
-<a href = '../../stock/{{ batch.batch }}'>{{ batch.batch }}</a>  ::  {{ batch.batchup_date|date:"j/n/Y" }}  ::  {{ batch.material }}  ::  <a href='../../supplier/{{ batch.supplier }}'>{{ batch.supplier }}</a>  ::  {{ batch.stockquantity }} Kg  ::  &pound;{{ batch.costprice|floatformat:3 }}<br><br>
+<a href = '../../stock/{{ batch.batch }}'>{{ batch.batch }}</a>  ::  {{ batch.batchup_date|date:"j/n/Y" }}  ::  {{ batch.material }}  ::  <a href='../../supplier/{{ batch.supplier.supplier_code }}' title='{{ batch.supplier.name }}'>{{ batch.supplier.supplier_code }}</a>  ::  {{ batch.stockquantity }} Kg  ::  &pound;{{ batch.costprice|floatformat:3 }}<br><br>
 </li>
 {% endfor %}
 </ul>
@@ -61,7 +61,7 @@ td p {
       <ul>
 {% for purchase in purchases %}
 <li>
-<a href='../../purchase_order/{{ purchase.pon }}'>{{ purchase.pon }}</a>  ::  {{ purchase.stock_set.all.0.batchup_date|date:"j/n/Y" }}  ::  <a href='../../supplier/{{ purchase.purchaseorder.supplier.supplier_code }}'>{{ purchase.purchaseorder.supplier.supplier_code }}</a>  ::  <a href='../../stock/{{ purchase.stock_set.all.0.batch }}'>{{ purchase.stock_set.all.0.batch }}</a>  ::  {{ purchase.purchaseorder.getstatus }}  ::  {{ purchase.delivered_quantity|floatformat }} Kg  ::  &pound;{{ purchase.price|floatformat:3 }}<br><br>
+<a href='../../purchase_order/{{ purchase.pon }}'>{{ purchase.pon }}</a>  ::  {{ purchase.stock_set.all.0.batchup_date|date:"j/n/Y" }}  ::  <a href='../../supplier/{{ purchase.purchaseorder.supplier.supplier_code }}' title='{{ purchase.purchaseorder.supplier.name }}'>{{ purchase.purchaseorder.supplier.supplier_code }}</a>  ::  <a href='../../stock/{{ purchase.stock_set.all.0.batch }}'>{{ purchase.stock_set.all.0.batch }}</a>  ::  {{ purchase.purchaseorder.getstatus }}  ::  {{ purchase.delivered_quantity|floatformat }} Kg  ::  &pound;{{ purchase.price|floatformat:3 }}<br><br>
 </li>
 {% endfor %}
 </ul>
@@ -71,7 +71,7 @@ td p {
             <ul>
 {% for sale in sales %}
 <li>
-<a href='../../sales_order/{{ sale.won }}'>{{ sale.won }}</a>  ::  {{ sale.stockmovement_set.all.0.lastupdated|date:"j/n/Y" }}  ::  <a href='../../customer/{{ sale.salesorder.customer.customer_code }}'>{{ sale.salesorder.customer.customer_code }}</a>  ::  <a href='../../stock/{{ sale.stock_set.all.0.batch }}'>{{ sale.stock_set.all.0.batch }}</a>  ::  {{ sale.salesorder.getstatus }}  ::  {{ sale.stockmovement_set.all.0.movement_quantity|floatformat }} Kg  ::  &pound;{{ sale.price|floatformat:3 }}<br><br>
+<a href='../../sales_order/{{ sale.won }}'>{{ sale.won }}</a>  ::  {{ sale.stockmovement_set.all.0.lastupdated|date:"j/n/Y" }}  ::  <a href='../../customer/{{ sale.salesorder.customer.customer_code }}' title='{{ sale.salesorder.customer.name }}'>{{ sale.salesorder.customer.customer_code }}</a>  ::  <a href='../../stock/{{ sale.stock_set.all.0.batch }}'>{{ sale.stock_set.all.0.batch }}</a>  ::  {{ sale.salesorder.getstatus }}  ::  {{ sale.stockmovement_set.all.0.movement_quantity|floatformat }} Kg  ::  &pound;{{ sale.price|floatformat:3 }}<br><br>
 </li>
 {% endfor %}
 </ul>
