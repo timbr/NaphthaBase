@@ -149,7 +149,13 @@ td p {
 </table>
 <br>
 <br>
+<b>LAST 10 PURCHASES:</b>
+<br><br>
 
+{% for item in purchases %}
+<a href='../../purchase_order/{{ item.pon }}'>{{ item.pon }}</a>  ::  {{ item.stock_set.all.0.batchup_date|date:"j/n/Y" }}  ::  <a href='../../material/{{ item.material.code }}' title = '{{ item.material.description }}'>{{ item.material.code }}</a>  ::  {{ .delivered_quantity|floatformat }} Kg  ::  &pound;{{ item.price|floatformat:3 }}<br><br>
+
+{% endfor %}
 
 
 

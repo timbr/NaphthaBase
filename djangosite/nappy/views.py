@@ -77,8 +77,9 @@ def singlesupplier(request, supplier_code):
     if len(supplier) != 1:
         return HttpResponse("Supplier code %s has %s records in the database" % (supplier_code, len(supplier)))
     supplier = supplier[0]
+    purchases = PurchaseItem.objects.filter(purchaseorder__supplier__supplier_code=supplier_code.upper()).order_by('-pon')[:10]
     t = loader.get_template('Supplier.html')
-    c = Context({'supplier': supplier})
+    c = Context({'supplier': supplier, 'purchases': purchases})
     return HttpResponse(t.render(c))
 
 def singlematerial(request, material_code):
