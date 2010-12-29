@@ -148,7 +148,8 @@ create_carrier_table = """
 create_deletedsales_table = """
     CREATE TABLE deletedsales (
     id integer NOT NULL PRIMARY KEY,
-    won integer,
+    won varchar(10) NOT NULL,
+    salesorder_id integer REFERENCES salesorder (id),
     operator varchar(20) NOT NULL,
     reason varchar(50),
     lastupdated datetime NOT NULL,
@@ -559,9 +560,11 @@ get_deleted_sales = """
     \"Missing Order Number\".Key AS WO_Num,
     \"Missing Order Number\".\"User ID\" AS UserID,
     \"Missing Order Number\".Reason AS Reason,
-    \"Missing Order Number\".DateTime AS LastUpdated
+    \"Missing Order Number\".DateTime AS LastUpdated,
+    \"Missing Order Number\".\"Record Number\" AS RecordNumber
     FROM \"Missing Order Number\"
-    WHERE \"Missing Order Number\".Key > '1'
+    WHERE (\"Missing Order Number\".Key > '1' AND
+    \"Missing Order Number\".DateTime > #%(lastupdate)s#)
     """
 
 #----------------------------------------------------------------------------#

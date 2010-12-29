@@ -1,6 +1,6 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem
+from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales
 from django.template import Context, loader
 from decimal import Decimal
 
@@ -48,9 +48,13 @@ def singlebatch(request, batch_num):
     return HttpResponse(t.render(c))
 
 def singlewo(request, wo_num):
+    missingwo = DeletedSales.objects.filter(won = wo_num)
     wo = SalesOrder.objects.filter(won = wo_num)
     if len(wo) != 1:
-        return HttpResponse("Sales Order number %s has %s records in the database" % (wo_num, len(wo)))
+        if len(missingwo) == 1:
+            return HttpResponse("Sales order %s has been deleted by %s because:  %s" % (wo_num, missingwo[0].operator, missingwo[0].reason))
+        else:
+            return HttpResponse("Sales Order number %s has %s records in the database" % (wo_num, len(wo)))
     wo = wo[0]
     print wo
     t = loader.get_template('SalesOrder.html')

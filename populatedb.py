@@ -226,6 +226,21 @@ def salesitem():
     global salesitemdata
     salesitemdata = [row for row in nb.naphthabase_query("select won, material_id, id from salesitem")]
 
+def deletedsales():
+    data = getdata(nb.sql.get_deleted_sales, '\"Missing Order Number\"')
+    newdata = []
+    for item in data:
+        line = []
+        line.append(item[0])
+        salesordercode = [data[1] for data in salesorderdata if data[0] == item[0]]
+        if len(salesordercode) > 0:
+            line.append(salesordercode[0])
+        else:
+            line.append(None)
+        line[2:] = item[1:]
+        newdata.append(line)
+    update(newdata, 'deletedsales')
+
 def despatch():
     data = getdata(nb.sql.get_despatch, '\"Sales Order Despatch\"')
     newdata = []
@@ -291,5 +306,6 @@ if __name__ == '__main__':
     formula()
     sales()
     salesitem()
+    deletedsales()
     despatch()
     stockusage()

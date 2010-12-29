@@ -273,6 +273,21 @@ class SalesItem(models.Model):
         return self.won
 
 
+class DeletedSales(models.Model):
+    won = models.CharField(max_length=10)
+    salesorder = models.ForeignKey(SalesOrder, null=True)
+    operator = models.CharField(max_length=20)
+    reason = models.CharField(max_length=50)
+    lastupdated = models.DateTimeField('last updated')
+    rr_recordno = models.IntegerField()
+    
+    class Meta:
+        db_table = 'deletedsales'
+    
+    def __unicode__(self):
+        return self.won
+
+
 class Despatch(models.Model):
     won = models.CharField(max_length=10)
     materialcode = models.CharField(max_length=20)
