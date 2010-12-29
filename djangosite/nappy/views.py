@@ -87,6 +87,7 @@ def singlematerial(request, material_code):
     material = material[0]
     instock = material.stock_set.all().filter(status = 'S').order_by('-batch')
     purchases = material.purchaseitem_set.all().order_by('-pon')[:10]
+    sales = material.salesitem_set.all().order_by('-won')[:10]
     t = loader.get_template('Material.html')
-    c = Context({'instock': instock, 'material': material, 'purchases': purchases})
+    c = Context({'instock': instock, 'material': material, 'purchases': purchases, 'sales' : sales})
     return HttpResponse(t.render(c))
