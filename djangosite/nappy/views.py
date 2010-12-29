@@ -1,8 +1,9 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales
+from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales, Customer, Supplier, Contact, Depot
 from django.template import Context, loader
 from decimal import Decimal
+
 
 def po(request):
     latest_purchase_orders = PurchaseOrder.objects.all().filter(orderdate__gt='2010-11-01').order_by('-pon')
@@ -59,4 +60,13 @@ def singlewo(request, wo_num):
     print wo
     t = loader.get_template('SalesOrder.html')
     c = Context({'wo': wo, 'links': {'prev': int(wo_num) - 1, 'next': int(wo_num) + 1}})
+    return HttpResponse(t.render(c))
+
+def singlecustomer(request, customer_code):
+    customer = Customer.objects.filter(customer_code = customer_code.upper())
+    if len(customer) != 1:
+        return HttpResponse("Customer code %s has %s records in the database" % (customer_code, len(customer)))
+    customer = customer[0]
+    t = loader.get_template('Customer.html')
+    c = Context({'customer': customer})
     return HttpResponse(t.render(c))

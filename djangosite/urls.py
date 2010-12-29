@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     (r'^purchase_order/(?P<po_num>\d+)/$', 'nappy.views.singlepo'),
     (r'^stock/(?P<batch_num>\d+)/$', 'nappy.views.singlebatch'),
     (r'^sales_order/(?P<wo_num>\d+)/$', 'nappy.views.singlewo'),
+    (r'^customer/(?P<customer_code>[a-zA-Z0-9_.-]+)/$', 'nappy.views.singlecustomer'),
     
 
     # Uncomment the admin/doc line below to enable admin documentation:
