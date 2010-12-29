@@ -35,6 +35,8 @@ td p {
 
 </head>
 <body>
+<h1><big style="color: rgb(246, 207, 45);">SUPPLIER</big></h1>
+
 <table style="text-align: left; width: 791px; height: 349px;"
  border="1" cellpadding="2" cellspacing="2">
   <tbody>
@@ -113,7 +115,7 @@ td p {
       <td style="width: 319px;" align="undefined"
  valign="undefined">
 {% for depot in supplier.depot_set.all %}
-{{ depot.address }}{{ depot.postcode }}<br>  {% endfor %}</td>
+{{ depot.clientname }}{{ depot.address }}{{ depot.postcode }}<br>  {% endfor %}</td>
       <td style="width: 83px;" align="undefined"
  valign="undefined"></td>
       <td style="width: 195px;" align="undefined"

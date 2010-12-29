@@ -35,6 +35,7 @@ td p {
 
 </head>
 <body>
+<h1><big style="color: rgb(164, 246, 83);">PURCHASES</big></h1>
 
 <table style="text-align: left; width: 90%; height: 90px;" border="1" cellpadding="2" cellspacing="2">
 
@@ -63,7 +64,7 @@ td p {
 
       <td style="width: 43px; text-align: center; vertical-align: top; height: 39px;">{{ po.pon }}</td>
 
-      <td style="width: 85px; text-align: center; vertical-align: top; height: 39px;" title = "{{ po.supplier.name }}">{{ po.supplier.supplier_code }}</td>
+      <td style="width: 85px; text-align: center; vertical-align: top; height: 39px;" title = "{{ po.supplier.name }}"><a href='../../supplier/{{ po.supplier.supplier_code }}'>{{ po.supplier.supplier_code }}</a></td>
 
       <td style="width: 79px; text-align: center; vertical-align: top; height: 39px;">{{ po.orderref }}</td>
 

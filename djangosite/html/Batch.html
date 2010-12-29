@@ -42,7 +42,7 @@ Material Code:  {{ batch.material.code }}<br>
 Material Description:  {{ batch.material.description }}<br>
 Stock Info:  {{ batch.stockinfo }}<br>
 Status:  {{ batch.getstatus }}<br>
-Supplier Name:  {{ batch.supplier.name }}<br>
+Supplier Name:  <a href='../../supplier/{{ batch.supplier.supplier_code }}'>{{ batch.supplier.name }}</a><br>
 Quantity in Stock:  {{ batch.stockquantity }} Kg<br>
 Cost:  &pound;{{ batch.costprice|floatformat:3 }};  (Purchase Price = &pound;{{ batch.purchaseitem.price|floatformat:3 }}:: Handling Charge = <font color = '{{ other.chargecolor }}'>&pound;{{ other.handling|floatformat:3 }}</font>)<br>
 Original Quantity booked into stock:  {{ batch.batchup_quantity }} Kg<br>
