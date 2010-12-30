@@ -205,18 +205,21 @@ def depot():
 
 def purchase():
     data = getdata(nb.sql.get_purchaseorder, '\"Purchase Order\"')
-    newdata = []
-    for item in data:
-        line = []
-        line[0:2] = item[0:2]
-        suppliercode = [data[1] for data in supplierdata if data[0] == item[2]]
-        if len(suppliercode) > 0:
-            line.append(suppliercode[0])
-        else:
-            line.append(None)
-        line[3:] = item[3:]
-        newdata.append(line)
-    update(newdata, 'purchaseorder')
+    dc = DataContainer()
+    for prchse in data:
+        dc.addentry(prchse.PO_Num)
+        dc.addentry(prchse.OrderValue)
+        dc.addentry(get_suppliercode(prchse.Supplier))
+        dc.addentry(prchse.OrderReference)
+        dc.addentry(prchse.OrderDate)
+        dc.addentry(prchse.PlacedBy)
+        dc.addentry(prchse.PrintedComment)
+        dc.addentry(prchse.DeliveryComment)
+        dc.addentry(prchse.Status)
+        dc.addentry(prchse.LastUpdated)
+        dc.addentry(prchse.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'purchaseorder')
     global purchasedata
     purchasedata = [row for row in nb.naphthabase_query("select pon, id from purchaseorder")]
 
