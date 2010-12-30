@@ -1,5 +1,6 @@
 import naphthabase as nb
 import datetime
+import decimal
 
 
 def getdata(randr_query, table):
@@ -17,93 +18,190 @@ def update(data, table):
     nb.naphthabase_transfer(data, 'insert into %s values %s' \
                                 % (table, insert_fields))
 
+class DataContainer(object):
+    def __init__(self):
+        self.datatable = []
+        self._dataline = []
+    
+    def addentry(self, data):
+        """Add the given data item to the dataline list.
+        
+        Any decimal values are converted to strings first.
+        """
+        
+        if type(data) is decimal.Decimal:
+            data = str(data)
+        self._dataline.append(data)
+        
+    def combine(*args, **kwargs):
+        """Combines several dataitems into a single string.
+        
+        By default, commas are removed from the end of dataitems. The optional
+        filter argument can be used to specify other characters to strip.
+        By default, a newline character is added to the end of each dataitem (apart from the last). The optional separator argument can be used to specify other end of line characters.
+        """
+        
+        filter = kwargs.get('filter', ',')
+        separator = kwargs.get('separator', '\n')
+        output = ''
+        for line in args[1:]:
+            # first arg says <__main__.DataContainer object at 0x031E9830>
+            output = output + line.strip(filter) + separator
+        output = output.strip(separator)
+        # No new-line character wanted at the end.
+        return output
+    
+    def addline(self):
+        self.datatable.append(self._dataline)
+        self._dataline = []
+    
+    def process(self, datablock):
+        for line in datablock:
+            for entry in line:
+                self.addentry(entry)
+            self.addline()
+
 
 def material():
-    data = getdata(nb.sql.material_codes, 'Material')
-    update(data, 'material')
+    data = getdata(nb.sql.get_material_codes, 'Material')
+    dc = DataContainer()
+    dc.process(data)
+    update(dc.datatable, 'material')
     global materialdata
     materialdata = [row for row in nb.naphthabase_query("select code, id from material")]
 
 def hauliers():
     data = getdata(nb.sql.get_hauliers, '\"Additional Items\"')
-    update(data, 'hauliers')
+    dc = DataContainer()
+    dc.process(data)
+    update(dc.datatable, 'hauliers')
 
 def carrier():
     data = getdata(nb.sql.get_carrier, '\"Sales Order Additional\"')
-    update(data, 'carrier')
+    dc = DataContainer()
+    dc.process(data)
+    update(dc.datatable, 'carrier')
     global carrierdata
     carrierdata = [row for row in nb.naphthabase_query("select won, id from carrier")]
 
 def customer():
     data = getdata(nb.sql.get_customer, 'Customer')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        line.append(item[1])
-        line.append("%s\n%s\n%s\n%s\n%s" % (item[2], item[3], item[4], item[5], item[6]))
-        line[3:] = item[7:]
-        newdata.append(line)
-    update(newdata, 'customer')
+    dc = DataContainer()
+    for cstmr in data:
+        dc.addentry(cstmr.CustomerID)
+        dc.addentry(cstmr.Name)
+        address = dc.combine(cstmr.Address1,
+                             cstmr.Address2,
+                             cstmr.Address3,
+                             cstmr.Address4,
+                             cstmr.Address5)
+        dc.addentry(address)
+        dc.addentry(cstmr.PostCode)
+        dc.addentry(cstmr.Telephone)
+        dc.addentry(cstmr.Fax)
+        dc.addentry(cstmr.Email)
+        dc.addentry(cstmr.Website)
+        dc.addentry(cstmr.ContactName)
+        dc.addentry(cstmr.VAT)
+        dc.addentry(cstmr.Comment)
+        dc.addentry(cstmr.Memo)
+        dc.addentry(cstmr.CreditLimit)
+        dc.addentry(cstmr.Terms)
+        dc.addentry(cstmr.LastUpdated)
+        dc.addentry(cstmr.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'customer')
     global customerdata
     customerdata = [row for row in nb.naphthabase_query("select customer_code, id from customer")]
+    
+def get_customercode(customerid):
+    cstmr_pk = [data[1] for data in customerdata if data[0] == customerid]
+    if len(cstmr_pk) > 1:
+        # There should only be one matching customer code
+        raise NameError('THERE IS MORE THAN 1 MATCHING CUSTOMER')
+    elif len(cstmr_pk) == 0:
+        return None
+    else:
+        return cstmr_pk[0]
 
 def supplier():
     data = getdata(nb.sql.get_supplier, 'Supplier')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        line.append(item[1])
-        line.append("%s\n%s\n%s\n%s\n%s" % (item[2], item[3], item[4], item[5], item[6]))
-        line[3:] = item[7:]
-        newdata.append(line)
-    update(newdata, 'supplier')
+    dc = DataContainer()
+    for spplr in data:
+        dc.addentry(spplr.SupplierID)
+        dc.addentry(spplr.Name)
+        address = dc.combine(spplr.Address1,
+                             spplr.Address2,
+                             spplr.Address3,
+                             spplr.Address4,
+                             spplr.Address5)
+        dc.addentry(address)
+        dc.addentry(spplr.PostCode)
+        dc.addentry(spplr.Telephone)
+        dc.addentry(spplr.Fax)
+        dc.addentry(spplr.Email)
+        dc.addentry(spplr.Website)
+        dc.addentry(spplr.ContactName)
+        dc.addentry(spplr.VAT)
+        dc.addentry(spplr.Comment)
+        dc.addentry(spplr.Memo)
+        dc.addentry(spplr.LastUpdated)
+        dc.addentry(spplr.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'supplier')
     global supplierdata
     supplierdata =[row for row in nb.naphthabase_query("select supplier_code, id from supplier")]
 
+def get_suppliercode(supplierid):
+    spplr_pk = [data[1] for data in supplierdata if data[0] == supplierid]
+    if len(spplr_pk) > 1:
+        # There should only be one matching supplier code
+        raise NameError('THERE IS MORE THAN 1 MATCHING SUPPLIER')
+    elif len(spplr_pk) == 0:
+        return None
+    else:
+        return spplr_pk[0]
+
 def contact():
     data = getdata(nb.sql.get_contact, 'Contact')
-    newdata = []
-    for item in data:
-        line = []
-        line[0:6] = item[0:6]
-        customercode = [data[1] for data in customerdata if data[0] == item[0]]
-        if len(customercode) > 0:
-            line.append(customercode[0])
-        else:
-            line.append(None)
-        suppliercode = [data[1] for data in supplierdata if data[0] == item[0]]
-        if len(suppliercode) > 0:
-            line.append(suppliercode[0])
-        else:
-            line.append(None)
-        line[9:] = item[6:]
-        newdata.append(line)
-    update(newdata, 'contact')
+    dc = DataContainer()
+    for cntct in data:
+        dc.addentry(cntct.ClientID)
+        dc.addentry(cntct.Title)
+        dc.addentry(cntct.Forename)
+        dc.addentry(cntct.Surname)
+        dc.addentry(cntct.Phone)
+        dc.addentry(cntct.Department)
+        dc.addentry(get_customercode(cntct.ClientID))
+        dc.addentry(get_suppliercode(cntct.ClientID))
+        dc.addentry(cntct.LastUpdated)
+        dc.addentry(cntct.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'contact')
 
 def depot():
     data = getdata(nb.sql.get_depot, 'Depot')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        line.append(item[1])
-        line.append("%s\n%s\n%s\n%s\n%s" % (item[2], item[3], item[4], item[5], item[6]))
-        line[4:8] = item[7:12]
-        customercode = [data[1] for data in customerdata if data[0] == item[0]]
-        if len(customercode) > 0:
-            line.append(customercode[0])
-        else:
-            line.append(None)
-        suppliercode = [data[1] for data in supplierdata if data[0] == item[0]]
-        if len(suppliercode) > 0:
-            line.append(suppliercode[0])
-        else:
-            line.append(None)
-        line[11:] = item[12:]
-        newdata.append(line)
-    update(newdata, 'depot')
+    dc = DataContainer()
+    for dpt in data:
+        dc.addentry(dpt.ClientID)
+        dc.addentry(dpt.Name)
+        address = dc.combine(dpt.Address1,
+                             dpt.Address2,
+                             dpt.Address3,
+                             dpt.Address4,
+                             dpt.Address5)
+        dc.addentry(address)
+        dc.addentry(dpt.PostCode)
+        dc.addentry(dpt.Telephone)
+        dc.addentry(dpt.Fax)
+        dc.addentry(dpt.Email)
+        dc.addentry(dpt.Comment)
+        dc.addentry(get_customercode(dpt.ClientID))
+        dc.addentry(get_suppliercode(dpt.ClientID))
+        dc.addentry(dpt.LastUpdated)
+        dc.addentry(dpt.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'depot')
 
 def purchase():
     data = getdata(nb.sql.get_purchaseorder, '\"Purchase Order\"')

@@ -252,7 +252,7 @@ create_depot_table = """
 #----------------------------------------------------------------------------#
 # Material Selection (R&R Database)
 #----------------------------------------------------------------------------#
-material_codes = """
+get_material_codes = """
     SELECT
     Formula.Key AS Code,
     Formula.Description,
@@ -264,24 +264,7 @@ material_codes = """
     ORDER BY Formula.Key
     """
 
-#****************************************************************************#
-
-#----------------------------------------------------------------------------#
-# Purchase Item Selection (R&R Database)
-#----------------------------------------------------------------------------#
-get_purchaseitem = """
-    SELECT
-    \"Purchase Item\".\"Order Number\" AS PO_Num,
-    \"Purchase Item\".\"Component Code\" AS Code,
-    \"Purchase Item\".Quantity,
-    \"Purchase Item\".Price,
-    \"Purchase Item\".\"Due Date\" AS DueDate,
-    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
-    \"Purchase Item\".\"Last Updated\" AS LastUpdated,
-    \"Purchase Item\".\"Record Number\" AS RecordNumber
-    FROM \"Purchase Item\"
-    WHERE \"Purchase Item\".\"Last Updated\" > #%(lastupdate)s#
-    """
+materialcode_columns = {'Code': 0, 'Description': 1, 'LastUpdated': 2, 'RecordNo': 3}
 
 #----------------------------------------------------------------------------#
 # Purchase Order Selection (R&R Database)
@@ -303,36 +286,17 @@ get_purchaseorder = """
     WHERE \"Purchase Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
-#----------------------------------------------------------------------------#
-# Purchase Order Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-purchase_orders = """
-    SELECT
-    pon,
-    Code,
-    Batch,
-    Quantity,
-    Price,
-    OrderValue,
-    Supplier,
-    OrderReference,
-    OrderDate,
-    DueDate,
-    PlacedBy,
-    DeliveredQuantity,
-    PrintedComment,
-    DeliveryComment,
-    Status,
-    LastUpdated
-    FROM Purchases,
-    (SELECT
-        MAX(LastUpdated) AS latest from Purchases WHERE
-        PO_Num = %(query)s)
-    WHERE PO_Num = %(query)s and LastUpdated = latest
-    ORDER BY Code
-    """             
-
-#****************************************************************************#
+purchaseorder_columns = {'PO_Num': 0,
+                         'OrderValue': 1,
+                         'Supplier': 2,
+                         'OrderReference': 3,
+                         'OrderDate': 4,
+                         'PlacedBy': 5,
+                         'PrintedComment': 6,
+                         'DeliveryComment': 7,
+                         'Status': 8,
+                         'LastUpdated': 9,
+                         'RecordNumber': 10}
 
 #----------------------------------------------------------------------------#
 # Stock Selection (R&R Database)
@@ -355,6 +319,18 @@ get_stock = """
     WHERE \"Formula Stock\".\"Last Updated\" > #%(lastupdate)s#
     """
 
+stock_columns = {'Batch': 0,
+                 'Code': 1,
+                         'StockInfo': 2,
+                         'BatchStatus': 3,
+                         'OrderDate': 4,
+                         'PlacedBy': 5,
+                         'PrintedComment': 6,
+                         'DeliveryComment': 7,
+                         'Status': 8,
+                         'LastUpdated': 9,
+                         'RecordNumber': 10}
+
 #****************************************************************************#
 
 #----------------------------------------------------------------------------#
@@ -376,43 +352,10 @@ get_stockusage = """
     \"Formula Stock Usage\".\"Record Number\" AS RecordNumber
     FROM \"Formula Stock Usage\"
     WHERE \"Formula Stock Usage\".\"Last Updated\" > #%(lastupdate)s#
-    """    
-
-
-#----------------------------------------------------------------------------#
-# Stock Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-get_batch = """
-    SELECT
-    Batch,
-    Code,
-    Revision,
-    BatchStatus,
-    QuantityNow,
-    OriginalDeliveredQuantity,
-    StockInfo,
-    Supplier,
-    PONumber,
-    PurchaseCost,
-    Customer,
-    WONumber,
-    Price,
-    UsageReference,
-    StockAction,
-    ItemOrder,
-    QuantityMovement,
-    UserID,
-    LastUpdated,
-    InvoiceDate,
-    BatchUp_Date
-    FROM Stock
-    WHERE Batch = %(query)s
     """
 
-#****************************************************************************#
-
 #----------------------------------------------------------------------------#
-# Sales Order Selection (R&R Database)
+# Despatch Selection (R&R Database)
 #----------------------------------------------------------------------------#
 get_despatch = """
     SELECT
@@ -426,9 +369,8 @@ get_despatch = """
     WHERE \"Sales Order Despatch\".\"Last Updated\" > #%(lastupdate)s#
     """
 
-
 #----------------------------------------------------------------------------#
-# Sales Order Selection (R&R Database)
+# Sales Item Selection (R&R Database)
 #----------------------------------------------------------------------------#
 get_salesitem = """
     SELECT
@@ -442,8 +384,7 @@ get_salesitem = """
     FROM \"Sales Order Item\"
     WHERE \"Sales Order Item\".\"Last Updated\" > #%(lastupdate)s#
     """
-    
-    
+
 #----------------------------------------------------------------------------#
 # Sales Order Selection (R&R Database)
 #----------------------------------------------------------------------------#
@@ -486,59 +427,7 @@ get_salesorder = """
     """
 
 #----------------------------------------------------------------------------#
-# Sales Order Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-sales_orders = """
-    SELECT
-    WO_Num,
-    Link,
-    StockCode,
-    CustomerKey,
-    CustomerOrderNumber,
-    DespatchNotes,
-    OrderQuantity,
-    Price,
-    OrderValue,
-    Status,
-    OrderDate,
-    RequiredDate,
-    DespatchDate,
-    InvoiceDate,
-    Operator,
-    DespatchCompanyName,
-    DespatchAddress1,
-    DespatchAddress2,
-    DespatchAddress3,
-    DespatchPostCode,
-    DeliveryNoteComment1,
-    DeliveryNoteComment2,
-    DeliveryNoteComment3,
-    DeliveryNoteComment4,
-    DeliveryNoteComment5,
-    InvoiceComment1,
-    InvoiceComment2,
-    InvoiceComment3,
-    InvoiceComment4,
-    InvoiceComment5,
-    InvoiceComment6,
-    InvoiceTerms,
-    ItemCount,
-    Haulier,
-    BatchDespatched,
-    DespatchedQuantity,
-    LastUpdated
-    FROM Sales,
-    (SELECT
-        MAX(LastUpdated) AS latest from Sales WHERE
-        WO_Num = %(query)s)
-    WHERE WO_Num = %(query)s and LastUpdated = latest
-    ORDER BY WO_Num
-    """
-
-#****************************************************************************#
-
-#----------------------------------------------------------------------------#
-# Sales Order Additional(R&R Database)
+# Sales Order Additional (R&R Database)
 #----------------------------------------------------------------------------#
 get_carrier = """
     SELECT
@@ -548,12 +437,10 @@ get_carrier = """
     \"Sales Order Additional\".\"Record Number\" AS RecordNumber
     FROM \"Sales Order Additional\"
     WHERE \"Sales Order Additional\".\"Last Updated\" > #%(lastupdate)s#
-    """    
-
-#****************************************************************************#
+    """
 
 #----------------------------------------------------------------------------#
-# Deleted Sales Orders(R&R Database)
+# Deleted Sales Orders (R&R Database)
 #----------------------------------------------------------------------------#
 get_deleted_sales = """
     SELECT
@@ -566,21 +453,6 @@ get_deleted_sales = """
     WHERE (\"Missing Order Number\".Key > '1' AND
     \"Missing Order Number\".DateTime > #%(lastupdate)s#)
     """
-
-#----------------------------------------------------------------------------#
-# Deleted Sales Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-deleted_sales_orders = """
-    SELECT
-    WO_Num,
-    UserID,
-    Reason,
-    LastUpdated
-    FROM DeletedSales
-    WHERE WO_Num = %(query)s
-    """
-
-#****************************************************************************#
 
 #----------------------------------------------------------------------------#
 # Hauliers Selection (R&R Database)
@@ -596,8 +468,6 @@ get_hauliers = """
     WHERE \"Additional Items\".\"Last Updated\" > #%(lastupdate)s#
     ORDER BY \"Additional Items\".\"Record Number\"
     """
-
-#****************************************************************************#
 
 #----------------------------------------------------------------------------#
 # Customer Selection (R&R Database)
@@ -630,37 +500,6 @@ get_customer = """
     """
 
 #----------------------------------------------------------------------------#
-# Customer Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-customer = """
-    SELECT
-    CustomerID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Website,
-    ContactName,
-    VAT,
-    Comment,
-    Memo,
-    CreditLimit,
-    Terms,
-    LastUpdated
-    FROM Customer
-    WHERE CustomerID like '%(query)s' OR
-    Name like '%(query)s'
-    """
-
-#****************************************************************************#
-
-#----------------------------------------------------------------------------#
 # Depot Selection (R&R Database)
 #----------------------------------------------------------------------------#
 get_depot = """
@@ -678,35 +517,11 @@ get_depot = """
     Depot.Email,
     Depot.Comment,
     Depot.\"Last Updated\" AS LastUpdated,
-    Depot.\"Record Number\" AS RecordNo
+    Depot.\"Record Number\" AS RecordNumber
     FROM Depot
     WHERE Depot.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Depot.\"Client ID\"
     """
-
-#----------------------------------------------------------------------------#
-# Depot Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-depot = """
-    SELECT
-    ClientID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Comment,
-    LastUpdated
-    FROM Depot
-    WHERE ClientID like '%(query)s'
-    """
-
-#****************************************************************************#
 
 #----------------------------------------------------------------------------#
 # Contact Selection (R&R Database)
@@ -725,24 +540,6 @@ get_contact = """
     WHERE Contact.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Contact.\"Client ID\"
     """
-
-#----------------------------------------------------------------------------#
-# Contact Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-contact = """
-    SELECT
-    ClientID,
-    Title,
-    Forename,
-    Surname,
-    Phone,
-    Department,
-    LastUpdated
-    FROM Contact
-    WHERE ClientID like '%(query)s'
-    """
-
-#****************************************************************************#
 
 #----------------------------------------------------------------------------#
 # Supplier Selection (R&R Database)
@@ -770,31 +567,4 @@ get_supplier = """
     FROM Supplier
     WHERE Supplier.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Supplier.ID
-    """
-
-#----------------------------------------------------------------------------#
-# Supplier Selection (NaphthaBase)
-#----------------------------------------------------------------------------#
-supplier = """
-    SELECT
-    SupplierID,
-    Name,
-    Address1,
-    Address2,
-    Address3,
-    Address4,
-    Address5,
-    PostCode,
-    Telephone,
-    Fax,
-    Email,
-    Website,
-    ContactName,
-    VAT,
-    Comment,
-    Memo,
-    LastUpdated
-    FROM Supplier
-    WHERE SupplierID like '%(query)s' OR
-    Name like '%(query)s'
     """
