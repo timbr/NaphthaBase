@@ -70,6 +70,16 @@ def material():
     global materialdata
     materialdata = [row for row in nb.naphthabase_query("select code, id from material")]
 
+def get_materialcode(materialid):
+    materialcode = [data[1] for data in materialdata if data[0] == materialid]
+    if len(materialcode) > 1:
+        # There should only be one matching material code
+        raise NameError('THERE IS MORE THAN 1 MATCHING MATERIAL')
+    elif len(materialcode) == 0:
+        return None
+    else:
+        return materialcode[0]
+
 def hauliers():
     data = getdata(nb.sql.get_hauliers, '\"Additional Items\"')
     dc = DataContainer()
@@ -82,7 +92,37 @@ def carrier():
     dc.process(data)
     update(dc.datatable, 'carrier')
     global carrierdata
-    carrierdata = [row for row in nb.naphthabase_query("select won, id from carrier")]
+    carrierdata = [row for row in nb.naphthabase_query("select won, id, description, lastupdated from carrier")]
+
+def get_carriercode(won):
+    carriercode = [data[1] for data in carrierdata if data[0] == won]
+    if len(carriercode) > 1:
+        # There should only be one matching carriercode
+        print won, carriercode
+        duplicates = checkduplication([data for data in carrierdata if data[0] == won])
+        if not duplicates:
+            raise NameError('THERE IS MORE THAN 1 MATCHING CARRIER')
+    elif len(carriercode) == 0:
+        return None
+    else:
+        return carriercode[0]
+
+def checkduplication(itemlist):
+    print itemlist
+    dataset = set()
+    for item in itemlist:
+        for index, field in enumerate(item):
+            if index != 1:
+                # we want to ignore the id as we know this will be different!
+                dataset.add(field)
+    print 'dataset:', dataset
+    if len(dataset) != len(item)-1:
+        return False
+    else:
+        return True
+            
+            
+
 
 def customer():
     data = getdata(nb.sql.get_customer, 'Customer')
@@ -222,176 +262,207 @@ def purchase():
     update(dc.datatable, 'purchaseorder')
     global purchasedata
     purchasedata = [row for row in nb.naphthabase_query("select pon, id from purchaseorder")]
+    
+def get_pocode(pon):
+    purchaseorder = [data[1] for data in purchasedata if data[0] == pon]
+    if len(purchaseorder) > 1:
+        # There should only be one matching PO code
+        raise NameError('THERE IS MORE THAN 1 MATCHING PO')
+    elif len(purchaseorder) == 0:
+        return None
+    else:
+        return purchaseorder[0]
 
 def purchaseitem():
     data = getdata(nb.sql.get_purchaseitem, '\"Purchase Item\"')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        purchaseorder = [data[1] for data in purchasedata if data[0] == item[0]]
-        if len(purchaseorder) > 0:
-            line.append(purchaseorder[0])
-        else:
-            line.append(None)
-        materialcode = [data[1] for data in materialdata if data[0] == item[1]]
-        if len(materialcode) > 0:
-            line.append(materialcode[0])
-        else:
-            line.append(None)
-        line[3:] = item[2:]
-        newdata.append(line)
-    update(newdata, 'purchaseitem')
+    dc = DataContainer()
+    for itm in data:
+        dc.addentry(itm.PO_Num)
+        dc.addentry(get_pocode(itm.PO_Num))
+        dc.addentry(get_materialcode(itm.Material))
+        dc.addentry(itm.Quantity)
+        dc.addentry(itm.Price)
+        dc.addentry(itm.DueDate)
+        dc.addentry(itm.DeliveredQuantity)
+        dc.addentry(itm.LastUpdated)
+        dc.addentry(itm.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'purchaseitem')
     global purchaseitemdata
     purchaseitemdata = [row for row in nb.naphthabase_query("select pon, material_id, id from purchaseitem")]
 
-def formula():
+def get_purchaseitemcode(pon, material):
+    purchaseitem = [data[2] for data in purchaseitemdata if data[0] == pon and data[1] == material]
+    if len(purchaseitem) > 1:
+        # There should only be one matching Purchase Item code
+        raise NameError('THERE IS MORE THAN 1 MATCHING Purchase Item')
+    elif len(purchaseitem) == 0:
+        return None
+    else:
+        return purchaseitem[0]
+
+def formulastock():
     data = getdata(nb.sql.get_stock, 'Formula Stock')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        materialcode = [data[1] for data in materialdata if data[0] == item[1]]
-        if len(materialcode) > 0:
-            line.append(materialcode[0])
-        else:
-            line.append(None)
-        line.append(item[2])
-        line.append(item[3])
-        suppliercode = [data[1] for data in supplierdata if data[0] == item[4]]
-        if len(suppliercode) > 0:
-            line.append(suppliercode[0])
-        else:
-            line.append(None)
-        purchaseitem = [data[2] for data in purchaseitemdata if data[0] == item[5] and data[1] == line[1]]
-        if len(purchaseitem) > 0:
-            line.append(purchaseitem[0])
-        else:
-            line.append(None)
-        line[6:] = item[6:]
-        newdata.append(line)
-    update(newdata, 'stock')
+    dc = DataContainer()
+    for stck in data:
+        dc.addentry(stck.Batch)
+        dc.addentry(get_materialcode(stck.Material))
+        dc.addentry(stck.StockInfo)
+        dc.addentry(stck.BatchStatus)
+        dc.addentry(get_suppliercode(stck.Supplier))
+        dc.addentry(get_purchaseitemcode(stck.PO_Num, stck.Material))
+        dc.addentry(stck.PurchaseCost)
+        dc.addentry(stck.OriginalDeliveredQuantity)
+        dc.addentry(stck.BatchUp_Date)
+        dc.addentry(stck.QuantityNow)
+        dc.addentry(stck.LastUpdated)
+        dc.addentry(stck.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'stock')
     global stockdata
     stockdata = [row for row in nb.naphthabase_query("select batch, id from stock")]
 
+def get_stockcode(batch):
+    stockcode = [data[1] for data in stockdata if data[0] == batch]
+    if len(stockcode) > 1:
+        # There should only be one matching stockcode
+        if batch not in ['15381']:
+            raise NameError('THERE IS MORE THAN 1 MATCHING BATCH NUMBER')
+    elif len(stockcode) == 0:
+        return None
+    else:
+        return stockcode[0]
+
 def sales():
     data = getdata(nb.sql.get_salesorder, '\"Sales Order\"')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        line.append(item[1])
-        customercode = [data[1] for data in customerdata if data[0] == item[2]]
-        if len(customercode) > 0:
-            line.append(customercode[0])
-        else:
-            line.append(None)
-        line[3:12] = item[3:12]
-        line.append("%s\n%s\n%s\n%s" % (item[12], item[13], item[14], item[15]))
-        line.append(item[16])
-        line.append("%s\n%s\n%s\n%s\n%s" % (item[17], item[18], item[19], item[20], item[21]))
-        line.append("%s\n%s\n%s\n%s\n%s\n%s" % (item[22], item[23], item[24], item[25], item[26], item[27]))
-        line.append(item[28])
-        line.append(item[29])
-        carriercode = [data[1] for data in carrierdata if data[0] == item[0]]
-        if len(carriercode) > 0:
-            line.append(carriercode[0])
-        else:
-            line.append(None)
-        line.append(item[30])
-        line.append(item[31])
-        newdata.append(line)
-    update(newdata, 'salesorder')
+    dc = DataContainer()
+    for sls in data:
+        dc.addentry(sls.WO_Num)
+        dc.addentry(sls.Link)
+        dc.addentry(get_customercode(sls.CustomerKey))
+        dc.addentry(sls.CustomerOrderNumber)
+        dc.addentry(sls.DespatchNotes)
+        dc.addentry(sls.OrderValue)
+        dc.addentry(sls.Status)
+        dc.addentry(sls.OrderDate)
+        dc.addentry(sls.DespatchDate)
+        dc.addentry(sls.InvoiceDate)
+        dc.addentry(sls.Operator)
+        dc.addentry(sls.DespatchCompanyName)
+        address = dc.combine(sls.DespatchAddress1,
+                             sls.DespatchAddress2,
+                             sls.DespatchAddress3,
+                             sls.DespatchAddress4)
+        dc.addentry(address)
+        dc.addentry(sls.DespatchPostCode)
+        delnotecomment = dc.combine(sls.DeliveryNoteComment1,
+                                    sls.DeliveryNoteComment2,
+                                    sls.DeliveryNoteComment3,
+                                    sls.DeliveryNoteComment4,
+                                    sls.DeliveryNoteComment5,
+                                    filter = '')
+        dc.addentry(delnotecomment)
+        invoicecomment = dc.combine(sls.InvoiceComment1,
+                                    sls.InvoiceComment2,
+                                    sls.InvoiceComment3,
+                                    sls.InvoiceComment4,
+                                    sls.InvoiceComment5,
+                                    sls.InvoiceComment6,
+                                    filter = '')
+        dc.addentry(invoicecomment)
+        dc.addentry(sls.InvoiceTerms)
+        dc.addentry(sls.ItemCount)
+        dc.addentry(get_carriercode(sls.WO_Num))
+        dc.addentry(sls.LastUpdated)
+        dc.addentry(sls.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'salesorder')
     global salesorderdata
     salesorderdata = [row for row in nb.naphthabase_query("select won, id from salesorder")]
 
+def get_salesordercode(won):
+    salesorder = [data[1] for data in salesorderdata if data[0] == won]
+    if len(salesorder) > 1:
+        # There should only be one matching Sales Order code
+        raise NameError('THERE IS MORE THAN 1 MATCHING SALES ORDER')
+    elif len(salesorder) == 0:
+        return None
+    else:
+        return salesorder[0]
+
 def salesitem():
     data = getdata(nb.sql.get_salesitem, '\"Sales Order Item\"')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        salesordercode = [data[1] for data in salesorderdata if data[0] == item[0]]
-        if len(salesordercode) > 0:
-            line.append(salesordercode[0])
-        else:
-            line.append(None)
-        materialcode = [data[1] for data in materialdata if data[0] == item[1]]
-        if len(materialcode) > 0:
-            line.append(materialcode[0])
-        else:
-            line.append(None)
-        line[3:] = item[2:]
-        newdata.append(line)
-    update(newdata, 'salesitem')
+    dc = DataContainer()
+    for itm in data:
+        dc.addentry(itm.WO_Num)
+        dc.addentry(get_salesordercode(itm.WO_Num))
+        dc.addentry(get_materialcode(itm.Material))
+        dc.addentry(itm.OrderQuantity)
+        dc.addentry(itm.Price)
+        dc.addentry(itm.RequiredDate)
+        dc.addentry(itm.LastUpdated)
+        dc.addentry(itm.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'salesitem')
     global salesitemdata
     salesitemdata = [row for row in nb.naphthabase_query("select won, material_id, id from salesitem")]
 
+def get_salesitemcode(won, material):
+    salesitem = [data[2] for data in salesitemdata if data[0] == won and data[1] == material]
+    if len(salesitem) > 1:
+        # There should only be one matching Sales Itemcode
+        raise NameError('THERE IS MORE THAN 1 MATCHING SALES Item')
+    elif len(salesitem) == 0:
+        return None
+    else:
+        return salesitem[0]
+
 def deletedsales():
     data = getdata(nb.sql.get_deleted_sales, '\"Missing Order Number\"')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        salesordercode = [data[1] for data in salesorderdata if data[0] == item[0]]
-        if len(salesordercode) > 0:
-            line.append(salesordercode[0])
-        else:
-            line.append(None)
-        line[2:] = item[1:]
-        newdata.append(line)
-    update(newdata, 'deletedsales')
+    dc = DataContainer()
+    for dltdsls in data:
+        dc.addentry(dltdsls.WO_Num)
+        dc.addentry(get_salesordercode(dltdsls.WO_Num))
+        dc.addentry(dltdsls.UserID)
+        dc.addentry(dltdsls.Reason)
+        dc.addentry(dltdsls.LastUpdated)
+        dc.addentry(dltdsls.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'deletedsales')
 
 def despatch():
     data = getdata(nb.sql.get_despatch, '\"Sales Order Despatch\"')
-    newdata = []
-    for item in data:
-        line = []
-        line.append(item[0])
-        line.append(item[1])
-        stockcode = [data[1] for data in stockdata if data[0] == item[2]]
-        if len(stockcode) > 0:
-            line.append(stockcode[0])
-        else:
-            line.append(None)
-        salesitemcode = [data[2] for data in salesitemdata if data[0] == item[0]]
-        if len(salesitemcode) > 0:
-            line.append(salesitemcode[0])
-        else:
-            line.append(None)
-        line[4:] = item[4:]
-        newdata.append(line)
-    update(newdata, 'despatch')
+    dc = DataContainer()
+    for dsptch in data:
+        dc.addentry(dsptch.WO_Num)
+        dc.addentry(dsptch.Material)
+        dc.addentry(get_materialcode(dsptch.Material))
+        dc.addentry(get_salesitemcode(dsptch.WO_Num, dsptch.Material))
+        dc.addentry(dsptch.BatchDespatched)
+        dc.addentry(dsptch.DespatchedQuantity)
+        dc.addentry(dsptch.LastUpdated)
+        dc.addentry(dsptch.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'despatch')
 
 def stockusage():
     data = getdata(nb.sql.get_stockusage, '\"Formula Stock Usage\"')
-    newdata = []
-    for item in data:
-        line = []
-        stockcode = [data[1] for data in stockdata if data[0] == item[0]]
-        if len(stockcode) > 0:
-            line.append(stockcode[0])
-        else:
-            line.append(None)
-        line.append(item[1])
-        customercode = [data[1] for data in customerdata if data[0] == item[2]]
-        if len(customercode) > 0:
-            line.append(customercode[0])
-        else:
-            line.append(None)
-        materialcode = [data[1] for data in materialdata if data[0] == item[4]]
-        if len(materialcode) != 1:
-            materialcode = None
-        else:
-            materialcode = materialcode[0]
-        salesitemcode = [data[2] for data in salesitemdata if data[0] == item[3] and data[1] == materialcode]
-        if len(salesitemcode) > 0:
-            line.append(salesitemcode[0])
-        else:
-            line.append(None)
-        line[4:] = item[5:]
-        newdata.append(line)
-    update(newdata, 'stockmovement')
+    dc = DataContainer()
+    for stckusg in data:
+        dc.addentry(get_stockcode(stckusg.Batch))
+        dc.addentry(stckusg.Action)
+        dc.addentry(get_customercode(stckusg.Customer))
+        materialcode = get_materialcode(stckusg.Material)
+        dc.addentry(get_salesitemcode(stckusg.WO_Num, materialcode))
+        dc.addentry(stckusg.Price)
+        dc.addentry(stckusg.UsageRef)
+        dc.addentry(stckusg.Quantity)
+        dc.addentry(stckusg.ItemOrder)
+        dc.addentry(stckusg.UserID)
+        dc.addentry(stckusg.LastUpdated)
+        dc.addentry(stckusg.RecordNumber)
+        dc.addline()
+    update(dc.datatable, 'stockmovement')
 
 if __name__ == '__main__':
     nb.make_database_connection()
@@ -404,7 +475,7 @@ if __name__ == '__main__':
     depot()
     purchase()
     purchaseitem()
-    formula()
+    formulastock()
     sales()
     salesitem()
     deletedsales()

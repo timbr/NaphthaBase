@@ -130,6 +130,8 @@ create_despatch_table = """
     materialcode varchar(20) NOT NULL,
     stock_id integer REFERENCES stock (id),
     salesitem_id REFERENCES salesitem (id),
+    batch varchar(10),
+    quantity varchar(10),
     lastupdated datetime NOT NULL,
     rr_recordno integer NOT NULL
     )
@@ -254,7 +256,7 @@ create_depot_table = """
 #----------------------------------------------------------------------------#
 get_material_codes = """
     SELECT
-    Formula.Key AS Code,
+    Formula.Key AS Material,
     Formula.Description,
     Formula.\"Last Updated\" AS LastUpdated,
     Formula.\"Record Number\" AS RecordNo
@@ -263,8 +265,6 @@ get_material_codes = """
     AND Formula.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Formula.Key
     """
-
-materialcode_columns = {'Code': 0, 'Description': 1, 'LastUpdated': 2, 'RecordNo': 3}
 
 #----------------------------------------------------------------------------#
 # Purchase Order Selection (R&R Database)
@@ -286,17 +286,22 @@ get_purchaseorder = """
     WHERE \"Purchase Order\".\"Last Updated\" > #%(lastupdate)s#
     """
 
-purchaseorder_columns = {'PO_Num': 0,
-                         'OrderValue': 1,
-                         'Supplier': 2,
-                         'OrderReference': 3,
-                         'OrderDate': 4,
-                         'PlacedBy': 5,
-                         'PrintedComment': 6,
-                         'DeliveryComment': 7,
-                         'Status': 8,
-                         'LastUpdated': 9,
-                         'RecordNumber': 10}
+#----------------------------------------------------------------------------#
+# Purchase Item Selection (R&R Database)
+#----------------------------------------------------------------------------#
+get_purchaseitem = """
+    SELECT
+    \"Purchase Item\".\"Order Number\" AS PO_Num,
+    \"Purchase Item\".\"Component Code\" AS Material,
+    \"Purchase Item\".Quantity,
+    \"Purchase Item\".Price,
+    \"Purchase Item\".\"Due Date\" AS DueDate,
+    \"Purchase Item\".\"Delivered Quantity\" AS DeliveredQuantity,
+    \"Purchase Item\".\"Last Updated\" AS LastUpdated,
+    \"Purchase Item\".\"Record Number\" AS RecordNumber
+    FROM \"Purchase Item\"
+    WHERE \"Purchase Item\".\"Last Updated\" > #%(lastupdate)s#
+    """
 
 #----------------------------------------------------------------------------#
 # Stock Selection (R&R Database)
@@ -304,11 +309,11 @@ purchaseorder_columns = {'PO_Num': 0,
 get_stock = """
     SELECT
     \"Formula Stock\".Batch,
-    \"Formula Stock\".Key AS Code,
+    \"Formula Stock\".Key AS Material,
     \"Formula Stock\".Location AS StockInfo,
     \"Formula Stock\".Type AS BatchStatus,
     \"Formula Stock\".Supplier,
-    \"Formula Stock\".PON AS PONumber,
+    \"Formula Stock\".PON AS PO_Num,
     \"Formula Stock\".Cost AS PurchaseCost,
     \"Formula Stock\".\"Original Quantity\" AS OriginalDeliveredQuantity,
     \"Formula Stock\".\"Production Date\" AS BatchUp_Date,
@@ -318,18 +323,6 @@ get_stock = """
     FROM \"Formula Stock\"
     WHERE \"Formula Stock\".\"Last Updated\" > #%(lastupdate)s#
     """
-
-stock_columns = {'Batch': 0,
-                 'Code': 1,
-                         'StockInfo': 2,
-                         'BatchStatus': 3,
-                         'OrderDate': 4,
-                         'PlacedBy': 5,
-                         'PrintedComment': 6,
-                         'DeliveryComment': 7,
-                         'Status': 8,
-                         'LastUpdated': 9,
-                         'RecordNumber': 10}
 
 #****************************************************************************#
 
@@ -341,8 +334,8 @@ get_stockusage = """
     \"Formula Stock Usage\".Batch,
     \"Formula Stock Usage\".\"Record Type\" AS Action,
     \"Formula Stock Usage\".Customer,
-    \"Formula Stock Usage\".\"Works Order Number\" AS WON,
-    \"Formula Stock Usage\".Formula,
+    \"Formula Stock Usage\".\"Works Order Number\" AS WO_Num,
+    \"Formula Stock Usage\".Formula AS Material,
     \"Formula Stock Usage\".Price,
     \"Formula Stock Usage\".\"Usage Reference\" AS UsageRef,
     \"Formula Stock Usage\".Quantity,
@@ -359,7 +352,7 @@ get_stockusage = """
 #----------------------------------------------------------------------------#
 get_despatch = """
     SELECT
-    \"Sales Order Despatch\".Key AS WON,
+    \"Sales Order Despatch\".Key AS WO_Num,
     \"Sales Order Despatch\".\"Stock Code\" AS Material,
     \"Sales Order Despatch\".Batch AS BatchDespatched,
     \"Sales Order Despatch\".Quantity AS DespatchedQuantity,
@@ -375,7 +368,7 @@ get_despatch = """
 get_salesitem = """
     SELECT
     \"Sales Order Item\".Parent AS WO_Num,
-    \"Sales Order Item\".\"Stock Code\" AS StockCode,
+    \"Sales Order Item\".\"Stock Code\" AS Material,
     \"Sales Order Item\".Quantity AS OrderQuantity,
     \"Sales Order Item\".Price,
     \"Sales Order Item\".\"Required Date\" AS RequiredDate,
