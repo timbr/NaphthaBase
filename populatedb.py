@@ -2,21 +2,69 @@ import naphthabase as nb
 import datetime
 import decimal
 
+#////////////////////////////////////////////////////////////////////////////#
+class DataTransferObject(object):
+    """Universal data transfer class.
+    
+    Contains basic routines for transferring data from the
+    R&R database to the NaphhaBase. Each table that needs
+    to be transferred should subclass DataTransferObject.
+    """
+#////////////////////////////////////////////////////////////////////////////#
+    
+    def __init__(self):
+        self.rrdata = nb.RandRDatabase()
+        self.naphthabase = nb.NaphthaBase()
+        self.dc = DataContainer()
+        self.getdata(self.sql, self.table)
+        
+    def getdata(self, randr_query, table):
+        print 'Getting %s data' % (table)
+        self.data = self.rrdata.query(randr_query, table)
+        
+    def update(self, data, table):
+        print 'Updating NaphthaBase with latest %s Data.' % table
+        self.naphthabase.query("DELETE FROM %s" % table) # Clear table
+        num_fields = len(self.naphthabase.get_columns(table))
+        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
+        # creates string "insert into <table> values (?,?,?,?, etc)"
+        self.naphthabase.transfer(data, 'insert into %s values %s' \
+                                    % (table, insert_fields))
+        self.create_memory_table(table)
 
-def getdata(randr_query, table):
-    print 'Getting %s data' % (table)
-    data = nb.get_randr_data(randr_query, table)
-    return data
+    def create_memory_table(self, table):
+        self.memorydata = []
+        self.alldata = [row for row in self.naphthabase.query("select * from %s" % table)]
+        self.columns = self.naphthabase.get_column_positions(table)
+        for row in self.alldata:
+            line = {}
+            for column in self.columns.keys():
+                line[column] = row[self.columns[column]]
+            self.memorydata.append(line)
+    
+    def get_id(self, **kwargs):
+        columns_of_interest = kwargs.keys()
+        if len(columns_of_interest) == 1:
+            col = columns_of_interest[0]
+            value = kwargs[col]
+            self.id = [line['id'] for line in self.memorydata if line[col] == value]
+        elif len(columns_of_interest) == 2:
+            col0 = columns_of_interest[0]
+            value0 = kwargs[col0]
+            col1 = columns_of_interest[1]
+            value1 = kwargs[col1]
+            self.id = [line['id'] for line in self.memorydata if line[col0] == col0 and line[col1] == value1]
+        if len(self.id) > 1:
+            # There should only be one matching material code
+            raise NameError('THERE IS MORE THAN 1 MATCHING MATERIAL')
+        elif len(self.id) == 0:
+            return None
+        else:
+            return self.id[0]
+            
 
 
-def update(data, table):
-    print 'Updating NaphthaBase with latest %s Data.' % table
-    nb.naphthabase_query("DELETE FROM %s" % table) # Clear table
-    num_fields = len(nb.get_columns(table))
-    insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
-    # creates string "insert into <table> values (?,?,?,?, etc)"
-    nb.naphthabase_transfer(data, 'insert into %s values %s' \
-                                % (table, insert_fields))
+
 
 class DataContainer(object):
     def __init__(self):
@@ -62,6 +110,17 @@ class DataContainer(object):
             self.addline()
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class Material(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.sql = nb.sql.get_material_codes
+        self.table = 'Formula'
+        DataTransferObject.__init__(self)
+        self.dc.process(self.data)
+        self.update(self.dc.datatable, 'material')
+    
+  
 def material():
     data = getdata(nb.sql.get_material_codes, 'Material')
     dc = DataContainer()
