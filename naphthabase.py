@@ -176,20 +176,6 @@ class NaphthaBase(object):
         column_names = [col[1] for col in column_data]
         return column_names
 
-    def get_column_positions(self, table):
-        """Creates a dictionary relating column names and their positions.
-    
-        So given the Materials table it would return:
-    
-            {'Code': 0, 'Description': 1, 'LastUpdated': 2, 'RecordNo': 3}
-        """
-    
-        column_names = self.get_columns(table)
-        column_dict = {}
-        for index, value in enumerate(column_names):
-            column_dict[value] = index
-        return column_dict
-
 
 def make_database_connection(RandR_db = RandR_Naphtha_Dbase, \
                              RandR_Acc_db = RandR_Accounts_Dbase):
