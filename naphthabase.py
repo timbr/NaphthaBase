@@ -71,8 +71,8 @@ class RandRDatabase(object):
             self.connect()
         stock_cursor = self.stock_connection.cursor()
         accounts_cursor = self.accounts_connection.cursor()
-        self.stock_tables = [row.table_name for row in stock_cursor.tables()]
-        self.accounts_tables = [row.table_name for row in accounts_cursor.tables()]
+        self.stock_tables = ['stock_' + row.table_name for row in stock_cursor.tables()]
+        self.accounts_tables = ['accounts_' + row.table_name for row in accounts_cursor.tables()]
         self.disconnect()
     
     def query(self, query, table, last_updated = ''):
@@ -84,7 +84,7 @@ class RandRDatabase(object):
         if table in self.stock_tables:
             RandRcursor = self.stock_connection.cursor()
         elif table in self.accounts_tables:
-            RandRcursor = accounts_connection.cursor()
+            RandRcursor = self.accounts_connection.cursor()
         else:
             print "Table %s not found in R&R Database" % table
         RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})

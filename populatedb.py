@@ -16,7 +16,7 @@ class DataTransferObject(object):
         self.rrdata = nb.RandRDatabase()
         self.naphthabase = nb.NaphthaBase()
         self.dc = DataContainer()
-        self.getdata(self.sql, self.table)
+        self.getdata(self.r_and_r_sql, self.r_and_r_table)
         
     def getdata(self, randr_query, table):
         print 'Getting %s data' % (table)
@@ -30,7 +30,6 @@ class DataTransferObject(object):
         # creates string "insert into <table> values (?,?,?,?, etc)"
         self.naphthabase.transfer(data, 'insert into %s values %s' \
                                     % (table, insert_fields))
-        self.create_memory_table(table)
 
     def create_memory_table(self, table):
         self.memorydata = []
@@ -56,6 +55,7 @@ class DataTransferObject(object):
             self.id = [line['id'] for line in self.memorydata if line[col0] == col0 and line[col1] == value1]
         if len(self.id) > 1:
             # There should only be one matching material code
+            duplicates = self.checkduplication([data for data in carrierdata if data[0] == won])
             raise NameError('THERE IS MORE THAN 1 MATCHING MATERIAL')
         elif len(self.id) == 0:
             return None
@@ -63,10 +63,15 @@ class DataTransferObject(object):
             return self.id[0]
             
 
-
-
-
+#////////////////////////////////////////////////////////////////////////////#
 class DataContainer(object):
+    """Container for staging a table before uploading to the NaphthaBase.
+    
+    A table can be built up row by row in the DataContainer using addentry, or
+    transferred in one go using process. Any decimal values are converted to
+    strings first. Several lines can be combined into one using combine.
+    """
+#////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.datatable = []
         self._dataline = []
@@ -111,39 +116,135 @@ class DataContainer(object):
 
 
 #////////////////////////////////////////////////////////////////////////////#
+class QuickReference(object):
+    """Storage for an in-memory table for quick look-ups
+    """
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, table = '', fields = ''):
+        self.naphthabase = nb.NaphthaBase()
+        if table != '' and fields != '':
+            self.create_memory_table(table, fields)
+    
+    def create_memory_table(self, table, fields = ''):
+        if fields == '':
+            fields = '*'
+            self.columns = self.naphthabase.get_columns(table)
+        else:
+            self.columns = list(fields)
+            fields = ('%s,' * len(fields)).strip(',') % fields
+        self.pos = {}
+        for f in self.columns:
+            self.pos[f] = self.columns.index(f)
+        self.memorydata = [row for row in self.naphthabase.query("select %s from %s" % (fields, table))]
+    
+    def get_id(self, reply = 'id', **kwargs):
+        p = self.pos
+        columns_of_interest = kwargs.keys()
+        if len(columns_of_interest) == 1:
+            col = columns_of_interest[0]
+            value = kwargs[col]
+            self.id = [line[p[reply]] for line in self.memorydata if line[p[col]] == value]
+        elif len(columns_of_interest) == 2:
+            col0 = columns_of_interest[0]
+            value0 = kwargs[col0]
+            col1 = columns_of_interest[1]
+            value1 = kwargs[col1]
+            self.id = [line[p[reply]] for line in self.memorydata if line[p[col0]] == col0 and line[p[col1]] == value1]
+        if len(self.id) > 1:
+            self.duplicates()
+        elif len(self.id) == 0:
+            return None
+        else:
+            return self.id[0]
+
+    def duplicates(self):
+        # More than one matching reference has been found
+        print 'duplicates:', self.id
+        raise NameError('MORE THAN ONE MATCHING REFERENCE FOUND')
+
+
+
+#////////////////////////////////////////////////////////////////////////////#
 class Material(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
-        self.sql = nb.sql.get_material_codes
-        self.table = 'Formula'
+        self.r_and_r_sql = nb.sql.get_material_codes
+        self.r_and_r_table = 'stock_Formula'
         DataTransferObject.__init__(self)
         self.dc.process(self.data)
         self.update(self.dc.datatable, 'material')
-    
-  
-def material():
-    data = getdata(nb.sql.get_material_codes, 'Material')
-    dc = DataContainer()
-    dc.process(data)
-    update(dc.datatable, 'material')
-    global materialdata
-    materialdata = [row for row in nb.naphthabase_query("select code, id from material")]
+        self.qr = self.QR('material', ('id', 'code'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
 
-def get_materialcode(materialid):
-    materialcode = [data[1] for data in materialdata if data[0] == materialid]
-    if len(materialcode) > 1:
-        # There should only be one matching material code
-        raise NameError('THERE IS MORE THAN 1 MATCHING MATERIAL')
-    elif len(materialcode) == 0:
-        return None
-    else:
-        return materialcode[0]
 
-def hauliers():
-    data = getdata(nb.sql.get_hauliers, '\"Additional Items\"')
-    dc = DataContainer()
-    dc.process(data)
-    update(dc.datatable, 'hauliers')
+#////////////////////////////////////////////////////////////////////////////#
+class Hauliers(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.r_and_r_sql = nb.sql.get_hauliers
+        self.r_and_r_table = 'stock_Additional Items'
+        DataTransferObject.__init__(self)
+        self.dc.process(self.data)
+        self.update(self.dc.datatable, 'hauliers')        
+
+        
+#////////////////////////////////////////////////////////////////////////////#
+class Carrier(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.r_and_r_sql = nb.sql.get_carrier
+        self.r_and_r_table = 'stock_Sales Order Additional'
+        DataTransferObject.__init__(self)
+        self.dc.process(self.data)
+        self.update(self.dc.datatable, 'carrier') 
+        self.qr = self.QR('carrier', ('id', 'won', 'description', 'lastupdated'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Customer(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.r_and_r_sql = nb.sql.get_customer
+        self.r_and_r_table = 'accounts_Customer'
+        DataTransferObject.__init__(self)
+        for cstmr in self.data:
+            self.dc.addentry(cstmr.CustomerID)
+            self.dc.addentry(cstmr.Name)
+            address = self.dc.combine(cstmr.Address1,
+                                    cstmr.Address2,
+                                    cstmr.Address3,
+                                    cstmr.Address4,
+                                    cstmr.Address5)
+            self.dc.addentry(address)
+            self.dc.addentry(cstmr.PostCode)
+            self.dc.addentry(cstmr.Telephone)
+            self.dc.addentry(cstmr.Fax)
+            self.dc.addentry(cstmr.Email)
+            self.dc.addentry(cstmr.Website)
+            self.dc.addentry(cstmr.ContactName)
+            self.dc.addentry(cstmr.VAT)
+            self.dc.addentry(cstmr.Comment)
+            self.dc.addentry(cstmr.Memo)
+            self.dc.addentry(cstmr.CreditLimit)
+            self.dc.addentry(cstmr.Terms)
+            self.dc.addentry(cstmr.LastUpdated)
+            self.dc.addentry(cstmr.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'customer') 
+        self.qr = self.QR('customer', ('id', 'customer_code'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)  
+
+
 
 def carrier():
     data = getdata(nb.sql.get_carrier, '\"Sales Order Additional\"')
