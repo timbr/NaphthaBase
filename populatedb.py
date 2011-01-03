@@ -117,29 +117,44 @@ class QuickReference(object):
             self.memorydata.append(line)
     
     def get_id(self, reply = 'id', **kwargs):
-        columns_of_interest = kwargs.keys()
-        if len(columns_of_interest) == 1:
-            col = columns_of_interest[0]
-            value = kwargs[col]
-            self.id = [line.__getattribute__(reply) for line in self.memorydata if line.__getattribute__(col) == value]
-        elif len(columns_of_interest) == 2:
-            col0 = columns_of_interest[0]
-            value0 = kwargs[col0]
-            col1 = columns_of_interest[1]
-            value1 = kwargs[col1]
-            self.id = [line.__getattribute__(reply) for line in self.memorydata if line.__getattribute__(col0) == value0 and line.__getattribute__(col1) == value1]
-        if len(self.id) > 1:
-            self.duplicates()
-        elif len(self.id) == 0:
+        clmns = kwargs.keys()
+        col_a = clmns[0]
+        value_a = kwargs[col_a]
+        if len(clmns) == 2:
+            col_b = clmns[1]
+            value_b = kwargs[col_b]
+        else:
+            col_b = 'dummy'
+            value_b = ''
+        results = []
+        for line in self.memorydata:
+            linedata = line.__dict__
+            if col_b == 'dummy':
+                linedata[col_b] = ''
+            if linedata[col_a] == value_a and linedata[col_b] == value_b:
+                results.append(line)
+        if len(results) > 1:
+            if not self.duplicates(results):
+                raise NameError('MORE THAN ONE MATCHING REFERENCE FOUND')
+        elif len(results) == 0:
             return None
         else:
-            return self.id[0]
+            return results[0].__getattribute__(reply)
 
-    def duplicates(self):
+    def duplicates(self, results):
         # More than one matching reference has been found
-        print 'duplicates:', self.id
-        raise NameError('MORE THAN ONE MATCHING REFERENCE FOUND')
-
+        dataset = set()
+        for result in results:
+            print 'duplicates:', result.__dict__
+            for field in result.__dict__:
+               if field != 'id':
+                   # we want to ignore the id field as we know this will be different
+                   dataset.add(result.__getattribute__(field))
+        print 'dataset: ', dataset
+        if len(dataset) != len(result.__dict__) - 1:
+            return False # the entries are different
+        else:
+            return True # they are exact copies
 
 
 #////////////////////////////////////////////////////////////////////////////#
@@ -281,8 +296,198 @@ class Contact(DataTransferObject):
         self.update(self.dc.datatable, 'contact')
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class Depot(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, customer, supplier):
+        self.r_and_r_sql = nb.sql.get_depot
+        self.r_and_r_table = 'accounts_Depot'
+        DataTransferObject.__init__(self)
+        for dpt in self.data:
+            self.dc.addentry(dpt.ClientID)
+            self.dc.addentry(dpt.Name)
+            address = self.dc.combine(dpt.Address1,
+                                      dpt.Address2,
+                                      dpt.Address3,
+                                      dpt.Address4,
+                                      dpt.Address5)
+            self.dc.addentry(address)
+            self.dc.addentry(dpt.PostCode)
+            self.dc.addentry(dpt.Telephone)
+            self.dc.addentry(dpt.Fax)
+            self.dc.addentry(dpt.Email)
+            self.dc.addentry(dpt.Comment)
+            self.dc.addentry(customer.qr.get_id(customer_code = dpt.ClientID))
+            self.dc.addentry(supplier.qr.get_id(supplier_code = dpt.ClientID))
+            self.dc.addentry(dpt.LastUpdated)
+            self.dc.addentry(dpt.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'depot') 
 
 
+#////////////////////////////////////////////////////////////////////////////#
+class PurchaseOrder(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, supplier):
+        self.r_and_r_sql = nb.sql.get_purchaseorder
+        self.r_and_r_table = 'stock_Purchase Order'
+        DataTransferObject.__init__(self)
+        for prchse in self.data:
+            self.dc.addentry(prchse.PO_Num)
+            self.dc.addentry(prchse.OrderValue)
+            self.dc.addentry(supplier.qr.get_id(supplier_code = prchse.Supplier))
+            self.dc.addentry(prchse.OrderReference)
+            self.dc.addentry(prchse.OrderDate)
+            self.dc.addentry(prchse.PlacedBy)
+            self.dc.addentry(prchse.PrintedComment)
+            self.dc.addentry(prchse.DeliveryComment)
+            self.dc.addentry(prchse.Status)
+            self.dc.addentry(prchse.LastUpdated)
+            self.dc.addentry(prchse.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'purchaseorder') 
+        self.qr = self.QR('purchaseorder', ('id', 'pon'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class PurchaseItem(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, purchaseorder, material):
+        self.r_and_r_sql = nb.sql.get_purchaseitem
+        self.r_and_r_table = 'stock_Purchase Item'
+        DataTransferObject.__init__(self)
+        for itm in self.data:
+            self.dc.addentry(itm.PO_Num)
+            self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
+            self.dc.addentry(material.qr.get_id(code = itm.Material))
+            self.dc.addentry(itm.Quantity)
+            self.dc.addentry(itm.Price)
+            self.dc.addentry(itm.DueDate)
+            self.dc.addentry(itm.DeliveredQuantity)
+            self.dc.addentry(itm.LastUpdated)
+            self.dc.addentry(itm.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'purchaseitem') 
+        self.qr = self.QR('purchaseitem', ('id', 'pon', 'material_id'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Stock(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, material, supplier, purchaseitem):
+        self.r_and_r_sql = nb.sql.get_stock
+        self.r_and_r_table = 'stock_Formula Stock'
+        DataTransferObject.__init__(self)
+        for stck in self.data:
+            self.dc.addentry(stck.Batch)
+            self.dc.addentry(material.qr.get_id(code = stck.Material))
+            self.dc.addentry(stck.StockInfo)
+            self.dc.addentry(stck.BatchStatus)
+            self.dc.addentry(supplier.qr.get_id(supplier_code = stck.Supplier))
+            self.dc.addentry(purchaseitem.qr.get_id(pon = stck.PO_Num, \
+                                                    material_id = stck.Material))
+            self.dc.addentry(stck.PurchaseCost)
+            self.dc.addentry(stck.OriginalDeliveredQuantity)
+            self.dc.addentry(stck.BatchUp_Date)
+            self.dc.addentry(stck.QuantityNow)
+            self.dc.addentry(stck.LastUpdated)
+            self.dc.addentry(stck.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'stock') 
+        self.qr = self.QR('stock', ('id', 'batch'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class SalesOrder(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, customer, carrier):
+        self.r_and_r_sql = nb.sql.get_salesorder
+        self.r_and_r_table = 'stock_Sales Order'
+        DataTransferObject.__init__(self)
+        for sls in self.data:
+            self.dc.addentry(sls.WO_Num)
+            self.dc.addentry(sls.Link)
+            self.dc.addentry(customer.qr.get_id(customer_code = sls.CustomerKey))
+            self.dc.addentry(sls.CustomerOrderNumber)
+            self.dc.addentry(sls.DespatchNotes)
+            self.dc.addentry(sls.OrderValue)
+            self.dc.addentry(sls.Status)
+            self.dc.addentry(sls.OrderDate)
+            self.dc.addentry(sls.DespatchDate)
+            self.dc.addentry(sls.InvoiceDate)
+            self.dc.addentry(sls.Operator)
+            self.dc.addentry(sls.DespatchCompanyName)
+            address = self.dc.combine(sls.DespatchAddress1,
+                                      sls.DespatchAddress2,
+                                      sls.DespatchAddress3,
+                                      sls.DespatchAddress4)
+            self.dc.addentry(address)
+            self.dc.addentry(sls.DespatchPostCode)
+            delnotecomment = self.dc.combine(sls.DeliveryNoteComment1,
+                                             sls.DeliveryNoteComment2,
+                                             sls.DeliveryNoteComment3,
+                                             sls.DeliveryNoteComment4,
+                                             sls.DeliveryNoteComment5,
+                                             filter = '')
+            self.dc.addentry(delnotecomment)
+            invoicecomment = self.dc.combine(sls.InvoiceComment1,
+                                             sls.InvoiceComment2,
+                                             sls.InvoiceComment3,
+                                             sls.InvoiceComment4,
+                                             sls.InvoiceComment5,
+                                             sls.InvoiceComment6,
+                                             filter = '')
+            self.dc.addentry(invoicecomment)
+            self.dc.addentry(sls.InvoiceTerms)
+            self.dc.addentry(sls.ItemCount)
+            self.dc.addentry(carrier.qr.get_id(won = sls.WO_Num))
+            self.dc.addentry(sls.LastUpdated)
+            self.dc.addentry(sls.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'salesorder') 
+        self.qr = self.QR('salesorder', ('id', 'won'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class SalesItem(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, purchaseorder, material):
+        self.r_and_r_sql = nb.sql.get_salesitem
+        self.r_and_r_table = 'stock_Sales Order Item'
+        DataTransferObject.__init__(self)
+        for itm in self.data:
+            self.dc.addentry(itm.PO_Num)
+            self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
+            self.dc.addentry(material.qr.get_id(code = itm.Material))
+            self.dc.addentry(itm.Quantity)
+            self.dc.addentry(itm.Price)
+            self.dc.addentry(itm.DueDate)
+            self.dc.addentry(itm.DeliveredQuantity)
+            self.dc.addentry(itm.LastUpdated)
+            self.dc.addentry(itm.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'salesitem') 
+        self.qr = self.QR('salesitem', ('id', 'pon', 'material_id'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
 
 
 def carrier():
@@ -664,19 +869,31 @@ def stockusage():
     update(dc.datatable, 'stockmovement')
 
 if __name__ == '__main__':
-    nb.make_database_connection()
-    material()
-    hauliers()
-    carrier()
-    customer()
-    supplier()
-    contact()
-    depot()
-    purchase()
-    purchaseitem()
-    formulastock()
-    sales()
-    salesitem()
-    deletedsales()
-    despatch()
-    stockusage()
+#    nb.make_database_connection()
+#    material()
+#    hauliers()
+#    carrier()
+#    customer()
+#    supplier()
+#    contact()
+#    depot()
+#    purchase()
+#    purchaseitem()
+#    formulastock()
+#    sales()
+#    salesitem()
+#    deletedsales()
+#    despatch()
+#    stockusage()
+
+    material = Material()
+    hauliers = Hauliers()
+    carrier = Carrier()
+    customer = Customer()
+    supplier = Supplier()
+    contact = Contact(customer, supplier)
+    depot = Depot(customer, supplier)
+    purchaseorder = PurchaseOrder(supplier)
+    purchaseitem = PurchaseItem(purchaseorder, material)
+    stock = Stock(material, supplier, purchaseitem)
+    salesorder = SalesOrder(customer, carrier)
