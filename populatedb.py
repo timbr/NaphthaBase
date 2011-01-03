@@ -94,31 +94,40 @@ class QuickReference(object):
         if table != '' and fields != '':
             self.create_memory_table(table, fields)
 
+    class qrcontainer(object):
+        pass
+
     def create_memory_table(self, table, fields = ''):
         if fields == '':
             fields = '*'
             self.columns = self.naphthabase.get_columns(table)
         else:
             self.columns = list(fields)
-            fields = ('%s,' * len(fields)).strip(',') % fields
+            #fields = ('%s,' * len(fields)).strip(',') % fields
+            fields = ','.join(fields)
         self.pos = {}
         for f in self.columns:
             self.pos[f] = self.columns.index(f)
-        self.memorydata = [row for row in self.naphthabase.query("select %s from %s" % (fields, table))]
+        alldata = self.naphthabase.query("select %s from %s" % (fields, table))
+        self.memorydata = []
+        for row in alldata:
+            line = self.qrcontainer()
+            for col in self.columns:
+               line.__dict__[col] = row[self.pos[col]]
+            self.memorydata.append(line)
     
     def get_id(self, reply = 'id', **kwargs):
-        p = self.pos
         columns_of_interest = kwargs.keys()
         if len(columns_of_interest) == 1:
             col = columns_of_interest[0]
             value = kwargs[col]
-            self.id = [line[p[reply]] for line in self.memorydata if line[p[col]] == value]
+            self.id = [line.__getattribute__(reply) for line in self.memorydata if line.__getattribute__(col) == value]
         elif len(columns_of_interest) == 2:
             col0 = columns_of_interest[0]
             value0 = kwargs[col0]
             col1 = columns_of_interest[1]
             value1 = kwargs[col1]
-            self.id = [line[p[reply]] for line in self.memorydata if line[p[col0]] == col0 and line[p[col1]] == value1]
+            self.id = [line.__getattribute__(reply) for line in self.memorydata if line.__getattribute__(col0) == value0 and line.__getattribute__(col1) == value1]
         if len(self.id) > 1:
             self.duplicates()
         elif len(self.id) == 0:
