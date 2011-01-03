@@ -30,37 +30,6 @@ class DataTransferObject(object):
         # creates string "insert into <table> values (?,?,?,?, etc)"
         self.naphthabase.transfer(data, 'insert into %s values %s' \
                                     % (table, insert_fields))
-
-    def create_memory_table(self, table):
-        self.memorydata = []
-        self.alldata = [row for row in self.naphthabase.query("select * from %s" % table)]
-        self.columns = self.naphthabase.get_column_positions(table)
-        for row in self.alldata:
-            line = {}
-            for column in self.columns.keys():
-                line[column] = row[self.columns[column]]
-            self.memorydata.append(line)
-    
-    def get_id(self, **kwargs):
-        columns_of_interest = kwargs.keys()
-        if len(columns_of_interest) == 1:
-            col = columns_of_interest[0]
-            value = kwargs[col]
-            self.id = [line['id'] for line in self.memorydata if line[col] == value]
-        elif len(columns_of_interest) == 2:
-            col0 = columns_of_interest[0]
-            value0 = kwargs[col0]
-            col1 = columns_of_interest[1]
-            value1 = kwargs[col1]
-            self.id = [line['id'] for line in self.memorydata if line[col0] == col0 and line[col1] == value1]
-        if len(self.id) > 1:
-            # There should only be one matching material code
-            duplicates = self.checkduplication([data for data in carrierdata if data[0] == won])
-            raise NameError('THERE IS MORE THAN 1 MATCHING MATERIAL')
-        elif len(self.id) == 0:
-            return None
-        else:
-            return self.id[0]
             
 
 #////////////////////////////////////////////////////////////////////////////#
@@ -124,7 +93,7 @@ class QuickReference(object):
         self.naphthabase = nb.NaphthaBase()
         if table != '' and fields != '':
             self.create_memory_table(table, fields)
-    
+
     def create_memory_table(self, table, fields = ''):
         if fields == '':
             fields = '*'
@@ -218,10 +187,10 @@ class Customer(DataTransferObject):
             self.dc.addentry(cstmr.CustomerID)
             self.dc.addentry(cstmr.Name)
             address = self.dc.combine(cstmr.Address1,
-                                    cstmr.Address2,
-                                    cstmr.Address3,
-                                    cstmr.Address4,
-                                    cstmr.Address5)
+                                      cstmr.Address2,
+                                      cstmr.Address3,
+                                      cstmr.Address4,
+                                      cstmr.Address5)
             self.dc.addentry(address)
             self.dc.addentry(cstmr.PostCode)
             self.dc.addentry(cstmr.Telephone)
@@ -242,7 +211,68 @@ class Customer(DataTransferObject):
         
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
-            QuickReference.__init__(self, table, fields)  
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Supplier(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.r_and_r_sql = nb.sql.get_supplier
+        self.r_and_r_table = 'accounts_Supplier'
+        DataTransferObject.__init__(self)
+        for spplr in self.data:
+            self.dc.addentry(spplr.SupplierID)
+            self.dc.addentry(spplr.Name)
+            address = self.dc.combine(spplr.Address1,
+                                      spplr.Address2,
+                                      spplr.Address3,
+                                      spplr.Address4,
+                                      spplr.Address5)
+            self.dc.addentry(address)
+            self.dc.addentry(spplr.PostCode)
+            self.dc.addentry(spplr.Telephone)
+            self.dc.addentry(spplr.Fax)
+            self.dc.addentry(spplr.Email)
+            self.dc.addentry(spplr.Website)
+            self.dc.addentry(spplr.ContactName)
+            self.dc.addentry(spplr.VAT)
+            self.dc.addentry(spplr.Comment)
+            self.dc.addentry(spplr.Memo)
+            self.dc.addentry(spplr.LastUpdated)
+            self.dc.addentry(spplr.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'supplier') 
+        self.qr = self.QR('supplier', ('id', 'supplier_code'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Contact(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, customer, supplier):
+        self.r_and_r_sql = nb.sql.get_contact
+        self.r_and_r_table = 'accounts_Contact'
+        DataTransferObject.__init__(self)
+        for cntct in self.data:
+            self.dc.addentry(cntct.ClientID)
+            self.dc.addentry(cntct.Title)
+            self.dc.addentry(cntct.Forename)
+            self.dc.addentry(cntct.Surname)
+            self.dc.addentry(cntct.Phone)
+            self.dc.addentry(cntct.Department)
+            self.dc.addentry(customer.qr.get_id(customer_code = cntct.ClientID))
+            self.dc.addentry(supplier.qr.get_id(supplier_code = cntct.ClientID))
+            self.dc.addentry(cntct.LastUpdated)
+            self.dc.addentry(cntct.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'contact')
+
+
+
 
 
 
