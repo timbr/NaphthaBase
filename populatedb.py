@@ -402,7 +402,7 @@ class Stock(DataTransferObject):
             self.dc.addentry(stck.RecordNumber)
             self.dc.addline()
         self.update(self.dc.datatable, 'stock') 
-        self.qr = self.QR('stock', ('id', 'batch'))
+        self.qr = self.QR('stock', ('id', 'batch', 'status', 'lastupdated'))
         
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
@@ -472,22 +472,84 @@ class SalesItem(DataTransferObject):
         self.r_and_r_table = 'stock_Sales Order Item'
         DataTransferObject.__init__(self)
         for itm in self.data:
-            self.dc.addentry(itm.PO_Num)
-            self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
+            self.dc.addentry(itm.WO_Num)
+            self.dc.addentry(salesorder.qr.get_id(won = itm.WO_Num))
             self.dc.addentry(material.qr.get_id(code = itm.Material))
-            self.dc.addentry(itm.Quantity)
+            self.dc.addentry(itm.OrderQuantity)
             self.dc.addentry(itm.Price)
-            self.dc.addentry(itm.DueDate)
-            self.dc.addentry(itm.DeliveredQuantity)
+            self.dc.addentry(itm.RequiredDate)
             self.dc.addentry(itm.LastUpdated)
             self.dc.addentry(itm.RecordNumber)
             self.dc.addline()
         self.update(self.dc.datatable, 'salesitem') 
-        self.qr = self.QR('salesitem', ('id', 'pon', 'material_id'))
+        self.qr = self.QR('salesitem', ('id', 'won', 'material_id'))
         
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
             QuickReference.__init__(self, table, fields)
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class DeletedSales(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, salesorder):
+        self.r_and_r_sql = nb.sql.get_deleted_sales
+        self.r_and_r_table = 'stock_Missing Order Number'
+        DataTransferObject.__init__(self)
+        for dltdsls in self.data:
+            self.dc.addentry(dltdsls.WO_Num)
+            self.dc.addentry(salesorder.qr.get_id(won = dltdsls.WO_Num))
+            self.dc.addentry(dltdsls.UserID)
+            self.dc.addentry(dltdsls.Reason)
+            self.dc.addentry(dltdsls.LastUpdated)
+            self.dc.addentry(dltdsls.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'deletedsales')
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class Despatch(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, material, salesitem):
+        self.r_and_r_sql = nb.sql.get_despatch
+        self.r_and_r_table = 'stock_Sales Order Despatch'
+        DataTransferObject.__init__(self)
+        for dsptch in self.data:
+            self.dc.addentry(dsptch.WO_Num)
+            self.dc.addentry(dsptch.Material)
+            self.dc.addentry(material.qr.get_id(code = dsptch.Material))
+            self.dc.addentry(salesitem.qr.get_id(won = dsptch.WO_Num, material_id = dsptch.Material))
+            self.dc.addentry(dsptch.BatchDespatched)
+            self.dc.addentry(dsptch.DespatchedQuantity)
+            self.dc.addentry(dsptch.LastUpdated)
+            self.dc.addentry(dsptch.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'despatch')
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class StockUsage(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self, stock, customer, material, saleitem):
+        self.r_and_r_sql = nb.sql.get_stockusage
+        self.r_and_r_table = 'stock_Formula Stock Usage'
+        DataTransferObject.__init__(self)
+        for stckusg in self.data:
+            self.dc.addentry(stock.qr.get_id(batch = stckusg.Batch))
+            self.dc.addentry(stckusg.Action)
+            self.dc.addentry(customer.qr.get_id(customer_code = stckusg.Customer))
+            materialcode = material.qr.get_id(code = stckusg.Material)
+            self.dc.addentry(salesitem.qr.get_id(won = stckusg.WO_Num, material_id = materialcode))
+            self.dc.addentry(stckusg.Price)
+            self.dc.addentry(stckusg.UsageRef)
+            self.dc.addentry(stckusg.Quantity)
+            self.dc.addentry(stckusg.ItemOrder)
+            self.dc.addentry(stckusg.UserID)
+            self.dc.addentry(stckusg.LastUpdated)
+            self.dc.addentry(stckusg.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'stockmovement')
+
 
 
 def carrier():
@@ -897,3 +959,7 @@ if __name__ == '__main__':
     purchaseitem = PurchaseItem(purchaseorder, material)
     stock = Stock(material, supplier, purchaseitem)
     salesorder = SalesOrder(customer, carrier)
+    salesitem = SalesItem(salesorder, material)
+    deletedsales = DeletedSales(salesorder)
+    despatch = Despatch(material, salesitem)
+    stockusage = StockUsage(stock, customer, material, salesitem)
