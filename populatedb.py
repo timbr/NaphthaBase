@@ -16,11 +16,18 @@ class DataTransferObject(object):
         self.rrdata = nb.RandRDatabase()
         self.naphthabase = nb.NaphthaBase()
         self.dc = DataContainer()
-        self.getdata(self.r_and_r_sql, self.r_and_r_table)
+        dbreply = self.getdata(self.r_and_r_sql, self.r_and_r_table)
+        if dbreply == 'Unable to connect':
+            print 'Unable to connect to the R&R database'
+        else:
+            self.processdata(dbreply)
+
+    def processdata(self, data):
+        pass
         
     def getdata(self, randr_query, table):
         print 'Getting %s data' % (table)
-        self.data = self.rrdata.query(randr_query, table)
+        return self.rrdata.query(randr_query, table)
         
     def update(self, data, table):
         print 'Updating NaphthaBase with latest %s Data.' % table
@@ -171,7 +178,9 @@ class Material(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_material_codes
         self.r_and_r_table = 'stock_Formula'
         DataTransferObject.__init__(self)
-        self.dc.process(self.data)
+
+    def processdata(self, data):
+        self.dc.process(data)
         self.update(self.dc.datatable, 'material')
         self.qr = self.QR('material', ('id', 'code'))
         
@@ -187,7 +196,9 @@ class Hauliers(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_hauliers
         self.r_and_r_table = 'stock_Additional Items'
         DataTransferObject.__init__(self)
-        self.dc.process(self.data)
+
+    def processdata(self, data):
+        self.dc.process(data)
         self.update(self.dc.datatable, 'hauliers')        
 
         
@@ -198,7 +209,9 @@ class Carrier(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_carrier
         self.r_and_r_table = 'stock_Sales Order Additional'
         DataTransferObject.__init__(self)
-        self.dc.process(self.data)
+
+    def processdata(self, data):
+        self.dc.process(data)
         self.update(self.dc.datatable, 'carrier') 
         self.qr = self.QR('carrier', ('id', 'won', 'description', 'lastupdated'))
         
@@ -214,7 +227,9 @@ class Customer(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_customer
         self.r_and_r_table = 'accounts_Customer'
         DataTransferObject.__init__(self)
-        for cstmr in self.data:
+
+    def processdata(self, data):
+        for cstmr in data:
             self.dc.addentry(cstmr.CustomerID)
             self.dc.addentry(cstmr.Name)
             address = self.dc.combine(cstmr.Address1,
@@ -252,7 +267,9 @@ class Supplier(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_supplier
         self.r_and_r_table = 'accounts_Supplier'
         DataTransferObject.__init__(self)
-        for spplr in self.data:
+
+    def processdata(self, data):
+        for spplr in data:
             self.dc.addentry(spplr.SupplierID)
             self.dc.addentry(spplr.Name)
             address = self.dc.combine(spplr.Address1,
@@ -288,7 +305,9 @@ class Contact(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_contact
         self.r_and_r_table = 'accounts_Contact'
         DataTransferObject.__init__(self)
-        for cntct in self.data:
+
+    def processdata(self, data):
+        for cntct in data:
             self.dc.addentry(cntct.ClientID)
             self.dc.addentry(cntct.Title)
             self.dc.addentry(cntct.Forename)
@@ -310,7 +329,9 @@ class Depot(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_depot
         self.r_and_r_table = 'accounts_Depot'
         DataTransferObject.__init__(self)
-        for dpt in self.data:
+
+    def processdata(self, data):
+        for dpt in data:
             self.dc.addentry(dpt.ClientID)
             self.dc.addentry(dpt.Name)
             address = self.dc.combine(dpt.Address1,
@@ -339,7 +360,9 @@ class PurchaseOrder(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_purchaseorder
         self.r_and_r_table = 'stock_Purchase Order'
         DataTransferObject.__init__(self)
-        for prchse in self.data:
+
+    def processdata(self, data):
+        for prchse in data:
             self.dc.addentry(prchse.PO_Num)
             self.dc.addentry(prchse.OrderValue)
             self.dc.addentry(supplier.qr.get_id(supplier_code = prchse.Supplier))
@@ -367,7 +390,9 @@ class PurchaseItem(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_purchaseitem
         self.r_and_r_table = 'stock_Purchase Item'
         DataTransferObject.__init__(self)
-        for itm in self.data:
+
+    def processdata(self, data):
+        for itm in data:
             self.dc.addentry(itm.PO_Num)
             self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
             self.dc.addentry(material.qr.get_id(code = itm.Material))
@@ -393,14 +418,17 @@ class Stock(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_stock
         self.r_and_r_table = 'stock_Formula Stock'
         DataTransferObject.__init__(self)
-        for stck in self.data:
+
+    def processdata(self, data):
+        for stck in data:
             self.dc.addentry(stck.Batch)
-            self.dc.addentry(material.qr.get_id(code = stck.Material))
+            matcode = material.qr.get_id(code = stck.Material)
+            self.dc.addentry(matcode)
             self.dc.addentry(stck.StockInfo)
             self.dc.addentry(stck.BatchStatus)
             self.dc.addentry(supplier.qr.get_id(supplier_code = stck.Supplier))
             self.dc.addentry(purchaseitem.qr.get_id(pon = stck.PO_Num, \
-                                                    material_id = stck.Material))
+                                                    material_id = matcode))
             self.dc.addentry(stck.PurchaseCost)
             self.dc.addentry(stck.OriginalDeliveredQuantity)
             self.dc.addentry(stck.BatchUp_Date)
@@ -433,7 +461,9 @@ class SalesOrder(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_salesorder
         self.r_and_r_table = 'stock_Sales Order'
         DataTransferObject.__init__(self)
-        for sls in self.data:
+
+    def processdata(self, data):
+        for sls in data:
             self.dc.addentry(sls.WO_Num)
             self.dc.addentry(sls.Link)
             self.dc.addentry(customer.qr.get_id(customer_code = sls.CustomerKey))
@@ -488,7 +518,9 @@ class SalesItem(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_salesitem
         self.r_and_r_table = 'stock_Sales Order Item'
         DataTransferObject.__init__(self)
-        for itm in self.data:
+
+    def processdata(self, data):
+        for itm in data:
             self.dc.addentry(itm.WO_Num)
             self.dc.addentry(salesorder.qr.get_id(won = itm.WO_Num))
             self.dc.addentry(material.qr.get_id(code = itm.Material))
@@ -513,7 +545,9 @@ class DeletedSales(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_deleted_sales
         self.r_and_r_table = 'stock_Missing Order Number'
         DataTransferObject.__init__(self)
-        for dltdsls in self.data:
+
+    def processdata(self, data):
+        for dltdsls in data:
             self.dc.addentry(dltdsls.WO_Num)
             self.dc.addentry(salesorder.qr.get_id(won = dltdsls.WO_Num))
             self.dc.addentry(dltdsls.UserID)
@@ -531,7 +565,9 @@ class Despatch(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_despatch
         self.r_and_r_table = 'stock_Sales Order Despatch'
         DataTransferObject.__init__(self)
-        for dsptch in self.data:
+
+    def processdata(self, data):
+        for dsptch in data:
             self.dc.addentry(dsptch.WO_Num)
             self.dc.addentry(dsptch.Material)
             self.dc.addentry(material.qr.get_id(code = dsptch.Material))
@@ -551,7 +587,9 @@ class StockUsage(DataTransferObject):
         self.r_and_r_sql = nb.sql.get_stockusage
         self.r_and_r_table = 'stock_Formula Stock Usage'
         DataTransferObject.__init__(self)
-        for stckusg in self.data:
+
+    def processdata(self, data):
+        for stckusg in data:
             self.dc.addentry(stock.qr.get_id(batch = stckusg.Batch))
             self.dc.addentry(stckusg.Action)
             self.dc.addentry(customer.qr.get_id(customer_code = stckusg.Customer))
