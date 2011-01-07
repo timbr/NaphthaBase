@@ -1,6 +1,27 @@
 import naphthabase as nb
 import datetime
 import decimal
+import logging, logging.handlers
+
+# Make a global logging object
+logger = logging.getLogger("logit")
+logger.setLevel(logging.DEBUG)
+
+# This handler writes everything that isn't a DEBUG to file
+h1 = logging.FileHandler("log.txt")
+h1.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+h1.setFormatter(formatter)
+logger.addHandler(h1)
+
+
+
+# This handler writes everything to the console
+h2 = logging.StreamHandler()
+h2.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(levelname)s - %(message)s")
+h2.setFormatter(formatter)
+logger.addHandler(h2)
 
 #////////////////////////////////////////////////////////////////////////////#
 class DataTransferObject(object):
@@ -18,7 +39,7 @@ class DataTransferObject(object):
         self.dc = DataContainer()
         dbreply = self.getdata(self.r_and_r_sql, self.r_and_r_table)
         if dbreply == 'Unable to connect':
-            print 'Unable to connect to the R&R database'
+            logger.warn('Unable to connect to the R&R database')
         else:
             self.processdata(dbreply)
 
@@ -26,11 +47,11 @@ class DataTransferObject(object):
         pass
         
     def getdata(self, randr_query, table):
-        print 'Getting %s data' % (table)
+        logger.debug('Getting %s data' % (table))
         return self.rrdata.query(randr_query, table)
         
     def update(self, data, table):
-        print 'Updating NaphthaBase with latest %s Data.' % table
+        logger.debug('Updating NaphthaBase with latest %s Data.' % table)
         self.naphthabase.query("DELETE FROM %s" % table) # Clear table
         num_fields = len(self.naphthabase.get_columns(table))
         insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
@@ -153,12 +174,12 @@ class QuickReference(object):
         # More than one matching reference has been found
         dataset = set()
         for result in results:
-            print 'duplicates:', result
+            logger.warn('duplicates: %s' % result)
             for field in result.keys():
                if field != 'id':
                    # we want to ignore the id field as we know this will be different
                    dataset.add(result[field])
-        print 'dataset: ', dataset
+        logger.warn('dataset: %s' % dataset)
         if len(dataset) != len(result.keys()) - 1:
             if self.excluded(results):
                 return True # we're going to ignore this one....
@@ -447,7 +468,7 @@ class Stock(DataTransferObject):
         # There are two entries for batch 15381 that are not duplicates.
         # This method will allow this to pass. Only one entry is used.
             if results[0]['batch'] in ['15381']:
-                print 'Excluding batch 15381'
+                logger.warn('Excluding batch 15381')
                 return True
             else:
                 return False

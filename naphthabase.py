@@ -16,6 +16,9 @@ import decimal
 
 from nbsettings import *
 import sql
+import logging
+
+logger = logging.getLogger("logit")
 
 #////////////////////////////////////////////////////////////////////////////#
 class RandRDatabase(object):
@@ -40,21 +43,21 @@ class RandRDatabase(object):
             self.stock_connection = \
                pyodbc.connect(DRIVER = '{Microsoft Access Driver (*.mdb)}',
                           DBQ = self.naphthav6)
-            print "Made connection with R&R database at %s" % self.naphthav6
+            logger.debug("Made connection with R&R database at %s" % self.naphthav6)
             self.connected = 1
         else:
-            print "Unable to make connection with R&R database at %s" \
-                                                              % self.naphthav6
+            logger.warn("Unable to make connection with R&R database at %s" \
+                                                              % self.naphthav6)
         if os.path.exists(self.naphtha_accounts):
             self.accounts_connection = \
                pyodbc.connect(DRIVER='{Microsoft Access Driver (*.mdb)}',
                  DBQ = self.naphtha_accounts, PWD = self.accounts_db_password)
-            print "Made connection with R&R Accounts database at %s" \
-                                                       % self.naphtha_accounts
+            logger.debug("Made connection with R&R Accounts database at %s" \
+                                                       % self.naphtha_accounts)
             self.connected += 1
         else:
-            print "Unable to make connection with R&R Accounts database at %s" \
-                                                       % self.naphtha_accounts
+            logger.warn("Unable to make connection with R&R Accounts database at %s" \
+                                                       % self.naphtha_accounts)
         if self.connected == 2:
             return True
         else:
@@ -87,7 +90,7 @@ class RandRDatabase(object):
         elif table in self.accounts_tables:
             RandRcursor = self.accounts_connection.cursor()
         else:
-            print "Table %s not found in R&R Database" % table
+            logger.warn("Table %s not found in R&R Database" % table)
         RandRdata = RandRcursor.execute(query % {'lastupdate': last_updated})
         results = [line for line in RandRdata]
         self.disconnect()
