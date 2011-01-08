@@ -93,11 +93,11 @@ class DataContainer(object):
         
         filter = kwargs.get('filter', ',')
         separator = kwargs.get('separator', '\n')
-        output = ''
+        output = []
         for line in args[1:]:
             # first arg says <__main__.DataContainer object at 0x031E9830>
-            output = output + line.strip(filter) + separator
-        output = output.strip(separator)
+            output.append(line.strip(filter))
+        output = separator.join(output)
         # No new-line character wanted at the end.
         return output
     
