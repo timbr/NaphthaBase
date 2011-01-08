@@ -434,8 +434,8 @@ class PurchaseItem(DataTransferObject):
     def processdata(self, data):
         for itm in data:
             self.dc.addentry(itm.PO_Num)
-            self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
             self.dc.addentry(itm.Index)
+            self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
             self.dc.addentry(material.qr.get_id(code = itm.Material))
             self.dc.addentry(itm.Quantity)
             self.dc.addentry(itm.Price)
@@ -450,7 +450,7 @@ class PurchaseItem(DataTransferObject):
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
             QuickReference.__init__(self, table, fields)
-
+            
 
 #////////////////////////////////////////////////////////////////////////////#
 class Stock(DataTransferObject):
@@ -637,6 +637,7 @@ class StockUsage(DataTransferObject):
             materialcode = material.qr.get_id(code = stckusg.Material)
             self.dc.addentry(salesitem.qr.get_id(won = stckusg.WO_Num, material_id = materialcode))
             self.dc.addentry(stckusg.Price)
+            self.dc.addentry(stckusg.PO_Num)
             self.dc.addentry(stckusg.UsageRef)
             self.dc.addentry(stckusg.Quantity)
             self.dc.addentry(stckusg.ItemOrder)
