@@ -145,6 +145,25 @@ class QuickReference(object):
             self.memorydata.append(line)
     
     def get_id(self, reply = 'id', **kwargs):
+        """Returns the primary key of a row given the value of a stated column.
+        
+        One or two column values can be passed in the form:
+        
+          code = 'ABS33', description = 'BLACK ABS REGRIND'
+
+        The primary key of the row is returned by default, but an alternative
+        column can be returned by setting reply.
+        
+        If more than one row matches the given column values then the rows are
+        checked to see if they are duplicates. The primary key column and the
+        rr_recordno column are ignored during this duplication checking. If
+        the rows are found to be duplicates then only the primary key from the
+        first matching row is returned. If the rows aren't found to be
+        duplicates then the rows are checked to see if they are included in an
+        exclusions list which will specify which row to return. If the rows
+        aren't in the exlusions list then only the first result is returned.
+        """
+        
         clmns = kwargs.keys()
         col_a = clmns[0]
         value_a = kwargs[col_a]
@@ -416,6 +435,7 @@ class PurchaseItem(DataTransferObject):
         for itm in data:
             self.dc.addentry(itm.PO_Num)
             self.dc.addentry(purchaseorder.qr.get_id(pon = itm.PO_Num))
+            self.dc.addentry(itm.Index)
             self.dc.addentry(material.qr.get_id(code = itm.Material))
             self.dc.addentry(itm.Quantity)
             self.dc.addentry(itm.Price)

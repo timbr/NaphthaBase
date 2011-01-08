@@ -168,6 +168,7 @@ class PurchaseOrder(models.Model):
 class PurchaseItem(models.Model):
     pon = models.CharField(max_length=10)
     purchaseorder = models.ForeignKey(PurchaseOrder, null=True)
+    itemno = models.IntegerField()
     material = models.ForeignKey(Material, null=True)
     quantity = models.CharField(max_length=15)
     price = models.CharField(max_length=15)

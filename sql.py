@@ -26,6 +26,7 @@ create_purchaseitem_table = """
     CREATE TABLE purchaseitem (
     id integer NOT NULL PRIMARY KEY,
     pon varchar(10),
+    itemno integer NOT NULL,
     purchaseorder_id integer REFERENCES purchaseorder (id),
     material_id integer REFERENCES material (id),
     quantity varchar(15) NOT NULL,
@@ -292,6 +293,7 @@ get_purchaseorder = """
 get_purchaseitem = """
     SELECT
     \"Purchase Item\".\"Order Number\" AS PO_Num,
+    \"Purchase Item\".Index,
     \"Purchase Item\".\"Component Code\" AS Material,
     \"Purchase Item\".Quantity,
     \"Purchase Item\".Price,
