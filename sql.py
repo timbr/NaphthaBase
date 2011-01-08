@@ -83,6 +83,23 @@ create_stockmovement_table = """
     rr_recordno integer NOT NULL
     )
     """
+    
+create_dummystockmovement_table = """
+    CREATE TABLE dummystockmovement (
+    id integer NOT NULL PRIMARY KEY,
+    stock varchar(10),
+    action varchar(10),
+    material varchar(10),
+    salesprice varchar(20),
+    pon varchar(10),
+    movement_description varchar(100),
+    movement_quantity varchar(20),
+    item_order integer,
+    user_id varchar(20),
+    lastupdated datetime NOT NULL,
+    rr_recordno integer NOT NULL
+    )
+    """
 
 create_salesorder_table = """
     CREATE TABLE salesorder (

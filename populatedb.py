@@ -445,17 +445,47 @@ class PurchaseItem(DataTransferObject):
             self.dc.addentry(itm.RecordNumber)
             self.dc.addline()
         self.update(self.dc.datatable, 'purchaseitem') 
-        self.qr = self.QR('purchaseitem', ('id', 'pon', 'material_id'))
+        self.qr = self.QR('purchaseitem', ('id', 'pon', 'material_id', 'itemno'))
         
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
             QuickReference.__init__(self, table, fields)
-            
+
+
+#////////////////////////////////////////////////////////////////////////////#
+class StockUsageDummy(DataTransferObject):
+#////////////////////////////////////////////////////////////////////////////#
+    def __init__(self):
+        self.r_and_r_sql = nb.sql.get_stockusage
+        self.r_and_r_table = 'stock_Formula Stock Usage'
+        DataTransferObject.__init__(self)
+
+    def processdata(self, data):
+        for stckusg in data:
+            self.dc.addentry(stckusg.Batch)
+            self.dc.addentry(stckusg.Action)
+            self.dc.addentry(stckusg.Material)
+            self.dc.addentry(stckusg.Price)
+            self.dc.addentry(stckusg.PO_Num)
+            self.dc.addentry(stckusg.UsageRef)
+            self.dc.addentry(stckusg.Quantity)
+            self.dc.addentry(stckusg.ItemOrder)
+            self.dc.addentry(stckusg.UserID)
+            self.dc.addentry(stckusg.LastUpdated)
+            self.dc.addentry(stckusg.RecordNumber)
+            self.dc.addline()
+        self.update(self.dc.datatable, 'dummystockmovement')
+        self.qr = self.QR('dummystockmovement', ('stock', 'pon', 'action', 'item_order'))
+        
+    class QR(QuickReference):
+        def __init__(self, table = '', fields = ''):
+            QuickReference.__init__(self, table, fields)
+
 
 #////////////////////////////////////////////////////////////////////////////#
 class Stock(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
-    def __init__(self, material, supplier, purchaseitem):
+    def __init__(self, material, supplier, purchaseitem, stockusedummy):
         self.r_and_r_sql = nb.sql.get_stock
         self.r_and_r_table = 'stock_Formula Stock'
         DataTransferObject.__init__(self)
@@ -468,8 +498,14 @@ class Stock(DataTransferObject):
             self.dc.addentry(stck.StockInfo)
             self.dc.addentry(stck.BatchStatus)
             self.dc.addentry(supplier.qr.get_id(supplier_code = stck.Supplier))
-            self.dc.addentry(purchaseitem.qr.get_id(pon = stck.PO_Num, \
-                                                    material_id = matcode))
+            # Note that stck.PO_Num is not used. The PO number is identified from the Stock Usage.
+            #The Purchase Item entry is identified by its index, found from the Stock Usage
+            po_num = stockusedummy.qr.get_id(reply = 'pon', stock = stck.Batch, \
+                                                    action = 'G')
+            po_item_num = stockusedummy.qr.get_id(reply = 'item_order', stock = stck.Batch, \
+                                                    action = 'G')
+            self.dc.addentry(purchaseitem.qr.get_id(pon = po_num, \
+                                                    itemno = po_item_num))
             self.dc.addentry(stck.PurchaseCost)
             self.dc.addentry(stck.OriginalDeliveredQuantity)
             self.dc.addentry(stck.BatchUp_Date)
@@ -659,7 +695,8 @@ if __name__ == '__main__':
     depot = Depot(customer, supplier)
     purchaseorder = PurchaseOrder(supplier)
     purchaseitem = PurchaseItem(purchaseorder, material)
-    stock = Stock(material, supplier, purchaseitem)
+    stockusedummy = StockUsageDummy()
+    stock = Stock(material, supplier, purchaseitem, stockusedummy)
     salesorder = SalesOrder(customer, carrier)
     salesitem = SalesItem(salesorder, material)
     deletedsales = DeletedSales(salesorder)

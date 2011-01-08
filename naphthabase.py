@@ -152,6 +152,7 @@ class NaphthaBase(object):
                      'purchaseitem': sql.create_purchaseitem_table,
                      'material': sql.create_material_table,
                      'stock': sql.create_stock_table,
+                     'dummystockmovement': sql.create_dummystockmovement_table,
                      'stockmovement': sql.create_stockmovement_table,
                      'salesorder': sql.create_salesorder_table,
                      'salesitem': sql.create_salesitem_table,
