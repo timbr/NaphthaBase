@@ -500,11 +500,11 @@ class Stock(DataTransferObject):
             self.dc.addentry(supplier.qr.get_id(supplier_code = stck.Supplier))
             # Note that stck.PO_Num is not used. The PO number is identified from the Stock Usage.
             #The Purchase Item entry is identified by its index, found from the Stock Usage
-            po_num = stockusedummy.qr.get_id(reply = 'pon', stock = stck.Batch, \
-                                                    action = 'G')
+            ##po_num = stockusedummy.qr.get_id(reply = 'pon', stock = stck.Batch, \
+            ##                                        action = 'G')
             po_item_num = stockusedummy.qr.get_id(reply = 'item_order', stock = stck.Batch, \
                                                     action = 'G')
-            self.dc.addentry(purchaseitem.qr.get_id(pon = po_num, \
+            self.dc.addentry(purchaseitem.qr.get_id(pon = stck.PO_Num, \
                                                     itemno = po_item_num))
             self.dc.addentry(stck.PurchaseCost)
             self.dc.addentry(stck.OriginalDeliveredQuantity)
@@ -686,6 +686,7 @@ class StockUsage(DataTransferObject):
 
 
 if __name__ == '__main__':
+    tempnb = nb.NaphthaBase()
     material = Material()
     hauliers = Hauliers()
     carrier = Carrier()
@@ -695,8 +696,10 @@ if __name__ == '__main__':
     depot = Depot(customer, supplier)
     purchaseorder = PurchaseOrder(supplier)
     purchaseitem = PurchaseItem(purchaseorder, material)
+    tempnb.query(nb.sql.create_dummystockmovement_table)
     stockusedummy = StockUsageDummy()
     stock = Stock(material, supplier, purchaseitem, stockusedummy)
+    tempnb.query("DELETE FROM dummystockmovement")
     salesorder = SalesOrder(customer, carrier)
     salesitem = SalesItem(salesorder, material)
     deletedsales = DeletedSales(salesorder)

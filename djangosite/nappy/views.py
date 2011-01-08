@@ -25,8 +25,9 @@ def singlepo(request, po_num):
         return HttpResponse("PO number %s has %s records in the database" % (po_num, len(po)))
     po = po[0]
     print po
+    purchaseitems = po.purchaseitem_set.all().order_by('itemno')
     t = loader.get_template('PurchaseOrder.html')
-    c = Context({'po': po, 'links': {'prev': int(po_num) - 1, 'next': int(po_num) + 1}})
+    c = Context({'po': po, 'purchaseitems': purchaseitems, 'links': {'prev': int(po_num) - 1, 'next': int(po_num) + 1}})
     return HttpResponse(t.render(c))
 
 def singlebatch(request, batch_num):

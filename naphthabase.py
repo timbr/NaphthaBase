@@ -43,7 +43,7 @@ class RandRDatabase(object):
             self.stock_connection = \
                pyodbc.connect(DRIVER = '{Microsoft Access Driver (*.mdb)}',
                           DBQ = self.naphthav6)
-            logger.debug("Made connection with R&R database at %s" % self.naphthav6)
+            #logger.debug("Made connection with R&R database at %s" % self.naphthav6)
             self.connected = 1
         else:
             logger.warn("Unable to make connection with R&R database at %s" \
@@ -52,8 +52,8 @@ class RandRDatabase(object):
             self.accounts_connection = \
                pyodbc.connect(DRIVER='{Microsoft Access Driver (*.mdb)}',
                  DBQ = self.naphtha_accounts, PWD = self.accounts_db_password)
-            logger.debug("Made connection with R&R Accounts database at %s" \
-                                                       % self.naphtha_accounts)
+            #logger.debug("Made connection with R&R Accounts database at %s" \
+            #                                           % self.naphtha_accounts)
             self.connected += 1
         else:
             logger.warn("Unable to make connection with R&R Accounts database at %s" \
@@ -152,7 +152,6 @@ class NaphthaBase(object):
                      'purchaseitem': sql.create_purchaseitem_table,
                      'material': sql.create_material_table,
                      'stock': sql.create_stock_table,
-                     'dummystockmovement': sql.create_dummystockmovement_table,
                      'stockmovement': sql.create_stockmovement_table,
                      'salesorder': sql.create_salesorder_table,
                      'salesitem': sql.create_salesitem_table,
