@@ -705,3 +705,4 @@ if __name__ == '__main__':
     deletedsales = DeletedSales(salesorder)
     despatch = Despatch(material, salesitem)
     stockusage = StockUsage(stock, customer, material, salesitem)
+    tempnb.query("DROP TABLE dummystockmovement") # Delete table
