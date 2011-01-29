@@ -647,8 +647,9 @@ class Despatch(DataTransferObject):
         for dsptch in data:
             self.dc.addentry(dsptch.WO_Num)
             self.dc.addentry(dsptch.Material)
-            self.dc.addentry(material.qr.get_id(code = dsptch.Material))
-            self.dc.addentry(salesitem.qr.get_id(won = dsptch.WO_Num, material_id = dsptch.Material))
+            self.dc.addentry(stock.qr.get_id(batch = dsptch.BatchDespatched))
+            materialcode = material.qr.get_id(code = dsptch.Material)
+            self.dc.addentry(salesitem.qr.get_id(won = dsptch.WO_Num, material_id = materialcode))
             self.dc.addentry(dsptch.BatchDespatched)
             self.dc.addentry(dsptch.DespatchedQuantity)
             self.dc.addentry(dsptch.LastUpdated)

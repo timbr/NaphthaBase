@@ -133,11 +133,15 @@ Code</th>
 
       <td style="width: 73px; height: 18px;" align="undefined" valign="undefined">{{ item.required_date|date:"l jS F Y" }}</td>
 
-      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined"><a href='../../stock/{{ item.stockmovement_set.all.0.stock.batch }}'>{{ item.stockmovement_set.all.0.stock.batch }}</a></td>
+      <td style="width: 11px; height: 18px;" align="undefined" valign="undefined">
+      {% for btch in item.despatch_set.all %}
+      <a href='../../stock/{{ btch.stock }}'>{{ btch.stock }}</a>: {{ btch.quantity }}Kg<br>
+      {% endfor %}
+      </td>
 
       <td style="width: 248px; height: 18px;" align="undefined" valign="undefined">{{ item.stockmovement_set.all.0.movement_description }}</td>
 
-      <td style="width: 119px; height: 18px;" align="undefined" valign="undefined">{{ item.stockmovement_set.all.0.movement_quantity }} Kg</td>
+      <td style="width: 119px; height: 18px;" align="undefined" valign="undefined">{{ totalquantity }} Kg</td>
 
     </tr>
 {% endfor %}

@@ -294,6 +294,8 @@ class Despatch(models.Model):
     materialcode = models.CharField(max_length=20)
     stock = models.ForeignKey(Stock, null=True)
     salesitem = models.ForeignKey(SalesItem, null=True)
+    batch = models.CharField(max_length=20)
+    quantity = models.CharField(max_length=20)
     lastupdated = models.DateTimeField('last updated')
     rr_recordno = models.IntegerField()
     

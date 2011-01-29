@@ -1,6 +1,6 @@
 # Create your views here.
 from django.http import HttpResponse
-from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales, Customer, Supplier, Contact, Depot, Material
+from nappy.models import PurchaseOrder, PurchaseItem, Stock, SalesOrder, SalesItem, DeletedSales, Customer, Supplier, Contact, Depot, Material, Despatch
 from django.template import Context, loader
 from decimal import Decimal
 
@@ -54,13 +54,18 @@ def singlewo(request, wo_num):
     wo = SalesOrder.objects.filter(won = wo_num)
     if len(wo) != 1:
         if len(missingwo) == 1:
-            return HttpResponse("Sales order %s has been deleted by %s because:  %s" % (wo_num, missingwo[0].operator, missingwo[0].reason))
+            return HttpResponse("Sales order %s has been deleted by %s because:  %s<br><a href='../%d'>Previous</a>...<a href='../%d'>Next</a>" % (wo_num, missingwo[0].operator, missingwo[0].reason, int(wo_num) - 1, int(wo_num) + 1))
         else:
             return HttpResponse("Sales Order number %s has %s records in the database" % (wo_num, len(wo)))
     wo = wo[0]
     print wo
+    
+    totalquantity = 0.0
+    for batch in Despatch.objects.filter(won = wo_num):
+        totalquantity += float(batch.quantity)
+        
     t = loader.get_template('SalesOrder.html')
-    c = Context({'wo': wo, 'links': {'prev': int(wo_num) - 1, 'next': int(wo_num) + 1}})
+    c = Context({'wo': wo, 'totalquantity': totalquantity, 'links': {'prev': int(wo_num) - 1, 'next': int(wo_num) + 1}})
     return HttpResponse(t.render(c))
 
 def singlecustomer(request, customer_code):
