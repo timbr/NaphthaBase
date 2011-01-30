@@ -117,7 +117,7 @@ class NaphthaBase(object):
         """
     
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
+        #NaphthaBase.text_factory = lambda x: unicode(x, "utf-8", "ignore")  # solves problem with Pound signs....!
         c = NaphthaBase.cursor()
         if params == None:
             results = [row for row in c.execute(query)]
@@ -136,7 +136,7 @@ class NaphthaBase(object):
         """
     
         NaphthaBase = sqlite3.connect(NaphthaBase_Dbase)
-        NaphthaBase.text_factory = str # solves problem with Pound signs....!
+        #NaphthaBase.text_factory = str # solves problem with Pound signs....!
         c = NaphthaBase.cursor()
         for entry in data:
             entry = [None] + entry # Add null value so that primary key autoincrements

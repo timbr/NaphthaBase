@@ -78,9 +78,15 @@ class DataContainer(object):
         
         Any decimal values are converted to strings first.
         """
-        
+        global monkey
         if type(data) is decimal.Decimal:
             data = str(data)
+        if type(data) is str:
+            monkey = data
+            data = data.replace('\xa3', '\u00a3')
+            data = data.replace('\xd9', '')
+            data = unicode(data, encoding = 'utf-8')
+            data = data.replace(u'\\u00a3', u'\u00a3')
         self._dataline.append(data)
         
     def combine(*args, **kwargs):

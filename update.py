@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, ForeignKey, create_engine
+from sqlalchemy import Column, Integer, String, DateTime, Date, ForeignKey, create_engine, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
@@ -7,10 +7,11 @@ from sqlalchemy.interfaces import PoolListener
 class SetTextFactory(PoolListener):
     """Solves problem with pound signs"""
     def connect(self, dbapi_con, con_record):
-        dbapi_con.text_factory = str 
+        dbapi_con.text_factory = str
 
 dbpath = 'C:/Users/Tim/Desktop/NaphthaBase/NaphthaBase.db'
-engine = create_engine('sqlite:///%s' % dbpath, listeners=[SetTextFactory()],  echo=True)
+engine = create_engine('sqlite:///%s' % dbpath, echo=True)
+#engine = create_engine('sqlite:///%s' % dbpath, listeners=[SetTextFactory()],  echo=True)
 Base = declarative_base(engine)
 
 class Material(Base):
@@ -19,7 +20,7 @@ class Material(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String)
     description = Column(String)
-    lastupdated = Column(DateTime)
+    lastupdated = Column(DateTime, nullable = True)
     rr_recordno = Column(String)
 
     def __init__(self, id, code, description, lastupdated, rr_recordno):
