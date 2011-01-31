@@ -10,8 +10,9 @@ class SetTextFactory(PoolListener):
         dbapi_con.text_factory = str
 
 dbpath = 'C:/Users/Tim/Desktop/NaphthaBase/NaphthaBase.db'
-engine = create_engine('sqlite:///%s' % dbpath, echo=True)
+engine = create_engine('sqlite:///%s' % dbpath)
 #engine = create_engine('sqlite:///%s' % dbpath, listeners=[SetTextFactory()],  echo=True)
+
 Base = declarative_base(engine)
 
 class Material(Base):
@@ -49,7 +50,7 @@ class Hauliers(Base):
         self.name = name
         self.nominalcode = nominalcode
         self.lastupdated = lastupdated
-        self.rr_recordno = rr_recoderno
+        self.rr_recordno = rr_recordno
 
     def __repr__(self):
         return "<Haulier - %s: %s>" % (self.haulierkey, self.name)
@@ -177,7 +178,7 @@ class Contact(Base):
     customer = relationship(Customer, backref=backref('contacts', order_by=id))
     supplier = relationship(Supplier, backref=backref('contacts', order_by=id))
     
-    def __init__(self, id, clientcode, title, forename, surname, phone, department, customer, supplier, lastupdated, rr_recordno):
+    def __init__(self, id, clientcode, title, forename, surname, phone, department, customer_id, supplier_id, lastupdated, rr_recordno):
         self.id = id
         self.clientcode = clientcode
         self.title = title
@@ -185,6 +186,8 @@ class Contact(Base):
         self.surname = surname
         self.phone = phone
         self.department = department
+        self.customer_id = customer_id
+        self.supplier_id = supplier_id
         self.lastupdated = lastupdated
         self.rr_recordno = rr_recordno
 
@@ -212,7 +215,7 @@ class Depot(Base):
     customer = relationship(Customer, backref=backref('depot', order_by=id))
     supplier = relationship(Supplier, backref=backref('depot', order_by=id))
 
-    def __init__(self, id, clientid, clientname, addres, postcode, phone, fax, email, comment, lastupdated, rr_recordno):
+    def __init__(self, id, clientid, clientname, address, postcode, phone, fax, email, comment, customer_id, supplier_id, lastupdated, rr_recordno):
         self.id = id
         self.clientid = clientid
         self.clientname = clientname
@@ -222,6 +225,8 @@ class Depot(Base):
         self.fax = self.fax
         self.email = self.email
         self.comment = self.comment
+        self.customer_id = customer_id
+        self.supplier_id = supplier_id
         self.lastupdated = self.lastupdated
         self.rr_recordno = rr_recordno
 
@@ -251,6 +256,7 @@ class PurchaseOrder(Base):
         self.id = id
         self.pon = pon
         self.ordervalue = ordervalue
+        self.supplier_id = supplier_id
         self.orderref = orderref
         self.orderdate = orderdate
         self.placedby = placedby
@@ -274,7 +280,7 @@ class PurchaseItem(Base):
     material_id = Column(Integer, ForeignKey('material.id'))
     quantity = Column(String)
     price = Column(String)
-    duedate = Column(Date)
+    duedate = Column(DateTime)
     delivered_quantity = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
@@ -282,10 +288,12 @@ class PurchaseItem(Base):
     purchaseorder = relationship(PurchaseOrder, backref=backref('purchaseitems', order_by=id))
     material = relationship(Material, backref=backref('purchaseitems', order_by=id))
 
-    def __init__(self, id, pon, itemno, quantity, price, duedate, delivered_quantity, lastupdated, rr_recordno):
+    def __init__(self, id, pon, itemno, purchaseorder_id, material_id, quantity, price, duedate, delivered_quantity, lastupdated, rr_recordno):
         self.id = id
         self.pon = pon
         self.itemno = itemno
+        self.purchaseorder_id = purchaseorder_id
+        self.material_id = material_id
         self.quantity = quantity
         self.price = price
         self.duedate = duedate
@@ -318,11 +326,14 @@ class Stock(Base):
     supplier = relationship(Supplier, backref=backref('stock', order_by=id))
     purchaseitem = relationship(PurchaseItem, backref=backref('stock', order_by=id))
     
-    def __init__(self, id, batch, stockinfo, status, costprice, batchup_quantity, batchup_date, stockquantity, lastupdated, rr_recordno):
+    def __init__(self, id, batch, material_id, stockinfo, status, supplier_id, purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity, lastupdated, rr_recordno):
         self.id = id
         self.batch = batch
+        self.material_id = material_id
         self.stockinfo = stockinfo
         self.status = status
+        self.supplier_id = supplier_id
+        self.purchaseitem_id = purchaseitem_id
         self.costprice = costprice
         self.batchup_quantity = batchup_quantity
         self.batchup_date = batchup_date
@@ -363,10 +374,12 @@ class SalesOrder(Base):
     customer = relationship(Customer, backref=backref('salesorder', order_by=id))
     carrier = relationship(Carrier, backref=backref('salesorder', order_by=id))
     
-    def __init__(self, id, won, followon_link, picklist_comment, ordervalue, status, orderdate, despatchdate, invoicedate, operator, delivery_name, delivery_address, delivery_postcode, printed_comments, invoice_comments, invoice_terms, item_count, lastupdated, rr_recordno):
+    def __init__(self, id, won, followon_link, customer_id, customer_orderno, picklist_comment, ordervalue, status, orderdate, despatchdate, invoicedate, operator, delivery_name, delivery_address, delivery_postcode, printed_comments, invoice_comments, invoice_terms, item_count, carrier_id, lastupdated, rr_recordno):
         self.id = id
         self.won = won
         self.followon_link = followon_link
+        self.customer_id = customer_id
+        self.customer_orderno = customer_orderno
         self.picklist_comment = picklist_comment
         self.ordervalue = ordervalue
         self.status = status
@@ -381,6 +394,7 @@ class SalesOrder(Base):
         self.invoice_comments = invoice_comments
         self.invoice_terms = invoice_terms
         self.item_count = item_count
+        self.carrier_id = carrier_id
         self.lastupdated = lastupdated
         self.rr_recordno = rr_recordno
     
@@ -403,9 +417,11 @@ class SalesItem(Base):
     
     salesorder = relationship(SalesOrder, backref=backref('salesitems', order_by=id))
     material = relationship(Material, backref=backref('salesitems', order_by=id))
-    def __init__(self, id, won, quantity, price, required_date, lastupdated, rr_recordno):
+    def __init__(self, id, won, salesorder_id, material_id, quantity, price, required_date, lastupdated, rr_recordno):
         self.id = id
         self.won = won
+        self.salesorder_id = salesorder_id
+        self.material_id = material_id
         self.quantity = quantity
         self.price = price
         self.required_date = required_date
@@ -429,9 +445,10 @@ class DeletedSales(Base):
     
     salesorder = relationship(SalesOrder, backref=backref('deletedsales', order_by=id))
     
-    def __init_(self, id, won, operator, reason, lastupdated, rr_recordno):
+    def __init__(self, id, won, salesorder_id, operator, reason, lastupdated, rr_recordno):
         self.id = id
         self.won = won
+        self.salesorder_id = salesorder_id
         self.operator = operator
         self.reason = reason
         self.lastupdated = lastupdated
@@ -457,10 +474,12 @@ class Despatch(Base):
     stock = relationship(Stock, backref=backref('despatched', order_by=id))
     salesitem = relationship(SalesItem, backref=backref('despatched', order_by=id))
     
-    def __init__(self, id, won, materialcode, batch, quantity, lastupdated, rr_recordno):
+    def __init__(self, id, won, materialcode, stock_id, salesitem_id, batch, quantity, lastupdated, rr_recordno):
         self.id = id
         self.won = won
         self.materialcode = materialcode
+        self.stock_id = stock_id
+        self.salesitem_id = salesitem_id
         self.batch = batch
         self.quantity = quantity
         self.lastupdated = lastupdated
@@ -491,9 +510,12 @@ class StockMovement(Base):
     customer = relationship(Customer, backref=backref('stockmovement', order_by=id))
     salesitem = relationship(SalesItem, backref=backref('stockmovement', order_by=id))
     
-    def __init__(self, id, action, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
+    def __init__(self, id, stock_id, action, customer_id, salesitem_id, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
         self.id = id
+        self.stock_id = stock_id
         self.action = action
+        self.customer_id = customer_id
+        self.salesitem_id = salesitem_id
         self.salesprice = salesprice
         self.pon = pon
         self.movement_description = movement_description
@@ -505,6 +527,40 @@ class StockMovement(Base):
     
     def __repr__(self):
         return "<StockMovement - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
+
+
+class DummyStockMovement(Base):
+    __tablename__ = 'dummystockmovement'
+
+    id = Column(Integer, primary_key=True)
+    stock = Column(String)
+    action = Column(String)
+    material = Column(String)
+    salesprice = Column(String)
+    pon = Column(String)
+    movement_description = Column(String)
+    movement_quantity = Column(String)
+    item_order = Column(Integer)
+    user_id = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    def __init__(self, id, stock, action, material, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
+        self.id = id
+        self.stock = stock
+        self.action = action
+        self.material = material
+        self.salesprice = salesprice
+        self.pon = pon
+        self.movement_description = movement_description
+        self.movement_quantity = movement_quantity
+        self.item_order = item_order
+        self.user_id = user_id
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+    
+    def __repr__(self):
+        return "<DummyStockMovement - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
     
 
 def loadSession():

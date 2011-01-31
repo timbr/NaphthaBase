@@ -1,0 +1,10 @@
+R&R Database 'Features'
+========================
+
+Carrier Table (Sales Order Additional)
+=============
+Jill tends to delete the carrier record when she prints out the invoices. It would be nice to retain a record of this carrier information. There is the odd case of duplicate records with sequential record numbers. I'm not sure why these are created.
+The Carrier field has also been used for miscellaneous comments to be printed on the invoice.
+It is also possible for the original carrier to be deleted and a new carrier then added. Although one has been deleted, the new record has a different record number. This means that if a snapshot of the database is taken before the original is deleted and then the database is later syncronised, both records will appear for the same works order.
+It may be best to check which records have been deleted before syncing the database.
+

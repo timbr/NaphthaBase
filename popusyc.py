@@ -1,6 +1,7 @@
 import naphthabase as nb
 import datetime
 import decimal
+from update import *
 import logging, logging.handlers
 
 # Make a global logging object
@@ -35,7 +36,7 @@ class DataTransferObject(object):
     
     def __init__(self):
         self.rrdata = nb.RandRDatabase()
-        self.naphthabase = nb.NaphthaBase()
+        self.nbdb = loadSession()
         self.dc = DataContainer()
         dbreply = self.getdata(self.r_and_r_sql, self.r_and_r_table)
         if dbreply == 'Unable to connect':
@@ -48,16 +49,30 @@ class DataTransferObject(object):
         
     def getdata(self, randr_query, table):
         logger.debug('Getting %s data' % (table))
-        return self.rrdata.query(randr_query, table)
+        lastrecord = self.nbdb.query(self.nb_object).order_by(desc(self.nb_object.lastupdated)).first()
+        if lastrecord is None:
+            lastupdated = datetime.datetime(1982,1,1,0,0)
+        else:
+            lastupdated = lastrecord.lastupdated
+        return self.rrdata.query(randr_query, table, lastupdated)
         
-    def update(self, data, table):
+    def update(self, data, table, ):
         logger.debug('Updating NaphthaBase with latest %s Data.' % table)
-        self.naphthabase.query("DELETE FROM %s" % table) # Clear table
-        num_fields = len(self.naphthabase.get_columns(table))
-        insert_fields = '(' + '?,' * (num_fields - 1) + '?)'
-        # creates string "insert into <table> values (?,?,?,?, etc)"
-        self.naphthabase.transfer(data, 'insert into %s values %s' \
-                                    % (table, insert_fields))
+        for entry in data:
+            line = [None] + entry
+            newdata = self.nb_object(*line)
+            newdata.lastupdated = line[-2]
+            existing = self.nbdb.query(self.nb_object).filter(self.nb_object.rr_recordno == line[-1]).all()
+            if len(existing) > 1:
+                print 'arrrggghhh'
+            if len(existing) > 0:
+                existing[0] = newdata
+                self.nbdb.commit()
+                if table != 'dummystockmovement':
+                    print "Already Exists:   ", newdata
+            else:
+                self.nbdb.add(newdata)
+        self.nbdb.commit()
             
 
 #////////////////////////////////////////////////////////////////////////////#
@@ -214,11 +229,12 @@ class QuickReference(object):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Material(DataTransferObject):
+class UpdateMaterial(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_material_codes
         self.r_and_r_table = 'stock_Formula'
+        self.nb_object = Material
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -232,11 +248,12 @@ class Material(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Hauliers(DataTransferObject):
+class UpdateHauliers(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_hauliers
         self.r_and_r_table = 'stock_Additional Items'
+        self.nb_object = Hauliers
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -245,11 +262,12 @@ class Hauliers(DataTransferObject):
 
         
 #////////////////////////////////////////////////////////////////////////////#
-class Carrier(DataTransferObject):
+class UpdateCarrier(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_carrier
         self.r_and_r_table = 'stock_Sales Order Additional'
+        self.nb_object = Carrier
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -262,12 +280,14 @@ class Carrier(DataTransferObject):
             QuickReference.__init__(self, table, fields)
 
 
+
 #////////////////////////////////////////////////////////////////////////////#
-class Customer(DataTransferObject):
+class UpdateCustomer(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_customer
         self.r_and_r_table = 'accounts_Customer'
+        self.nb_object = Customer
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -303,11 +323,12 @@ class Customer(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Supplier(DataTransferObject):
+class UpdateSupplier(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_supplier
         self.r_and_r_table = 'accounts_Supplier'
+        self.nb_object = Supplier
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -341,11 +362,12 @@ class Supplier(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Contact(DataTransferObject):
+class UpdateContact(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, customer, supplier):
         self.r_and_r_sql = nb.sql.get_contact
         self.r_and_r_table = 'accounts_Contact'
+        self.nb_object = Contact
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -365,11 +387,12 @@ class Contact(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Depot(DataTransferObject):
+class UpdateDepot(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, customer, supplier):
         self.r_and_r_sql = nb.sql.get_depot
         self.r_and_r_table = 'accounts_Depot'
+        self.nb_object = Depot
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -396,11 +419,12 @@ class Depot(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class PurchaseOrder(DataTransferObject):
+class UpdatePurchaseOrder(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, supplier):
         self.r_and_r_sql = nb.sql.get_purchaseorder
         self.r_and_r_table = 'stock_Purchase Order'
+        self.nb_object = PurchaseOrder
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -426,11 +450,12 @@ class PurchaseOrder(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class PurchaseItem(DataTransferObject):
+class UpdatePurchaseItem(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, purchaseorder, material):
         self.r_and_r_sql = nb.sql.get_purchaseitem
         self.r_and_r_table = 'stock_Purchase Item'
+        self.nb_object = PurchaseItem
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -460,6 +485,7 @@ class StockUsageDummy(DataTransferObject):
     def __init__(self):
         self.r_and_r_sql = nb.sql.get_stockusage
         self.r_and_r_table = 'stock_Formula Stock Usage'
+        self.nb_object = DummyStockMovement
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -477,6 +503,7 @@ class StockUsageDummy(DataTransferObject):
             self.dc.addentry(stckusg.RecordNumber)
             self.dc.addline()
         self.update(self.dc.datatable, 'dummystockmovement')
+        print 'building quick reference.....'
         self.qr = self.QR('dummystockmovement', ('stock', 'pon', 'action', 'item_order'))
         
     class QR(QuickReference):
@@ -485,11 +512,12 @@ class StockUsageDummy(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Stock(DataTransferObject):
+class UpdateStock(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, material, supplier, purchaseitem, stockusedummy):
         self.r_and_r_sql = nb.sql.get_stock
         self.r_and_r_table = 'stock_Formula Stock'
+        self.nb_object = Stock
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -534,11 +562,12 @@ class Stock(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class SalesOrder(DataTransferObject):
+class UpdateSalesOrder(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, customer, carrier):
         self.r_and_r_sql = nb.sql.get_salesorder
         self.r_and_r_table = 'stock_Sales Order'
+        self.nb_object = SalesOrder
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -591,11 +620,12 @@ class SalesOrder(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class SalesItem(DataTransferObject):
+class UpdateSalesItem(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, purchaseorder, material):
         self.r_and_r_sql = nb.sql.get_salesitem
         self.r_and_r_table = 'stock_Sales Order Item'
+        self.nb_object = SalesItem
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -618,11 +648,12 @@ class SalesItem(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class DeletedSales(DataTransferObject):
+class UpdateDeletedSales(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, salesorder):
         self.r_and_r_sql = nb.sql.get_deleted_sales
         self.r_and_r_table = 'stock_Missing Order Number'
+        self.nb_object = DeletedSales
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -638,11 +669,12 @@ class DeletedSales(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class Despatch(DataTransferObject):
+class UpdateDespatch(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, material, salesitem):
         self.r_and_r_sql = nb.sql.get_despatch
         self.r_and_r_table = 'stock_Sales Order Despatch'
+        self.nb_object = Despatch
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -661,11 +693,12 @@ class Despatch(DataTransferObject):
 
 
 #////////////////////////////////////////////////////////////////////////////#
-class StockUsage(DataTransferObject):
+class UpdateStockUsage(DataTransferObject):
 #////////////////////////////////////////////////////////////////////////////#
     def __init__(self, stock, customer, material, saleitem):
         self.r_and_r_sql = nb.sql.get_stockusage
         self.r_and_r_table = 'stock_Formula Stock Usage'
+        self.nb_object = StockMovement
         DataTransferObject.__init__(self)
 
     def processdata(self, data):
@@ -689,23 +722,25 @@ class StockUsage(DataTransferObject):
 
 
 if __name__ == '__main__':
+    Base.metadata.create_all()
     tempnb = nb.NaphthaBase()
-    material = Material()
-    hauliers = Hauliers()
-    carrier = Carrier()
-    customer = Customer()
-    supplier = Supplier()
-    contact = Contact(customer, supplier)
-    depot = Depot(customer, supplier)
-    purchaseorder = PurchaseOrder(supplier)
-    purchaseitem = PurchaseItem(purchaseorder, material)
-    tempnb.query(nb.sql.create_dummystockmovement_table)
+    material = UpdateMaterial()
+    hauliers = UpdateHauliers()
+    tempnb.query("DELETE FROM carrier") # Clear table
+    carrier = UpdateCarrier()
+    customer = UpdateCustomer()
+    supplier = UpdateSupplier()
+    contact = UpdateContact(customer, supplier)
+    depot = UpdateDepot(customer, supplier)
+    purchaseorder = UpdatePurchaseOrder(supplier)
+    purchaseitem = UpdatePurchaseItem(purchaseorder, material)
+    #tempnb.query(nb.sql.create_dummystockmovement_table)
     stockusedummy = StockUsageDummy()
-    stock = Stock(material, supplier, purchaseitem, stockusedummy)
-    tempnb.query("DELETE FROM dummystockmovement")
-    salesorder = SalesOrder(customer, carrier)
-    salesitem = SalesItem(salesorder, material)
-    deletedsales = DeletedSales(salesorder)
-    despatch = Despatch(material, salesitem)
-    stockusage = StockUsage(stock, customer, material, salesitem)
-    tempnb.query("DROP TABLE dummystockmovement") # Delete table
+    stock = UpdateStock(material, supplier, purchaseitem, stockusedummy)
+    #tempnb.query("DELETE FROM dummystockmovement")
+    salesorder = UpdateSalesOrder(customer, carrier)
+    salesitem = UpdateSalesItem(salesorder, material)
+    deletedsales = UpdateDeletedSales(salesorder)
+    despatch = UpdateDespatch(material, salesitem)
+    stockusage = UpdateStockUsage(stock, customer, material, salesitem)
+    #tempnb.query("DROP TABLE dummystockmovement") # Delete table
