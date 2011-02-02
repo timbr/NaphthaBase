@@ -56,7 +56,7 @@ class DataTransferObject(object):
             lastupdated = lastrecord.lastupdated
         return self.rrdata.query(randr_query, table, lastupdated)
         
-    def update(self, data, table, ):
+    def update(self, data, table):
         logger.debug('Updating NaphthaBase with latest %s Data.' % table)
         for entry in data:
             line = [None] + entry
@@ -66,13 +66,29 @@ class DataTransferObject(object):
             if len(existing) > 1:
                 print 'arrrggghhh'
             if len(existing) > 0:
-                existing[0] = newdata
-                self.nbdb.commit()
+                self.nbdb.delete(existing[0])
+                self.nbdb.add(newdata)
                 if table != 'dummystockmovement':
                     print "Already Exists:   ", newdata
+                    print line
             else:
                 self.nbdb.add(newdata)
         self.nbdb.commit()
+
+    def find_deleted_records(self):
+        naphthabaserecords = self.nbdb.query(self.nb_object).all()
+        self.nbrecordset = set()
+        print naphthabaserecords
+        for record in naphthabaserecords:
+            #print record.rr_recordno
+            self.nbrecordset.add(record.rr_recordno)
+        rr_records = self.rrdata.query(self.r_and_r_sql, self.r_and_r_table)
+        self.rr_recordset = set()
+        for record in rr_records:
+            self.rr_recordset.add(record.RecordNumber)
+        deleted = self.nbrecordset.difference(self.rr_recordset)
+        print "\n\n$$$ DELETED: %s" % deleted
+        print len(self.nbrecordset), len(self.rr_recordset)
             
 
 #////////////////////////////////////////////////////////////////////////////#
@@ -272,8 +288,11 @@ class UpdateCarrier(DataTransferObject):
 
     def processdata(self, data):
         self.dc.process(data)
+        self.find_deleted_records()
         self.update(self.dc.datatable, 'carrier') 
+        self.find_deleted_records()
         self.qr = self.QR('carrier', ('id', 'won', 'description', 'lastupdated'))
+    
         
     class QR(QuickReference):
         def __init__(self, table = '', fields = ''):
