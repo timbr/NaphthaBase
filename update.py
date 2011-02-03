@@ -46,7 +46,7 @@ class MaterialHistory(Base):
     lastupdated = Column(DateTime, nullable = True)
     rr_recordno = Column(Integer)
     
-    material = relationship(Material, backref=backref('history', order_by=id))
+    current = relationship(Material, backref=backref('history', order_by=id))
 
     def __init__(self, id, material_id, code, description, lastupdated, rr_recordno):
         self.id = id
@@ -68,9 +68,37 @@ class Hauliers(Base):
     nominalcode = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
 
-    def __init__(self, id, haulierkey, name, nominalcode, lastupdated, rr_recordno):
+    def __init__(self, id, haulierkey, name, nominalcode, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.haulierkey = haulierkey
+        self.name = name
+        self.nominalcode = nominalcode
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Haulier - %s: %s>" % (self.haulierkey, self.name)
+    
+
+class HauliersHistory(Base):
+    __tablename__ = 'hauliershistory'
+
+    id = Column(Integer, primary_key=True)
+    hauliers_id = Column(Integer, ForeignKey('hauliers.id'))
+    haulierkey = Column(String)
+    name = Column(String)
+    nominalcode = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+
+    current = relationship(Hauliers, backref=backref('history', order_by=id))
+
+    def __init__(self, id, hauliers_id, haulierkey, name, nominalcode, lastupdated, rr_recordno):
+        self.id = id
+        self.hauliers_id = hauliers_id
         self.haulierkey = haulierkey
         self.name = name
         self.nominalcode = nominalcode
@@ -78,9 +106,9 @@ class Hauliers(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Haulier - %s: %s>" % (self.haulierkey, self.name)
+        return "<HauliersHistory - %s: %s>" % (self.haulierkey, self.name)
     
-
+    
 class Carrier(Base):
     __tablename__ = 'carrier'
 
@@ -89,17 +117,43 @@ class Carrier(Base):
     description = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
 
-    def __init__(self, id, won, description, lastupdated, rr_recordno):
+    def __init__(self, id, won, description, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.won = won
+        self.description = description
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Carrier - WO%s: %s>" % (self.won, self.description)
+
+        
+class CarrierHistory(Base):
+    __tablename__ = 'carrierhistory'
+
+    id = Column(Integer, primary_key=True)
+    carrier_id = Column(Integer, ForeignKey('carrier.id'))
+    won = Column(String)
+    description = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    current = relationship(Carrier, backref=backref('history', order_by=id))
+
+    def __init__(self, id, carrier_id, won, description, lastupdated, rr_recordno):
+        self.id = id
+        self.carrier_id = carrier_id
         self.won = won
         self.description = description
         self.lastupdated = lastupdated
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Carrier - WO%s: %s>" % (self.won, self.description)
-
+        return "<CarrierHistory - WO%s: %s>" % (self.won, self.description)        
+        
     
 class Customer(Base):
     __tablename__ = 'customer'
@@ -121,8 +175,9 @@ class Customer(Base):
     terms = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
-    def __init__(self, id, customer_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, creditlimit, terms, lastupdated, rr_recordno):
+    def __init__(self, id, customer_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, creditlimit, terms, lastupdated, rr_recordno, deleted):
         self.id = id
         self.customer_code = customer_code
         self.name = name
@@ -134,7 +189,56 @@ class Customer(Base):
         self.website = website
         self.contactname = contactname
         self.vat = vat
-        self.comment =comment
+        self.comment = comment
+        self.memo = memo
+        self.creditlimit = creditlimit
+        self.terms = terms
+        self.latupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+    
+    def __repr__(self):
+        return "<Customer - '%s': '%s'>" % (self.customer_code, self.name)
+
+        
+class CustomerHistory(Base):
+    __tablename__ = 'customerhistory'
+    
+    id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    customer_code = Column(String)
+    name = Column(String)
+    address = Column(String)
+    postcode = Column(String)
+    phone = Column(String)
+    fax = Column(String)
+    email = Column(String)
+    website = Column(String)
+    contactname = Column(String)
+    vat = Column(String)
+    comment = Column(String)
+    memo = Column(String)
+    creditlimit = Column(String)
+    terms = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    current = relationship(Customer, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, customer_id, customer_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, creditlimit, terms, lastupdated, rr_recordno):
+        self.id = id
+        self.customer_id = customer_id
+        self.customer_code = customer_code
+        self.name = name
+        self.address = address
+        self.postcode = postcode
+        self.phone = phone
+        self.fax = fax
+        self.email = email
+        self.website = website
+        self.contactname = contactname
+        self.vat = vat
+        self.comment = comment
         self.memo = memo
         self.creditlimit = creditlimit
         self.terms = terms
@@ -142,8 +246,8 @@ class Customer(Base):
         self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<Customer - '%s': '%s'>" % (self.customer_code, self.name)
-
+        return "<CustomerHistory - '%s': '%s'>" % (self.customer_code, self.name)
+        
         
 class Supplier(Base):
     __tablename__ = 'supplier'
@@ -163,9 +267,55 @@ class Supplier(Base):
     memo = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
-    def __init__(self, id, supplier_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, lastupdated, rr_recordno):
+    def __init__(self, id, supplier_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.supplier_code = supplier_code
+        self.name = name
+        self.address = address
+        self.postcode = postcode
+        self.phone = phone
+        self.fax = fax
+        self.email = email
+        self.website = website
+        self.contactname = contactname
+        self.vat = vat
+        self.comment =comment
+        self.memo = memo
+        self.latupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+    
+    def __repr__(self):
+        return "<Supplier - '%s': '%s'>" % (self.supplier_code, self.name)
+
+        
+class SupplierHistory(Base):
+    __tablename__ = 'supplierhistory'
+
+    id = Column(Integer, primary_key=True)
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    supplier_code = Column(String)
+    name = Column(String)
+    address = Column(String)
+    postcode = Column(String)
+    phone = Column(String)
+    fax = Column(String)
+    email = Column(String)
+    website = Column(String)
+    contactname = Column(String)
+    vat = Column(String)
+    comment = Column(String)
+    memo = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    current = relationship(Supplier, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, supplier_id, supplier_code, name, address, postcode, phone, fax, email, website, contactname, vat, comment, memo, lastupdated, rr_recordno):
+        self.id = id
+        self.supplier_id = supplier_id
         self.supplier_code = supplier_code
         self.name = name
         self.address = address
@@ -182,8 +332,8 @@ class Supplier(Base):
         self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<Supplier - '%s': '%s'>" % (self.supplier_code, self.name)
-
+        return "<SupplierHistory - '%s': '%s'>" % (self.supplier_code, self.name)
+        
     
 class Contact(Base):
     __tablename__ = 'contact'
