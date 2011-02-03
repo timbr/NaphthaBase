@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Date, ForeignKey, create_engine, desc
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, create_engine, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 
@@ -22,16 +22,41 @@ class Material(Base):
     code = Column(String)
     description = Column(String)
     lastupdated = Column(DateTime, nullable = True)
-    rr_recordno = Column(String)
+    rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
 
-    def __init__(self, id, code, description, lastupdated, rr_recordno):
+    def __init__(self, id, code, description, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.code = code
+        self.description = description
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Material - %s: %s>" % (self.code, self.description)
+
+
+class MaterialHistory(Base):
+    __tablename__ = 'materialhistory'
+
+    id = Column(Integer, primary_key=True)
+    material_id = Column(Integer, ForeignKey('material.id'))
+    code = Column(String)
+    description = Column(String)
+    lastupdated = Column(DateTime, nullable = True)
+    rr_recordno = Column(Integer)
+    
+    material = relationship(Material, backref=backref('history', order_by=id))
+
+    def __init__(self, id, material_id, code, description, lastupdated, rr_recordno):
+        self.id = id
+        self.material_id = material_id
         self.code = code
         self.description = description
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Material - %s: %s>" % (self.code, self.description)
+        return "<MaterialHistory - %s: %s>" % (self.code, self.description)
     
 
 class Hauliers(Base):
@@ -42,7 +67,7 @@ class Hauliers(Base):
     name = Column(String)
     nominalcode = Column(String)
     lastupdated = Column(DateTime)
-    rr_recordno = Column(String)
+    rr_recordno = Column(Integer)
 
     def __init__(self, id, haulierkey, name, nominalcode, lastupdated, rr_recordno):
         self.id = id
@@ -63,7 +88,7 @@ class Carrier(Base):
     won = Column(String)
     description = Column(String)
     lastupdated = Column(DateTime)
-    rr_recordno = Column(String)
+    rr_recordno = Column(Integer)
 
     def __init__(self, id, won, description, lastupdated, rr_recordno):
         self.id = id
