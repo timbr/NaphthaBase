@@ -349,12 +349,53 @@ class Contact(Base):
     supplier_id = Column(Integer, ForeignKey('supplier.id'))
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     customer = relationship(Customer, backref=backref('contacts', order_by=id))
     supplier = relationship(Supplier, backref=backref('contacts', order_by=id))
+   
     
-    def __init__(self, id, clientcode, title, forename, surname, phone, department, customer_id, supplier_id, lastupdated, rr_recordno):
+    def __init__(self, id, clientcode, title, forename, surname, phone, department, customer_id, supplier_id, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.clientcode = clientcode
+        self.title = title
+        self.forename = forename
+        self.surname = surname
+        self.phone = phone
+        self.department = department
+        self.customer_id = customer_id
+        self.supplier_id = supplier_id
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Contact - %s: %s %s>" % (self.clientcode, self.forename, self.surname)
+
+        
+class ContactHistory(Base):
+    __tablename__ = 'contacthistory'
+
+    id = Column(Integer, primary_key=True)
+    contact_id = Column(Integer, ForeignKey('contact.id'))
+    clientcode = Column(String)
+    title = Column(String)
+    forename = Column(String)
+    surname = Column(String)
+    phone = Column(String)
+    department = Column(String)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #customer = relationship(Customer, backref=backref('contacts', order_by=id))
+    #supplier = relationship(Supplier, backref=backref('contacts', order_by=id))
+    current = relationship(Contact, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, contact_id, clientcode, title, forename, surname, phone, department, customer_id, supplier_id, lastupdated, rr_recordno):
+        self.id = id
+        self.contact_id = contact_id
         self.clientcode = clientcode
         self.title = title
         self.forename = forename
@@ -367,8 +408,8 @@ class Contact(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Contact - %s: %s %s>" % (self.clientcode, self.forename, self.surname)
-
+        return "<ContactHistory - %s: %s %s>" % (self.clientcode, self.forename, self.surname)
+        
 
 class Depot(Base):
     __tablename__ = 'depot'
@@ -386,12 +427,56 @@ class Depot(Base):
     supplier_id = Column(Integer, ForeignKey('supplier.id'))
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     customer = relationship(Customer, backref=backref('depot', order_by=id))
     supplier = relationship(Supplier, backref=backref('depot', order_by=id))
 
-    def __init__(self, id, clientid, clientname, address, postcode, phone, fax, email, comment, customer_id, supplier_id, lastupdated, rr_recordno):
+    def __init__(self, id, clientid, clientname, address, postcode, phone, fax, email, comment, customer_id, supplier_id, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.clientid = clientid
+        self.clientname = clientname
+        self.address = self.address
+        self.postcode = self.postcode
+        self.phone = self.phone
+        self.fax = self.fax
+        self.email = self.email
+        self.comment = self.comment
+        self.customer_id = customer_id
+        self.supplier_id = supplier_id
+        self.lastupdated = self.lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Depot - %s: %s>" % (self.clientid, self.clientname)
+        
+        
+class DepotHistory(Base):
+    __tablename__ = 'depothistory'
+
+    id = Column(Integer, primary_key=True)
+    depot_id = Column(Integer, ForeignKey('depot.id'))
+    clientid = Column(String)
+    clientname = Column(String)
+    address = Column(String)
+    postcode = Column(String)
+    phone = Column(String)
+    fax = Column(String)
+    email = Column(String)
+    comment = Column(String)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #customer = relationship(Customer, backref=backref('depot', order_by=id))
+    #supplier = relationship(Supplier, backref=backref('depot', order_by=id))
+    current = relationship(Depot, backref=backref('history', order_by=id))
+
+    def __init__(self, id, depot_id, clientid, clientname, address, postcode, phone, fax, email, comment, customer_id, supplier_id, lastupdated, rr_recordno):
+        self.id = id
+        self.depot_id = depot_id
         self.clientid = clientid
         self.clientname = clientname
         self.address = self.address
@@ -406,9 +491,9 @@ class Depot(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Depot - %s: %s>" % (self.clientid, self.clientname)
-    
-
+        return "<DepotHistory - %s: %s>" % (self.clientid, self.clientname)
+        
+        
 class PurchaseOrder(Base):
     __tablename__ = 'purchaseorder'
 
@@ -424,11 +509,52 @@ class PurchaseOrder(Base):
     status = Column(Integer)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     supplier = relationship(Supplier, backref=backref('purchaseorders', order_by=id))
     
-    def __init__(self, id, pon, ordervalue, supplier_id, orderref, orderdate, placedby, printedcomment, deliverycomment, status, lastupdated, rr_recordno):
+    def __init__(self, id, pon, ordervalue, supplier_id, orderref, orderdate, placedby, printedcomment, deliverycomment, status, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.pon = pon
+        self.ordervalue = ordervalue
+        self.supplier_id = supplier_id
+        self.orderref = orderref
+        self.orderdate = orderdate
+        self.placedby = placedby
+        self.printedcomment = printedcomment
+        self.deliverycomment = deliverycomment
+        self.status = status
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+        
+    def __repr__(self):
+        return "<PurchaseOrder - %s>" % (self.pon)
+        
+        
+class PurchaseOrderHistory(Base):
+    __tablename__ = 'purchaseorderhistory'
+
+    id = Column(Integer, primary_key=True)
+    po_id = Column(Integer, ForeignKey('purchaseorder.id'))
+    pon = Column(String)
+    ordervalue = Column(String)
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    orderref = Column(String)
+    orderdate = Column(DateTime)
+    placedby = Column(String)
+    printedcomment = Column(String)
+    deliverycomment = Column(String)
+    status = Column(Integer)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #supplier = relationship(Supplier, backref=backref('purchaseorders', order_by=id))
+    current = relationship(PurchaseOrder, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, po_id, pon, ordervalue, supplier_id, orderref, orderdate, placedby, printedcomment, deliverycomment, status, lastupdated, rr_recordno):
+        self.id = id
+        self.po_id = po_id
         self.pon = pon
         self.ordervalue = ordervalue
         self.supplier_id = supplier_id
@@ -442,7 +568,7 @@ class PurchaseOrder(Base):
         self.rr_recordno = rr_recordno
         
     def __repr__(self):
-        return "<PurchaseOrder - %s>" % (self.pon)
+        return "<PurchaseOrderHistory - %s>" % (self.pon)
     
 
 class PurchaseItem(Base):
@@ -459,12 +585,52 @@ class PurchaseItem(Base):
     delivered_quantity = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     purchaseorder = relationship(PurchaseOrder, backref=backref('purchaseitems', order_by=id))
     material = relationship(Material, backref=backref('purchaseitems', order_by=id))
 
-    def __init__(self, id, pon, itemno, purchaseorder_id, material_id, quantity, price, duedate, delivered_quantity, lastupdated, rr_recordno):
+    def __init__(self, id, pon, itemno, purchaseorder_id, material_id, quantity, price, duedate, delivered_quantity, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.pon = pon
+        self.itemno = itemno
+        self.purchaseorder_id = purchaseorder_id
+        self.material_id = material_id
+        self.quantity = quantity
+        self.price = price
+        self.duedate = duedate
+        self.delivered_quantity = delivered_quantity
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<PurchaseItem - id:%s , PON%s>" % (self.id, self.pon)
+        
+        
+class PurchaseItemHistory(Base):
+    __tablename__ = 'purchaseitemhistory'
+
+    id = Column(Integer, primary_key=True)
+    pi_id = Column(Integer, ForeignKey('purchaseitem.id'))
+    pon = Column(String)
+    itemno = Column(Integer)
+    purchaseorder_id = Column(Integer, ForeignKey('purchaseorder.id'))
+    material_id = Column(Integer, ForeignKey('material.id'))
+    quantity = Column(String)
+    price = Column(String)
+    duedate = Column(DateTime)
+    delivered_quantity = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #purchaseorder = relationship(PurchaseOrder, backref=backref('purchaseitems', order_by=id))
+    #material = relationship(Material, backref=backref('purchaseitems', order_by=id))
+    current = relationship(PurchaseItem, backref=backref('history', order_by=id))
+
+    def __init__(self, id, pi_id, pon, itemno, purchaseorder_id, material_id, quantity, price, duedate, delivered_quantity, lastupdated, rr_recordno):
+        self.id = id
+        self.pi_id = pi_id
         self.pon = pon
         self.itemno = itemno
         self.purchaseorder_id = purchaseorder_id
@@ -477,7 +643,7 @@ class PurchaseItem(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<PurchaseItem - id:%s , PON%s>" % (self.id, self.pon)
+        return "<PurchaseItemHistory - id:%s , PON%s>" % (self.id, self.pon)
     
 
 class Stock(Base):
