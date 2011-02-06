@@ -662,13 +662,58 @@ class Stock(Base):
     stockquantity = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     material = relationship(Material, backref=backref('stock', order_by=id))
     supplier = relationship(Supplier, backref=backref('stock', order_by=id))
     purchaseitem = relationship(PurchaseItem, backref=backref('stock', order_by=id))
     
-    def __init__(self, id, batch, material_id, stockinfo, status, supplier_id, purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity, lastupdated, rr_recordno):
+    def __init__(self, id, batch, material_id, stockinfo, status, supplier_id, purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.batch = batch
+        self.material_id = material_id
+        self.stockinfo = stockinfo
+        self.status = status
+        self.supplier_id = supplier_id
+        self.purchaseitem_id = purchaseitem_id
+        self.costprice = costprice
+        self.batchup_quantity = batchup_quantity
+        self.batchup_date = batchup_date
+        self.stockquantity = stockquantity
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<Stock - %s: %s>" % (self.batch, self.status)
+        
+        
+class StockHistory(Base):
+    __tablename__ = 'stockhistory'
+    
+    id = Column(Integer, primary_key=True)
+    stock_id = Column(Integer, ForeignKey('stock.id'))
+    batch = Column(String)
+    material_id = Column(Integer, ForeignKey('material.id'))
+    stockinfo = Column(String)
+    status = Column(String)
+    supplier_id = Column(Integer, ForeignKey('supplier.id'))
+    purchaseitem_id = Column(Integer, ForeignKey('purchaseitem.id'))
+    costprice = Column(String)
+    batchup_quantity = Column(String)
+    batchup_date = Column(DateTime)
+    stockquantity = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #material = relationship(Material, backref=backref('stock', order_by=id))
+    #supplier = relationship(Supplier, backref=backref('stock', order_by=id))
+    #purchaseitem = relationship(PurchaseItem, backref=backref('stock', order_by=id))
+    current = relationship(Stock, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, stock_id, batch, material_id, stockinfo, status, supplier_id, purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity, lastupdated, rr_recordno):
+        self.id = id
+        self.stock_id = stock_id
         self.batch = batch
         self.material_id = material_id
         self.stockinfo = stockinfo
@@ -683,7 +728,7 @@ class Stock(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<Stock - %s: %s>" % (self.batch, self.status)
+        return "<StockHistory - %s: %s>" % (self.batch, self.status)
 
         
 class SalesOrder(Base):
@@ -711,11 +756,12 @@ class SalesOrder(Base):
     carrier_id = Column(Integer, ForeignKey('carrier.id'))
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     customer = relationship(Customer, backref=backref('salesorder', order_by=id))
     carrier = relationship(Carrier, backref=backref('salesorder', order_by=id))
     
-    def __init__(self, id, won, followon_link, customer_id, customer_orderno, picklist_comment, ordervalue, status, orderdate, despatchdate, invoicedate, operator, delivery_name, delivery_address, delivery_postcode, printed_comments, invoice_comments, invoice_terms, item_count, carrier_id, lastupdated, rr_recordno):
+    def __init__(self, id, won, followon_link, customer_id, customer_orderno, picklist_comment, ordervalue, status, orderdate, despatchdate, invoicedate, operator, delivery_name, delivery_address, delivery_postcode, printed_comments, invoice_comments, invoice_terms, item_count, carrier_id, lastupdated, rr_recordno, deleted):
         self.id = id
         self.won = won
         self.followon_link = followon_link
@@ -738,9 +784,73 @@ class SalesOrder(Base):
         self.carrier_id = carrier_id
         self.lastupdated = lastupdated
         self.rr_recordno = rr_recordno
+        self.deleted = deleted
+        
     
     def __repr__(self):
         return "<SalesOrder - %s>" % (self.won)
+        
+        
+class SalesOrderHistory(Base):
+    __tablename__ = 'salesorderhistory'
+
+    id = Column(Integer, primary_key=True)
+    so_id = Column(Integer, ForeignKey('salesorder.id'))
+    won = Column(String)
+    followon_link = Column(String)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    customer_orderno = Column(String)
+    picklist_comment = Column(String)
+    ordervalue = Column(String)
+    status = Column(Integer)
+    orderdate = Column(DateTime)
+    despatchdate = Column(DateTime)
+    invoicedate = Column(DateTime)
+    operator = Column(String)
+    delivery_name = Column(String)
+    delivery_address = Column(String)
+    delivery_postcode = Column(String)
+    printed_comments = Column(String)
+    invoice_comments = Column(String)
+    invoice_terms = Column(String)
+    item_count = Column(Integer)
+    carrier_id = Column(Integer, ForeignKey('carrier.id'))
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+
+    
+    #customer = relationship(Customer, backref=backref('salesorder', order_by=id))
+    #carrier = relationship(Carrier, backref=backref('salesorder', order_by=id))
+    current = relationship(SalesOrder, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, so_id, won, followon_link, customer_id, customer_orderno, picklist_comment, ordervalue, status, orderdate, despatchdate, invoicedate, operator, delivery_name, delivery_address, delivery_postcode, printed_comments, invoice_comments, invoice_terms, item_count, carrier_id, lastupdated, rr_recordno):
+        self.id = id
+        self.so_id = so_id
+        self.won = won
+        self.followon_link = followon_link
+        self.customer_id = customer_id
+        self.customer_orderno = customer_orderno
+        self.picklist_comment = picklist_comment
+        self.ordervalue = ordervalue
+        self.status = status
+        self.orderdate = orderdate
+        self.despatchdate = despatchdate
+        self.invoicedate = invoicedate
+        self.operator = operator
+        self.delivery_name = delivery_name
+        self.delivery_address = delivery_address
+        self.delivery_postcode = delivery_postcode
+        self.printed_comments = printed_comments
+        self.invoice_comments = invoice_comments
+        self.invoice_terms = invoice_terms
+        self.item_count = item_count
+        self.carrier_id = carrier_id
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        
+    
+    def __repr__(self):
+        return "<SalesOrderHistory - %s>" % (self.won)
     
 
 class SalesItem(Base):
@@ -755,11 +865,48 @@ class SalesItem(Base):
     required_date = Column(DateTime)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     salesorder = relationship(SalesOrder, backref=backref('salesitems', order_by=id))
     material = relationship(Material, backref=backref('salesitems', order_by=id))
-    def __init__(self, id, won, salesorder_id, material_id, quantity, price, required_date, lastupdated, rr_recordno):
+    
+    def __init__(self, id, won, salesorder_id, material_id, quantity, price, required_date, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.won = won
+        self.salesorder_id = salesorder_id
+        self.material_id = material_id
+        self.quantity = quantity
+        self.price = price
+        self.required_date = required_date
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+
+    def __repr__(self):
+        return "<SalesItem - %s>" % (self.won)
+
+
+class SalesItemHistory(Base):
+    __tablename__ = 'salesitemhistory'
+    
+    id = Column(Integer, primary_key=True)
+    si_id = Column(Integer, ForeignKey('salesitem.id'))
+    won = Column(String)
+    salesorder_id = Column(Integer, ForeignKey('salesorder.id'))
+    material_id = Column(Integer, ForeignKey('material.id'))
+    quantity = Column(String)
+    price = Column(String)
+    required_date = Column(DateTime)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #salesorder = relationship(SalesOrder, backref=backref('salesitems', order_by=id))
+    #material = relationship(Material, backref=backref('salesitems', order_by=id))
+    current = relationship(SalesItem, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, si_id, won, salesorder_id, material_id, quantity, price, required_date, lastupdated, rr_recordno):
+        self.id = id
+        self.si_id = si_id
         self.won = won
         self.salesorder_id = salesorder_id
         self.material_id = material_id
@@ -770,7 +917,7 @@ class SalesItem(Base):
         self.rr_recordno = rr_recordno
 
     def __repr__(self):
-        return "<SalesItem - %s>" % (self.won)
+        return "<SalesItemHistory - %s>" % (self.won)
     
 
 class DeletedSales(Base):
@@ -783,10 +930,40 @@ class DeletedSales(Base):
     reason = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     salesorder = relationship(SalesOrder, backref=backref('deletedsales', order_by=id))
     
-    def __init__(self, id, won, salesorder_id, operator, reason, lastupdated, rr_recordno):
+    def __init__(self, id, won, salesorder_id, operator, reason, lastupdated, rr_recordno, deleted):
+        self.id = id
+        self.won = won
+        self.salesorder_id = salesorder_id
+        self.operator = operator
+        self.reason = reason
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+    
+    def __repr__(self):
+        return "<DeletedSales - %s: %s>" % (self.won, self.reason)
+    
+    
+class DeletedSalesHistory(Base):
+    __tablename__ = 'deletedsaleshistory'
+
+    id = Column(Integer, primary_key=True)
+    ds_id = Column(Integer, ForeignKey('deletedsales.id'))
+    won = Column(String)
+    salesorder_id = Column(Integer, ForeignKey('salesorder.id'))
+    operator = Column(String)
+    reason = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #salesorder = relationship(SalesOrder, backref=backref('deletedsales', order_by=id))
+    current = relationship(DeletedSales, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, ds_id, won, salesorder_id, operator, reason, lastupdated, rr_recordno):
         self.id = id
         self.won = won
         self.salesorder_id = salesorder_id
@@ -796,7 +973,7 @@ class DeletedSales(Base):
         self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<DeletedSales - %s: %s>" % (self.won, self.reason)
+        return "<DeletedSalesHistory - %s: %s>" % (self.won, self.reason)
     
 
 class Despatch(Base):
@@ -811,12 +988,48 @@ class Despatch(Base):
     quantity = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     stock = relationship(Stock, backref=backref('despatched', order_by=id))
     salesitem = relationship(SalesItem, backref=backref('despatched', order_by=id))
     
-    def __init__(self, id, won, materialcode, stock_id, salesitem_id, batch, quantity, lastupdated, rr_recordno):
+    def __init__(self, id, won, materialcode, stock_id, salesitem_id, batch, quantity, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.won = won
+        self.materialcode = materialcode
+        self.stock_id = stock_id
+        self.salesitem_id = salesitem_id
+        self.batch = batch
+        self.quantity = quantity
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+    
+    def __repr__(self):
+        return "<Despatch - WON%s: %s, %sKg>" % (self.won, self.materialcode, self.quantity)
+       
+       
+class DespatchHistory(Base):
+    __tablename__ = 'despatchhistory'
+    
+    id = Column(Integer, primary_key=True)
+    desp_id = Column(Integer, ForeignKey('despatch.id'))
+    won = Column(String)
+    materialcode = Column(String)
+    stock_id = Column(Integer, ForeignKey('stock.id'))
+    salesitem_id = Column(Integer, ForeignKey('salesitem.id'))
+    batch = Column(String)
+    quantity = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #stock = relationship(Stock, backref=backref('despatched', order_by=id))
+    #salesitem = relationship(SalesItem, backref=backref('despatched', order_by=id))
+    current = relationship(Despatch, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, desp_id, won, materialcode, stock_id, salesitem_id, batch, quantity, lastupdated, rr_recordno):
+        self.id = id
+        self.desp_id = desp_id
         self.won = won
         self.materialcode = materialcode
         self.stock_id = stock_id
@@ -827,7 +1040,7 @@ class Despatch(Base):
         self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<Despatch - WON%s: %s, %sKg>" % (self.won, self.materialcode, self.quantity)
+        return "<DespatchHistory - WON%s: %s, %sKg>" % (self.won, self.materialcode, self.quantity)
        
     
 class StockMovement(Base):
@@ -846,13 +1059,58 @@ class StockMovement(Base):
     user_id = Column(String)
     lastupdated = Column(DateTime)
     rr_recordno = Column(Integer)
+    deleted = Column(Boolean)
     
     stock = relationship(Stock, backref=backref('stockmovement', order_by=id))
     customer = relationship(Customer, backref=backref('stockmovement', order_by=id))
     salesitem = relationship(SalesItem, backref=backref('stockmovement', order_by=id))
     
-    def __init__(self, id, stock_id, action, customer_id, salesitem_id, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
+    def __init__(self, id, stock_id, action, customer_id, salesitem_id, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno, deleted):
         self.id = id
+        self.stock_id = stock_id
+        self.action = action
+        self.customer_id = customer_id
+        self.salesitem_id = salesitem_id
+        self.salesprice = salesprice
+        self.pon = pon
+        self.movement_description = movement_description
+        self.movement_quantity = movement_quantity
+        self.item_order = item_order
+        self.user_id = user_id
+        self.lastupdated = lastupdated
+        self.rr_recordno = rr_recordno
+        self.deleted = deleted
+    
+    def __repr__(self):
+        return "<StockMovement - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
+
+        
+class StockMovementHistory(Base):
+    __tablename__ = 'stockmovementhistory'
+
+    id = Column(Integer, primary_key=True)
+    sm_id = Column(Integer, ForeignKey('stockmovement.id'))
+    stock_id = Column(Integer, ForeignKey('stock.id'))
+    action = Column(String)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    salesitem_id = Column(Integer, ForeignKey('salesitem.id'))
+    salesprice = Column(String)
+    pon = Column(String)
+    movement_description = Column(String)
+    movement_quantity = Column(String)
+    item_order = Column(Integer)
+    user_id = Column(String)
+    lastupdated = Column(DateTime)
+    rr_recordno = Column(Integer)
+    
+    #stock = relationship(Stock, backref=backref('stockmovement', order_by=id))
+    #customer = relationship(Customer, backref=backref('stockmovement', order_by=id))
+    #salesitem = relationship(SalesItem, backref=backref('stockmovement', order_by=id))
+    current = relationship(StockMovement, backref=backref('history', order_by=id))
+    
+    def __init__(self, id, sm_id, stock_id, action, customer_id, salesitem_id, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
+        self.id = id
+        self.sm_id = sm_id
         self.stock_id = stock_id
         self.action = action
         self.customer_id = customer_id
@@ -867,8 +1125,8 @@ class StockMovement(Base):
         self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<StockMovement - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
-
+        return "<StockMovementHistory - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
+        
 
 class DummyStockMovement(Base):
     __tablename__ = 'dummystockmovement'

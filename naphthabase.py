@@ -95,6 +95,14 @@ class RandRDatabase(object):
         results = [line for line in RandRdata]
         self.disconnect()
         return results
+    
+    def simplequery(self, query, variable):
+        self.connect()
+        RandRcursor = self.stock_connection.cursor()
+        RandRdata = RandRcursor.execute(query, variable)
+        results = [line for line in RandRdata]
+        self.disconnect()
+        return results
 
 
 #////////////////////////////////////////////////////////////////////////////#

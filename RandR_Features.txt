@@ -8,3 +8,7 @@ The Carrier field has also been used for miscellaneous comments to be printed on
 It is also possible for the original carrier to be deleted and a new carrier then added. Although one has been deleted, the new record has a different record number. This means that if a snapshot of the database is taken before the original is deleted and then the database is later syncronised, both records will appear for the same works order.
 It may be best to check which records have been deleted before syncing the database.
 
+
+Sales Order Item Table
+======================
+The Record NUmbers for each entry do not stay constant! When a change is made to a Sales Item entry, the record number is changed to the next available number.
