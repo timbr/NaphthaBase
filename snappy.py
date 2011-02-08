@@ -7,127 +7,263 @@ rrdata = nb.RandRDatabase()
 nbdb = loadSession()
 Base.metadata.create_all()
 
-def update_material():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Material). \
-                            order_by(desc(Material.lastupdated)). \
-                            first()
-    if lastrecord is None:
+def get_customer_id(clientid):
+    customer = nbdb.query(Customer).filter(Customer.customer_code == clientid).all()
+    if len(customer) == 1:
+        customerid = customer[0].id
+    else:
+        customerid = None
+    return customerid
+
+def get_supplier_id(clientid):
+    supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == clientid).all()
+    if len(supplier) == 1:
+        supplierid = supplier[0].id
+    else:
+        supplierid = None
+    return supplierid
+
+
+material = {'rrtable' : 'stock_Formula',
+            'rrsql'   : nb.sql.get_material_codes,
+            'nbtable' : 'Material',
+            'Map' :
+            {
+            'code'        :  'Material',
+            'description' :  'Description',
+            'lastupdated' :  'LastUpdated',
+            'rr_recordno' :  'RecordNumber'
+            }
+            }
+
+hauliers = {'rrtable' : 'stock_Additional Items',
+            'rrsql'   : nb.sql.get_hauliers,
+            'nbtable' : 'Hauliers',
+            'Map' :
+            {
+            'haulierkey'  :  'HaulierKey',
+            'name'        :  'Name',
+            'nominalcode' : 'NominalCode',
+            'lastupdated' :  'LastUpdated',
+            'rr_recordno' :  'RecordNumber'
+            }
+            }
+
+carrier  = {'rrtable' : 'stock_Sales Order Additional',
+            'rrsql'   : nb.sql.get_carrier,
+            'nbtable' : 'Carrier',
+            'Map' :
+            {
+            'won'         :  'WO_Num',
+            'description' :  'Description',
+            'lastupdated' :  'LastUpdated',
+            'rr_recordno' :  'RecordNumber'
+            }
+            }
+            
+          
+customer = {'rrtable' : 'accounts_Customer',
+            'rrsql'   : nb.sql.get_customer,
+            'nbtable' : 'Customer',
+            'Map' :
+            {
+            'customer_code' :  'CustomerID',
+            'name'          :  'Name',
+            'address'       :  ['Address1',
+                               'Address2',
+                               'Address3',
+                               'Address4',
+                               'Address5'],
+            'postcode'      :  'PostCode',
+            'phone'         :  'Telephone',
+            'fax'           :  'Fax',
+            'email'         :  'Email',
+            'website'       :  'Website',
+            'contactname'   :  'ContactName',
+            'vat'           :  'VAT',
+            'comment'       :  'Comment',
+            'memo'          :  'Memo',
+            'creditlimit'   :  'CreditLimit',
+            'terms'         :  'Terms',
+            'lastupdated'   :  'LastUpdated',
+            'rr_recordno'   :  'RecordNumber'
+            }
+            }
+
+supplier = {'rrtable' : 'accounts_Supplier',
+            'rrsql'   : nb.sql.get_supplier,
+            'nbtable' : 'Supplier',
+            'Map' :
+            {
+            'supplier_code' :  'SupplierID',
+            'name'          :  'Name',
+            'address'       :  ['Address1',
+                               'Address2',
+                               'Address3',
+                               'Address4',
+                               'Address5'],
+            'postcode'      :  'PostCode',
+            'phone'         :  'Telephone',
+            'fax'           :  'Fax',
+            'email'         :  'Email',
+            'website'       :  'Website',
+            'contactname'   :  'ContactName',
+            'vat'           :  'VAT',
+            'comment'       :  'Comment',
+            'memo'          :  'Memo',
+            'lastupdated'   :  'LastUpdated',
+            'rr_recordno'   :  'RecordNumber'
+            }
+            }
+
+contacts = {'rrtable' : 'accounts_Contact',
+            'rrsql'   : nb.sql.get_contact,
+            'nbtable' : 'Contact',
+            'Map' :
+            {
+            'clientcode'    :  'ClientID',
+            'title'         :  'Title',
+            'forename'      :  'Forename',
+            'surname'       :  'Surname',
+            'phone'         :  'Phone',
+            'department'    :  'Department',
+            'customer_id'   :  {'func':
+                              'get_customer_id(record.ClientID)'},
+            'supplier_id'   :  {'func':
+                              'get_supplier_id(record.ClientID)'},
+            'lastupdated'   :  'LastUpdated',
+            'rr_recordno'   :  'RecordNumber'
+            }
+            }
+
+depot    = {'rrtable' : 'accounts_Depot',
+            'rrsql'   : nb.sql.get_depot,
+            'nbtable' : 'Depot',
+            'Map' :
+            {
+            'clientid'      :  'ClientID',
+            'clientname'    :  'Name',
+            'address'       :  ['Address1',
+                               'Address2',
+                               'Address3',
+                               'Address4',
+                               'Address5'],
+            'postcode'      :  'PostCode',
+            'phone'         :  'Telephone',
+            'fax'           :  'Fax',
+            'email'         :  'Email',
+            'comment'       :  'Comment',
+            'customer_id'   :  {'func':
+                              'get_customer_id(record.ClientID)'},
+            'supplier_id'   :  {'func':
+                              'get_supplier_id(record.ClientID)'},
+            'lastupdated'   :  'LastUpdated',
+            'rr_recordno'   :  'RecordNumber'
+            }
+            }
+            
+po_order = {'rrtable' : 'stock_Purchase Order',
+            'rrsql'   : nb.sql.get_purchaseorder,
+            'nbtable' : 'PurchaseOrder',
+            'Map' :
+            {
+            'pon'           :  'PO_Num',
+            'ordervalue'    :  'OrderValue',
+            'supplier_id'   :  {'func':
+                              'get_supplier_id(record.Supplier)'},
+            'orderref'      :  'OrderReference',
+            'orderdate'     :  'OrderDate',
+            'placedby'      :  'PlacedBy',
+            'printedcomment':  'PrintedComment',
+            'deliverycomment': 'DeliveryComment',
+            'status'        :  'Status',
+            'lastupdated'   :  'LastUpdated',
+            'rr_recordno'   :  'RecordNumber'
+            }
+            }
+            
+            
+            
+            
+
+def map_and_update(table_mapping):
+    """Maps the R&R database to the NaphthaBase
+    
+    The table_mapping dictionary describes how the NaphthaBase columns
+    are mapped to the R&R database columns.
+    This function gets the latest data from the R&R database and updates
+    the NaphthaBase.
+    """
+    
+    nbtable = eval(table_mapping['nbtable'])
+    # This is the specified NaphthaBase table object, eg Material, Customer, Supplier etc.
+    last_nb_record = nbdb.query(nbtable).order_by(desc(nbtable.lastupdated)). \
+                                                                        first()
+    if last_nb_record is None:
         lastupdated = datetime.datetime(1982,1,1,0,0)
     else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Material).filter(Material.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_material_codes,                           'stock_Formula')
-    all_records = set([i.RecordNo for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_material_codes,                           'stock_Formula', lastupdated)
-    
-    recentmods = set([i.RecordNo for i in newdata])
+        lastupdated = last_nb_record.lastupdated
+    # Finds the last updated record in the NaphthaBase and sets lastupdated variable to this date, or defaults to 1982.
+    lastnb_records = set([i.rr_recordno for i in nbdb.query(nbtable).filter(nbtable.deleted == False)])
+    # Creates a set of all Record Numbers in the Naphthabase table
+    all_rr_data = rrdata.query(table_mapping['rrsql'], table_mapping['rrtable'])
+    all_records = set([i.RecordNumber for i in all_rr_data])
+    # Creates a set of all Record Numbers in the R&R database table
+    newdata = rrdata.query(table_mapping['rrsql'], table_mapping['rrtable'], lastupdated)
+    recentmods = set([i.RecordNumber for i in newdata])
+    # Creates a set of all Record Numbers for entries in the R&R database table since the lastupdated date.
     
     new_records = recentmods.difference(lastnb_records)
+    # Set of all new records in the R&R database table that aren't in the NaphthaBase table
     updated_records = recentmods.intersection(lastnb_records)
+    # Set of records that exist in the NaphthaBase but need updating
     deletedrecords = lastnb_records.difference(all_records)
+    # Set of records that have been deleted from the R&R database and need the deleted flag setting in the NaphthaBase
+    
+    map = table_mapping['Map']
+    # This is the specific column mapping information.
+    args = ['%s(id = None' % (table_mapping['nbtable'])]
+    for column in map.keys():
+        rrcolumn = map[column]
+        if type(rrcolumn) is list:
+            # All records in the list are combined into a single field before writing to the NaphthaBase
+            start = '%s = combine(' % column
+            middle = []
+            for item in rrcolumn:
+                middle.append('record.%s' % item)
+                rrfield = start + ', '.join(middle) + ')'
+            args.append(rrfield)
+        elif type(rrcolumn) is dict:
+            # The function specified in the dictionary needs to be executed to get the reference id.
+            args.append('%s = %s' % (column, rrcolumn['func']))
+        else:
+            args.append('%s = record.%s' % (column, rrcolumn))
+        
+    args.append('deleted = False)')
+    newinstruction = ', '.join(args)
+    print newinstruction + '\n\n'
+    
+    args = ['%sHistory(id = None' % (table_mapping['nbtable'])]
+    for column in map.keys():
+        args.append('%s = lastrecord.%s' % (column, column))
+    oldinstruction = ', '.join(args) + ')'
+    print oldinstruction
     
     for record in newdata:
         record = sanitise(record)
-        if record.RecordNo in new_records:
-            newmat = Material(id = None,
-                        code = record.Material,
-                        description = record.Description,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNo,
-                        deleted = False)
+        if record.RecordNumber in new_records:
+            newmat = eval(newinstruction)
             newmat.lastupdated = record.LastUpdated
             nbdb.add(newmat)
-        elif record.RecordNo in updated_records:
-            lastrecord = nbdb.query(Material). \
-             filter(Material.rr_recordno == record.RecordNo).all()[0]
-            old = MaterialHistory(id = None,
-                        material_id = lastrecord.id,
-                        code = lastrecord.code,
-                        description = lastrecord.description,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Material(id = None,
-                        code = record.Material,
-                        description = record.Description,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNo,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        recordtodelete = nbdb.query(Material). \
-          filter(Material.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
-
-    
-
-def update_hauliers():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Hauliers). \
-                            order_by(desc(Hauliers.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Hauliers).filter(Hauliers.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_hauliers,                           'stock_Additional Items')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_hauliers,                           'stock_Additional Items', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            newhaul = Hauliers(id = None,
-                        haulierkey = record.HaulierKey,
-                        name = record.Name,
-                        nominalcode = record.NominalCode,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newhaul.lastupdated = record.LastUpdated
-            nbdb.add(newhaul)
         elif record.RecordNumber in updated_records:
-            lastrecord = nbdb.query(Hauliers). \
-             filter(Hauliers.rr_recordno == record.RecordNumber).all()[0]
-            old = HauliersHistory(id = None,
-                        hauliers_id = lastrecord.id,
-                        haulierkey = lastrecord.haulierkey,
-                        name = lastrecord.name,
-                        nominalcode = lastrecord.nominalcode,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
+            lastrecord = nbdb.query(nbtable). \
+             filter(nbtable.rr_recordno == record.RecordNo).all()[0]
+            old = eval(oldinstruction)
                         
             old.lastupdated = lastrecord.lastupdated
             
             nbdb.delete(lastrecord)
-            newrecord = Haulier(id = None,
-                        haulierkey = record.HaulierKey,
-                        name = record.Name,
-                        nominalcode = record.NominalCode,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNo,
-                        deleted = False)
+            newrecord = eval(newinstruction)
                       
             newrecord.lastupdated = record.LastUpdated
             
@@ -135,622 +271,20 @@ def update_hauliers():
             newrecord.history.append(old)
             nbdb.add(newrecord)
     for record in deletedrecords:
-        recordtodelete = nbdb.query(Hauliers). \
-          filter(Hauliers.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
-    
-    
-    
-def update_carrier():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Carrier). \
-                            order_by(desc(Carrier.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Carrier).filter(Carrier.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_carrier,                           'stock_Sales Order Additional')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_carrier,                           'stock_Sales Order Additional', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            newcarrier = Carrier(id = None,
-                        won = record.WO_Num,
-                        description = record.Description,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newcarrier.lastupdated = record.LastUpdated
-            nbdb.add(newcarrier)
-        elif record.RecordNumber in updated_records:
-            lastrecord = nbdb.query(Carrier). \
-             filter(Carrier.rr_recordno == record.RecordNumber).all()[0]
-            old = CarrierHistory(id = None,
-                        carrier_id = lastrecord.id,
-                        won = lastrecord.won,
-                        description = lastrecord.description,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Carrier(id = None,
-                        won = record.WO_Num,
-                        description = record.Description,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNo,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        recordtodelete = nbdb.query(Carrier). \
-          filter(Carrier.rr_recordno == record).all()[0]
+        recordtodelete = nbdb.query(nbtable). \
+          filter(nbtable.rr_recordno == record).all()[0]
         recordtodelete.deleted = True
             
     nbdb.commit()
     
     
 
-def update_customer():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Customer). \
-                            order_by(desc(Customer.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Customer).filter(Customer.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_customer,                           'accounts_Customer')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_customer,                           'accounts_Customer', lastupdated)
+
     
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            newcustomer = Customer(id = None,
-                        customer_code = record.CustomerID,
-                        name = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        website = record.Website,
-                        contactname = record.ContactName,
-                        vat = record.VAT,
-                        comment = record.Comment,
-                        memo = record.Memo,
-                        creditlimit = record.CreditLimit,
-                        terms = record.Terms,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newcustomer.lastupdated = record.LastUpdated
-            nbdb.add(newcustomer)
-        elif record.RecordNumber in updated_records:
-            lastrecord = nbdb.query(Customer). \
-             filter(Customer.rr_recordno == record.RecordNumber).all()[0]
-            old = CustomerHistory(id = None,
-                        customer_id = lastrecord.id,
-                        customer_code = lastrecord.customer_code,
-                        name = lastrecord.name,
-                        address = lastrecord.address,
-                        postcode = lastrecord.postcode,
-                        phone = lastrecord.phone,
-                        fax = lastrecord.fax,
-                        email = lastrecord.email,
-                        website = lastrecord.website,
-                        contactname = lastrecord.contactname,
-                        vat = lastrecord.vat,
-                        comment = lastrecord.comment,
-                        memo = lastrecord.memo,
-                        creditlimit = lastrecord.creditlimit,
-                        terms = lastrecord.terms,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Customer(id = None,
-                        customer_code = record.CustomerID,
-                        name = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        website = record.Website,
-                        contactname = record.ContactName,
-                        vat = record.VAT,
-                        comment = record.Comment,
-                        memo = record.Memo,
-                        creditlimit = record.CreditLimit,
-                        terms = record.Terms,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        print record
-        recordtodelete = nbdb.query(Customer). \
-          filter(Customer.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
-    
-    
-    
-def update_supplier():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Supplier). \
-                            order_by(desc(Supplier.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Supplier).filter(Supplier.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_supplier,                           'accounts_Supplier')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_supplier,                           'accounts_Supplier', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            newsupplier = Supplier(id = None,
-                        supplier_code = record.SupplierID,
-                        name = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        website = record.Website,
-                        contactname = record.ContactName,
-                        vat = record.VAT,
-                        comment = record.Comment,
-                        memo = record.Memo,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newsupplier.lastupdated = record.LastUpdated
-            nbdb.add(newsupplier)
-        elif record.RecordNumber in updated_records:
-            lastrecord = nbdb.query(Supplier). \
-             filter(Supplier.rr_recordno == record.RecordNumber).all()[0]
-            old = SupplierHistory(id = None,
-                        supplier_id = lastrecord.id,
-                        supplier_code = lastrecord.supplier_code,
-                        name = lastrecord.name,
-                        address = lastrecord.address,
-                        postcode = lastrecord.postcode,
-                        phone = lastrecord.phone,
-                        fax = lastrecord.fax,
-                        email = lastrecord.email,
-                        website = lastrecord.website,
-                        contactname = lastrecord.contactname,
-                        vat = lastrecord.vat,
-                        comment = lastrecord.comment,
-                        memo = lastrecord.memo,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Supplier(id = None,
-                        supplier_code = record.SupplierID,
-                        name = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        website = record.Website,
-                        contactname = record.ContactName,
-                        vat = record.VAT,
-                        comment = record.Comment,
-                        memo = record.Memo,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        print record
-        recordtodelete = nbdb.query(Supplier). \
-          filter(Supplier.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
 
 
 
-def update_contacts():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Contact). \
-                            order_by(desc(Contact.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Contact).filter(Contact.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_contact,                           'accounts_Contact')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_contact,                           'accounts_Contact', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            customer = nbdb.query(Customer).filter(Customer.customer_code == record.ClientID).all()
-            if len(customer) == 1:
-                customerid = customer[0].id
-            else:
-                customerid = None
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.ClientID).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-            newcontact = Contact(id = None,
-                        clientcode = record.ClientID,
-                        title = record.Title,
-                        forename= record.Forename,
-                        surname = record.Surname,
-                        phone = record.Phone,
-                        department = record.Department,
-                        customer_id = customerid,
-                        supplier_id = supplierid,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newcontact.lastupdated = record.LastUpdated
-            nbdb.add(newcontact)
-        elif record.RecordNumber in updated_records:
-            customer = nbdb.query(Customer).filter(Customer.customer_code == record.ClientID).all()
-            if len(customer) == 1:
-                customerid = customer[0].id
-            else:
-                customerid = None
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.ClientID).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-                
-            lastrecord = nbdb.query(Contact). \
-             filter(Contact.rr_recordno == record.RecordNumber).all()[0]
-            old = ContactHistory(id = None,
-                        contact_id = lastrecord.id,
-                        clientcode = lastrecord.clientcode,
-                        title = lastrecord.title,
-                        forename = lastrecord.forename,
-                        surname = lastrecord.surname,
-                        phone = lastrecord.phone,
-                        department = lastrecord.department,
-                        customer_id = lastrecord.customer_id,
-                        supplier_id = lastrecord.supplier_id,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Contact(id = None,
-                        clientcode = record.ClientID,
-                        title = record.Title,
-                        forename = record.Forename,
-                        surname = record.Surname,
-                        phone = record.Phone,
-                        department = record.Department,
-                        customer_id = customerid,
-                        supplier_id = supplierid,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        print record
-        recordtodelete = nbdb.query(Contact). \
-          filter(Contact.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
 
-
-def update_depot():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(Depot). \
-                            order_by(desc(Depot.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(Depot).filter(Depot.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_depot,                           'accounts_Depot')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_depot,                           'accounts_Depot', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            customer = nbdb.query(Customer).filter(Customer.customer_code == record.ClientID).all()
-            if len(customer) == 1:
-                customerid = customer[0].id
-            else:
-                customerid = None
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.ClientID).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-            newdepot = Depot(id = None,
-                        clientid = record.ClientID,
-                        clientname = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        comment = record.Comment,
-                        customer_id = customerid,
-                        supplier_id = supplierid,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newdepot.lastupdated = record.LastUpdated
-            nbdb.add(newdepot)
-        elif record.RecordNumber in updated_records:
-            customer = nbdb.query(Customer).filter(Customer.customer_code == record.ClientID).all()
-            if len(customer) == 1:
-                customerid = customer[0].id
-            else:
-                customerid = None
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.ClientID).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-                
-            lastrecord = nbdb.query(Depot). \
-             filter(Depot.rr_recordno == record.RecordNumber).all()[0]
-            old = DepotHistory(id = None,
-                        depot_id = lastrecord.id,
-                        clientid = lastrecord.clientid,
-                        clientname = lastrecord.clientname,
-                        address = lastrecord.address,
-                        postcode = lastrecord.postcode,
-                        phone = lastrecord.phone,
-                        fax = lastrecord.fax,
-                        email = lastrecord.email,
-                        comment = lastrecord.comment,
-                        customer_id = lastrecord.customer_id,
-                        supplier_id = lastrecord.supplier_id,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = Depot(id = None,
-                        clientid = record.ClientID,
-                        clientname = record.Name,
-                        address = combine(record.Address1,
-                                          record.Address2,
-                                          record.Address3,
-                                          record.Address4,
-                                          record.Address5),
-                        postcode = record.PostCode,
-                        phone = record.Telephone,
-                        fax = record.Fax,
-                        email = record.Email,
-                        comment = record.Comment,
-                        customer_id = customerid,
-                        supplier_id = supplierid,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        print record
-        recordtodelete = nbdb.query(Depot). \
-          filter(Depot.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
-    
-
-def update_purchaseorder():
-    global rrdata
-    global nbdb
-    lastrecord = nbdb.query(PurchaseOrder). \
-                            order_by(desc(PurchaseOrder.lastupdated)). \
-                            first()
-    if lastrecord is None:
-        lastupdated = datetime.datetime(1982,1,1,0,0)
-    else:
-        lastupdated = lastrecord.lastupdated
-    lastnb_records = set([i.rr_recordno for i in nbdb.query(PurchaseOrder).filter(PurchaseOrder.deleted == False)])
-    all_rr_data = rrdata.query(nb.sql.get_purchaseorder,                           'stock_Purchase Order')
-    all_records = set([i.RecordNumber for i in all_rr_data])
-    newdata = rrdata.query(nb.sql.get_purchaseorder,                           'stock_Purchase Order', lastupdated)
-    
-    recentmods = set([i.RecordNumber for i in newdata])
-    
-    new_records = recentmods.difference(lastnb_records)
-    updated_records = recentmods.intersection(lastnb_records)
-    deletedrecords = lastnb_records.difference(all_records)
-    
-    for record in newdata:
-        record = sanitise(record)
-        if record.RecordNumber in new_records:
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.Supplier).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-            newpo = PurchaseOrder(id = None,
-                        pon = record.PO_Num,
-                        ordervalue = record.OrderValue,
-                        supplier_id = supplierid,
-                        orderref = record.OrderReference,
-                        orderdate = record.OrderDate,
-                        placedby = record.PlacedBy,
-                        printedcomment = record.PrintedComment,
-                        deliverycomment = record.DeliveryComment,
-                        status = record.Status,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                        
-            newpo.lastupdated = record.LastUpdated
-            nbdb.add(newpo)
-        elif record.RecordNumber in updated_records:
-            supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == record.Supplier).all()
-            if len(supplier) == 1:
-                supplierid = supplier[0].id
-            else:
-                supplierid = None
-                
-            lastrecord = nbdb.query(PurchaseOrder). \
-             filter(PurchaseOrder.rr_recordno == record.RecordNumber).all()[0]
-            old = PurchaseOrderHistory(id = None,
-                        po_id = lastrecord.id,
-                        pon = lastrecord.pon,
-                        ordervalue = lastrecord.ordervalue,
-                        supplier_id = lastrecord.supplier_id,
-                        orderref = lastrecord.orderref,
-                        orderdate = lastrecord.orderdate,
-                        placedby = lastrecord.placedby,
-                        printedcomment = lastrecord.printedcomment,
-                        deliverycomment = lastrecord.deliverycomment,
-                        status = lastrecord.status,
-                        lastupdated = lastrecord.lastupdated,
-                        rr_recordno = lastrecord.rr_recordno)
-                        
-            old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = PurchaseOrder(id = None,
-                        pon = record.PO_Num,
-                        ordervalue = record.OrderValue,
-                        supplier_id = supplierid,
-                        orderref = record.OrderReference,
-                        orderdate = record.OrderDate,
-                        placedby = record.PlacedBy,
-                        printedcomment = record.PrintedComment,
-                        deliverycomment = record.DeliveryComment,
-                        status = record.Status,
-                        lastupdated = record.LastUpdated,
-                        rr_recordno = record.RecordNumber,
-                        deleted = False)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
-            nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
-    for record in deletedrecords:
-        print record
-        recordtodelete = nbdb.query(PurchaseOrder). \
-          filter(PurchaseOrder.rr_recordno == record).all()[0]
-        recordtodelete.deleted = True
-            
-    nbdb.commit()
     
     
 def update_purchaseitem():
@@ -1620,6 +1154,9 @@ def sanitise(record):
         else:
             cont.__dict__[column] = data
     return cont
+    
+
+
     
 
 def combine(*args, **kwargs):

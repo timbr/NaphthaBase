@@ -278,7 +278,7 @@ get_material_codes = """
     Formula.Key AS Material,
     Formula.Description,
     Formula.\"Last Updated\" AS LastUpdated,
-    Formula.\"Record Number\" AS RecordNo
+    Formula.\"Record Number\" AS RecordNumber
     FROM Formula
     WHERE (Formula.\"Customer Key\"='ANY')
     AND Formula.\"Last Updated\" > #%(lastupdate)s#
