@@ -21,14 +21,16 @@ class Material(Base):
     id = Column(Integer, primary_key=True)
     code = Column(String)
     description = Column(String)
+    minimumstock = Column(Integer)
     lastupdated = Column(DateTime, nullable = True)
     rr_recordno = Column(Integer)
     deleted = Column(Boolean)
 
-    def __init__(self, id, code, description, lastupdated, rr_recordno, deleted):
+    def __init__(self, id, code, description, minimumstock, lastupdated, rr_recordno, deleted):
         self.id = id
         self.code = code
         self.description = description
+        self.minimumstock = minimumstock
         self.rr_recordno = rr_recordno
         self.deleted = deleted
 
