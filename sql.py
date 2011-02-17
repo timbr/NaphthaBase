@@ -12,7 +12,7 @@ get_material_codes = """
     Formula.\"Last Updated\" AS LastUpdated,
     Formula.\"Record Number\" AS RecordNumber
     FROM Formula
-    WHERE (Formula.\"Customer Key\"='ANY')
+    WHERE (Formula.\"Customer Key\" != 'ANY')
     AND Formula.\"Last Updated\" > #%(lastupdate)s#
     ORDER BY Formula.Key
     """
