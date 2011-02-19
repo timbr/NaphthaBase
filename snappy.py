@@ -545,7 +545,9 @@ def sanitise(record):
             cont.__dict__[column] = str(data)
         elif type(data) is str:
             text = record.__getattribute__(column)
-            cont.__dict__[column] = text.replace('\xa3', '&POUND').replace('\xd9', '')
+            text = text.replace('\xa3', '&POUND').replace('\xd9', '')
+            utext = unicode(text, 'utf-8')
+            cont.__dict__[column] = utext.replace('&POUND', u'\xa3')
         else:
             cont.__dict__[column] = data
     return cont

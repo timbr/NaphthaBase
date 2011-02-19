@@ -2,17 +2,10 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Foreign
                        create_engine, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
-
 from sqlalchemy.interfaces import PoolListener
-
-class SetTextFactory(PoolListener):
-    """Solves problem with pound signs"""
-    def connect(self, dbapi_con, con_record):
-        dbapi_con.text_factory = str
 
 dbpath = 'C:/Users/Tim/Desktop/NaphthaBase/NaphthaBase.db'
 engine = create_engine('sqlite:///%s' % dbpath)
-#engine = create_engine('sqlite:///%s' % dbpath, listeners=[SetTextFactory()],  echo=True)
 
 Base = declarative_base(engine)
 
