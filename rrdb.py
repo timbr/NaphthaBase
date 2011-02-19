@@ -1,18 +1,10 @@
-""" naphthabase.py  -- Interface to the NaphthaBase Database.
-
-Provides routines for taking a snapshot of the official R & R Associates 
-database and saving the data in the NaphthaBase Database. All changes since
-the last snapshot are added without deleting the older data.
-
-Routines for quick and easy access to data in the NaphthaBase are also
-provided.
+""" rrdb.py  -- Interface to the R&R Database.
 """
 
 import pyodbc
 import datetime
 import os
 import nbsettings
-import sql
 import logging
 
 logger = logging.getLogger("logit")
