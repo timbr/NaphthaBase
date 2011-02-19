@@ -8,7 +8,9 @@ nbdb = loadSession()
 Base.metadata.create_all()
 
 def get_customer_id(clientid):
-    customer = nbdb.query(Customer).filter(Customer.customer_code == clientid).all()
+    customer = nbdb.query(Customer).\
+                    filter(Customer.\
+                    customer_code == clientid).all()
     if len(customer) == 1:
         customerid = customer[0].id
     else:
@@ -16,7 +18,8 @@ def get_customer_id(clientid):
     return customerid
 
 def get_supplier_id(clientid):
-    supplier = nbdb.query(Supplier).filter(Supplier.supplier_code == clientid).all()
+    supplier = nbdb.query(Supplier).\
+                    filter(Supplier.supplier_code == clientid).all()
     if len(supplier) == 1:
         supplierid = supplier[0].id
     else:
@@ -24,7 +27,8 @@ def get_supplier_id(clientid):
     return supplierid
 
 def get_carrier_id(WO_Num):
-    carrier = nbdb.query(Carrier).filter(Carrier.won == WO_Num).all()
+    carrier = nbdb.query(Carrier).\
+                   filter(Carrier.won == WO_Num).all()
     if len(carrier) == 1:
         carrierid = carrier[0].id
     elif len(carrier) > 1:
@@ -35,7 +39,8 @@ def get_carrier_id(WO_Num):
     return carrierid
     
 def get_purchaseorder_id(PO_Num):
-    po = nbdb.query(PurchaseOrder).filter(PurchaseOrder.pon == PO_Num).all()
+    po = nbdb.query(PurchaseOrder).\
+                    filter(PurchaseOrder.pon == PO_Num).all()
     if len(po) == 1:
         poid = po[0].id
     else:
@@ -56,7 +61,9 @@ def get_purchaseitem_id(PO_Num, Batch):
             itemnum = item.ItemOrder
         po_item_num[item.Batch] = itemnum
         
-    pi = nbdb.query(PurchaseItem).filter(PurchaseItem.pon == PO_Num).filter(PurchaseItem.itemno == po_item_num.get(Batch, None)).all()
+    pi = nbdb.query(PurchaseItem).\
+                    filter(PurchaseItem.pon == PO_Num).\
+                    filter(PurchaseItem.itemno == po_item_num.get(Batch, None)).all()
     if len(pi) == 1:
         piid = pi[0].id
     else:
@@ -64,7 +71,8 @@ def get_purchaseitem_id(PO_Num, Batch):
     return piid
 
 def get_material_id(material):
-    mat = nbdb.query(Material).filter(Material.code == material).all()
+    mat = nbdb.query(Material).\
+                     filter(Material.code == material).all()
     if len(mat) == 1:
         matid = mat[0].id
     else:
@@ -72,7 +80,8 @@ def get_material_id(material):
     return matid
 
 def get_salesorder_id(WO_Num):
-    so = nbdb.query(SalesOrder).filter(SalesOrder.won == WO_Num).all()
+    so = nbdb.query(SalesOrder).\
+                    filter(SalesOrder.won == WO_Num).all()
     if len(so) == 1:
         soid = so[0].id
     else:
@@ -80,9 +89,13 @@ def get_salesorder_id(WO_Num):
     return soid
 
 def get_salesitem_id(WO_Num, material):
-    mat = nbdb.query(Material).filter(Material.code == material).all()
+    mat = nbdb.query(Material).\
+                     filter(Material.code == material).all()
     if len(mat) == 1:
-        salesitem = nbdb.query(SalesItem).filter(SalesItem.won == WO_Num).filter(SalesItem.deleted == False).filter(SalesItem.material_id == mat[0].id).all()
+        salesitem = nbdb.query(SalesItem).\
+                               filter(SalesItem.won == WO_Num).\
+                               filter(SalesItem.deleted == False).\
+                               filter(SalesItem.material_id == mat[0].id).all()
         if len(salesitem) == 1:
             salesitemid = salesitem[0].id
         elif len(salesitem) > 1:
@@ -94,7 +107,8 @@ def get_salesitem_id(WO_Num, material):
     return salesitemid
 
 def get_stock_id(Batch):
-    stock = nbdb.query(Stock).filter(Stock.batch == Batch).all()
+    stock = nbdb.query(Stock).\
+                       filter(Stock.batch == Batch).all()
     if len(stock) == 1:
         stockid = stock[0].id
     else:
@@ -391,7 +405,7 @@ despatch = {'rrtable'              :   'stock_Sales Order Despatch',
             'stock_id'             :  {'func':
                                       'get_stock_id(record.BatchDespatched)'},
             'salesitem_id'         :  {'func':
-                          'get_salesitem_id(record.WO_Num, record.Material)'},
+                                       'get_salesitem_id(record.WO_Num, record.Material)'},
             'batch'                :   'BatchDespatched',
             'quantity'             :   'DespatchedQuantity',
             'lastupdated'          :   'LastUpdated',
@@ -410,7 +424,7 @@ stockmove = {'rrtable'             :   'stock_Formula Stock Usage',
             'customer_id'          :  {'func':
                                        'get_customer_id(record.Customer)'},
             'salesitem_id'         :  {'func':
-                          'get_salesitem_id(record.WO_Num, record.Material)'},
+                                       'get_salesitem_id(record.WO_Num, record.Material)'},
             'salesprice'           :   'Price',
             'pon'                  :   'PO_Num',
             'movement_description' :   'UsageRef',
@@ -436,8 +450,7 @@ def map_and_update(table_mapping):
     
     nbtable = eval(table_mapping['nbtable'])
     # This is the specified NaphthaBase table object, eg Material, Customer, Supplier etc.
-    last_nb_record = nbdb.query(nbtable).order_by(desc(nbtable.lastupdated)). \
-                                                                        first()
+    last_nb_record = nbdb.query(nbtable).order_by(desc(nbtable.lastupdated)).first()
     if last_nb_record is None:
         lastupdated = datetime.datetime(1982,1,1,0,0)
     else:
@@ -482,7 +495,8 @@ def map_and_update(table_mapping):
     newinstruction = ', '.join(args)
     print newinstruction + '\n\n'
     
-    args = ['%sHistory(id = None' % (table_mapping['nbtable'])]
+    tablename = table_mapping['nbtable']
+    args = ['%sHistory(id = None, %s_id = lastrecord.id' % (tablename, tablename.lower())]
     for column in map.keys():
         args.append('%s = lastrecord.%s' % (column, column))
     oldinstruction = ', '.join(args) + ')'
@@ -495,8 +509,8 @@ def map_and_update(table_mapping):
             newmat.lastupdated = record.LastUpdated
             nbdb.add(newmat)
         elif record.RecordNumber in updated_records:
-            lastrecord = nbdb.query(nbtable). \
-             filter(nbtable.rr_recordno == record.RecordNo).all()[0]
+            lastrecord = nbdb.query(nbtable).\
+                                    filter(nbtable.rr_recordno == record.RecordNumber).all()[0]
             old = eval(oldinstruction)
                         
             old.lastupdated = lastrecord.lastupdated
@@ -510,8 +524,8 @@ def map_and_update(table_mapping):
             newrecord.history.append(old)
             nbdb.add(newrecord)
     for record in deletedrecords:
-        recordtodelete = nbdb.query(nbtable). \
-          filter(nbtable.rr_recordno == record).all()[0]
+        recordtodelete = nbdb.query(nbtable).\
+                                    filter(nbtable.rr_recordno == record).all()[0]
         recordtodelete.deleted = True
             
     nbdb.commit()
