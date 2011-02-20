@@ -115,6 +115,15 @@ def get_stock_id(Batch):
     else:
         stockid = None
     return stockid
+
+def get_grade_id(Batch):
+    stock = nbdb.query(Stock).\
+                       filter(Stock.batch == Batch).all()
+    if len(stock) == 1:
+        gradeid = stock[0].grade_id
+    else:
+        gradeid = None
+    return gradeid
             
 
 def map_and_update(table_mapping):

@@ -190,6 +190,8 @@ stock   =  {'rrtable'              :   'stock_Formula Stock',
             
     'Map' : {
             'batch'                :   'Batch',
+            'grade_id'             :  {'func':
+                                       'get_grade_id(record.Batch)'},
             'material_id'          :  {'func':
                                        'get_material_id(record.Material)'},
             'stockinfo'            :   'StockInfo',

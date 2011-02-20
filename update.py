@@ -60,6 +60,35 @@ class MaterialHistory(Base):
     def __repr__(self):
         return "<MaterialHistory - %s: %s>" % (self.code, self.description)
 
+
+#----------------------------------------------------------------------------#
+class Grades(Base):
+    __tablename__ = 'grades'
+#----------------------------------------------------------------------------#
+    id = Column(Integer, primary_key=True)
+    grade = Column(String)
+    material_id = Column(Integer, ForeignKey('material.id'))
+    manufacturer = Column(String)
+    website = Column(String)
+    datasheet = Column(String)
+    msds = Column(String)
+    comments = Column(String)
+    
+    material = relationship(Material, backref=backref('grades', order_by=id))
+    
+    def __init__(self, id, grade, material, manufacturer, website, datasheet, msds, comments):
+        self.id = id
+        self.grade = grade
+        self.material_id = material_id
+        self.manufacturer = manufacturer
+        self.website = website
+        self.datasheet = datasheet
+        self.msds = msds
+        self.comments = comments
+    
+    def __repr__(self):
+        return "<Grades - %>" % (self.grade)
+
         
 #----------------------------------------------------------------------------#
 class Hauliers(Base):
@@ -685,6 +714,7 @@ class Stock(Base):
 #----------------------------------------------------------------------------#
     id = Column(Integer, primary_key=True)
     batch = Column(String)
+    grade_id = Column(Integer, ForeignKey('grades.id'))
     material_id = Column(Integer, ForeignKey('material.id'))
     stockinfo = Column(String)
     status = Column(String)
@@ -698,15 +728,17 @@ class Stock(Base):
     rr_recordno = Column(Integer)
     deleted = Column(Boolean)
     
+    grade = relationship(Grades, backref=backref('stock', order_by=id))
     material = relationship(Material, backref=backref('stock', order_by=id))
     supplier = relationship(Supplier, backref=backref('stock', order_by=id))
     purchaseitem = relationship(PurchaseItem, backref=backref('stock', order_by=id))
     
-    def __init__(self, id, batch, material_id, stockinfo, status, supplier_id, purchaseitem_id,\
-                 costprice, batchup_quantity, batchup_date, stockquantity, lastupdated,\
-                 rr_recordno, deleted):
+    def __init__(self, id, batch, grade_id, material_id, stockinfo, status, supplier_id,\
+                 purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity,\
+                 lastupdated, rr_recordno, deleted):
         self.id = id
         self.batch = batch
+        self.grade_id = grade_id
         self.material_id = material_id
         self.stockinfo = stockinfo
         self.status = status
@@ -731,6 +763,7 @@ class StockHistory(Base):
     id = Column(Integer, primary_key=True)
     stock_id = Column(Integer, ForeignKey('stock.id'))
     batch = Column(String)
+    grade_id = Column(Integer, ForeignKey('grades.id'))
     material_id = Column(Integer, ForeignKey('material.id'))
     stockinfo = Column(String)
     status = Column(String)
@@ -748,12 +781,13 @@ class StockHistory(Base):
     #purchaseitem = relationship(PurchaseItem, backref=backref('stock', order_by=id))
     current = relationship(Stock, backref=backref('history', order_by=id))
     
-    def __init__(self, id, stock_id, batch, material_id, stockinfo, status, supplier_id,\
+    def __init__(self, id, stock_id, batch, grade_id, material_id, stockinfo, status, supplier_id,\
                  purchaseitem_id, costprice, batchup_quantity, batchup_date, stockquantity,\
                  lastupdated, rr_recordno):
         self.id = id
         self.stock_id = stock_id
         self.batch = batch
+        self.grade_id = grade_id
         self.material_id = material_id
         self.stockinfo = stockinfo
         self.status = status
@@ -1192,41 +1226,21 @@ class StockMovementHistory(Base):
     
     def __repr__(self):
         return "<StockMovementHistory - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
-        
 
-#?????????????????????????????????????????????????????#
-class DummyStockMovement(Base):
-    __tablename__ = 'dummystockmovement'
-#?????????????????????????????????????????????????????#
+
+#----------------------------------------------------------------------------#
+class LastUpdate(Base):
+    __tablename__ = 'lastupdate'
+#----------------------------------------------------------------------------#
     id = Column(Integer, primary_key=True)
-    stock = Column(String)
-    action = Column(String)
-    material = Column(String)
-    salesprice = Column(String)
-    pon = Column(String)
-    movement_description = Column(String)
-    movement_quantity = Column(String)
-    item_order = Column(Integer)
-    user_id = Column(String)
     lastupdated = Column(DateTime)
-    rr_recordno = Column(Integer)
     
-    def __init__(self, id, stock, action, material, salesprice, pon, movement_description, movement_quantity, item_order, user_id, lastupdated, rr_recordno):
+    def __init__(self, id, lastupdated):
         self.id = id
-        self.stock = stock
-        self.action = action
-        self.material = material
-        self.salesprice = salesprice
-        self.pon = pon
-        self.movement_description = movement_description
-        self.movement_quantity = movement_quantity
-        self.item_order = item_order
-        self.user_id = user_id
         self.lastupdated = lastupdated
-        self.rr_recordno = rr_recordno
     
     def __repr__(self):
-        return "<DummyStockMovement - %s: %s %sKg>" % (self.action, self.movement_description, self.movement_quantity)
+        return "<LastUpdate - %>" % (self.lastupdated)
     
 
 def loadSession():
