@@ -3,8 +3,9 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Foreign
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy.interfaces import PoolListener
+import nbsettings
 
-dbpath = 'C:/Users/Tim/Desktop/NaphthaBase/NaphthaBase.db'
+dbpath = nbsettings.NaphthaBase_Dbase
 engine = create_engine('sqlite:///%s' % dbpath)
 
 Base = declarative_base(engine)

@@ -211,8 +211,7 @@ def map_and_update(table_mapping):
             newrecord.history.append(old)
             nbdb.add(newrecord)
     for record in deletedrecords:
-        recordtodelete = nbdb.query(nbtable).\
-                                    filter(nbtable.rr_recordno == record).all()[0]
+        recordtodelete = nbdb.query(nbtable).filter(nbtable.rr_recordno == record).all()[0]
         recordtodelete.deleted = True
             
     nbdb.commit()
