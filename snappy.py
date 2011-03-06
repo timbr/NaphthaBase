@@ -161,7 +161,8 @@ def map_and_update(table_mapping):
     
     map = table_mapping['Map']
     # This is the specific column mapping information.
-    args = ['%s(id = None' % (table_mapping['nbtable'])]
+    beginning = '%s(' % (table_mapping['nbtable'])
+    args = []
     for column in map.keys():
         rrcolumn = map[column]
         if type(rrcolumn) is list:
@@ -179,8 +180,9 @@ def map_and_update(table_mapping):
             args.append('%s = record.%s' % (column, rrcolumn))
         
     args.append('deleted = False)')
-    newinstruction = ', '.join(args)
-    print newinstruction + '\n\n'
+    newinstruction = beginning + 'id = None, ' + ', '.join(args)
+    updatedinstruction = ', '.join(args)
+    print updatedinstruction + '\n\n'
     
     tablename = table_mapping['nbtable']
     args = ['%sHistory(id = None, %s_id = lastrecord.id' % (tablename, tablename.lower())]
@@ -188,6 +190,9 @@ def map_and_update(table_mapping):
         args.append('%s = lastrecord.%s' % (column, column))
     oldinstruction = ', '.join(args) + ')'
     print oldinstruction + '\n\n'
+    
+    global old
+    global lastrecord
     
     for record in newdata:
         record = sanitise(record)
@@ -201,15 +206,30 @@ def map_and_update(table_mapping):
             old = eval(oldinstruction)
                         
             old.lastupdated = lastrecord.lastupdated
-            
-            nbdb.delete(lastrecord)
-            newrecord = eval(newinstruction)
-                      
-            newrecord.lastupdated = record.LastUpdated
-            
             nbdb.add(old)
-            newrecord.history.append(old)
-            nbdb.add(newrecord)
+            
+            #nbdb.delete(lastrecord)
+            for column in map.keys():
+                rrcolumn = map[column]
+                print rrcolumn
+                if type(rrcolumn) is list:
+                    # All records in the list are combined into a single field before writing to the NaphthaBase
+                    start = 'lastrecord.%s = combine(' % column
+                    middle = []
+                    for item in rrcolumn:
+                        middle.append('record.%s' % item)
+                        rrfield = start + ', '.join(middle) + ')'
+                    lastrecord.__setattr__(column, eval(rrfield))
+                elif type(rrcolumn) is dict:
+                    # The function specified in the dictionary needs to be executed to get the reference id.
+                    lastrecord.__setattr__(column, eval('record.%s' % rrcolumn['func']))
+                else:
+                    lastrecord.__setattr__(column, eval('record.%s' % rrcolumn))
+                      
+            lastrecord.lastupdated = record.LastUpdated
+          
+            lastrecord.history.append(old)
+            #nbdb.add(newrecord)
     for record in deletedrecords:
         recordtodelete = nbdb.query(nbtable).filter(nbtable.rr_recordno == record).all()[0]
         recordtodelete.deleted = True
